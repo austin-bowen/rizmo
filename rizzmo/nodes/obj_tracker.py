@@ -37,8 +37,10 @@ async def main():
         timestamp, camera_index, image_bytes, objects = data
         image_width, image_height = 1280 / 2, 720 / 2
 
-        tracked_object: Detection = get_tracked_object(objects)
+        tracked_object = get_tracked_object(objects)
         print(f'tracking: {tracked_object}')
+        if tracked_object is None:
+            return
 
         object_x = tracked_object.box.x + tracked_object.box.width / 2
         x_error = (2 * object_x / image_width) - 1
