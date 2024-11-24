@@ -51,3 +51,7 @@ class ProcessManager:
 
             for process in procs_to_kill:
                 process.wait()
+
+    def wait(self, timeout: float = None):
+        for process in self.processes:
+            process.wait(timeout)

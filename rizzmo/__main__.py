@@ -5,7 +5,7 @@ from rizzmo.procman import ProcessManager
 
 def main():
     with ProcessManager() as p:
-        coordinator = p.start_python_module('easymesh.coordinator')
+        p.start_python_module('easymesh.coordinator')
         sleep(1)
 
         for node in (
@@ -15,7 +15,7 @@ def main():
             p.start_python_module(f'rizzmo.nodes.{node}')
 
         try:
-            coordinator.wait()
+            p.wait()
         except KeyboardInterrupt:
             pass
 
