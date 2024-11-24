@@ -6,11 +6,11 @@ from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
 from rizzmo.config import config
-from rizzmo.nodes.messages import Box, Detection
+from rizzmo.nodes.messages import Detection
 
 
-def area(box: Box) -> float:
-    return box.width * box.height
+def area(detection: Detection) -> float:
+    return detection.box.width * detection.box.height
 
 
 def get_tracked_object(
