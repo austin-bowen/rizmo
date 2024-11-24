@@ -10,6 +10,7 @@ from easymesh import build_mesh_node
 from easymesh.argparse import add_coordinator_arg
 from easymesh.utils import require
 
+from rizzmo.config import config
 from rizzmo.nodes.image_codec import JpegImageCodec
 
 Image = np.ndarray
@@ -124,14 +125,16 @@ def parse_args() -> Namespace:
 
     parser.add_argument(
         '--camera-index', '-c',
+        default=config.camera_index,
         type=int,
+        help='Camera index. Default: %(default)s',
     )
 
     parser.add_argument(
         '--camera-fps', '-f',
         default=30.,
         type=float,
-        help='Camera FPS',
+        help='Camera FPS. Default: %(default)s',
     )
 
     parser.add_argument(
@@ -149,7 +152,7 @@ def parse_args() -> Namespace:
         '--jpeg-quality',
         default=80,
         type=int,
-        help='JPEG quality. Range: 0-100',
+        help='JPEG quality. Default: %(default)s. Range: 0-100',
     )
 
     return parser.parse_args()
