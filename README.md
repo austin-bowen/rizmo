@@ -2,29 +2,32 @@
 
 Code for my robot, Rizzmo.
 
-
 ## Hardware
 
 TODO
 
-
 ## Software Setup
 
 1. Install OS:
-   1. Write the Jetson Nano Developer Kit SD card image to a microSD card ([instructions](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#write)).
-   2. Power up and install OS.
-      - Hostname: `rizzmo`
-   3. Remove unnecessary programs. Install updates.
+    1. Write the Jetson Nano Developer Kit SD card image to a microSD
+       card ([instructions](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#write)).
+    2. Power up and install OS.
+        - Hostname: `rizzmo`
+    3. Remove unnecessary programs. Install updates.
 2. Setup SSH:
-   1. Copy `~/.ssh/id_rsa.pub` of dev machine to `~/.ssh/authorized_keys` on Jetson Nano.
-   2. Set permissions: `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`
+    1. Copy `~/.ssh/id_rsa.pub` of dev machine to `~/.ssh/authorized_keys` on Jetson Nano.
+    2. Set permissions: `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`
 3. Install and setup `pyenv` ([instructions](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation)).
-   - To update: `pyenv update`
+    - To update: `pyenv update`
 4. Install Python 3.12: `pyenv install 3.12 && pyenv global 3.12`
-   - The latest version is installed and set to the default.
-5. Setup `rizzmo` repo:
-   1. Clone this repo: `git clone https://github.com/austin-bowen/rizzmo.git`
-   2. Setup virtual env: `cd rizzmo && python -m venv --symlinks venv`
-   3. Activate venv and install requirements:
-      - `. venv/bin/activate`
-      - `pip install -r requirements.txt`
+    - The latest version is installed and set to the default.
+
+## Repository Setup
+
+```bash
+git clone https://github.com/austin-bowen/rizzmo.git
+cd rizzmo
+python -m venv --symlinks venv
+. venv/bin/activate
+pip install -r requirements.txt
+```
