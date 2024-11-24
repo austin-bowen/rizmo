@@ -6,7 +6,6 @@ from threading import Thread
 
 import numpy as np
 import sounddevice as sd
-
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
@@ -229,11 +228,16 @@ async def main(
         wav_data = wav_data.astype(np.int16)
         wav_file.writeframes(wav_data.tobytes())
 
+    device = next(
+        i for i, d in enumerate(sd.query_devices())
+        if d['name'].startswith('USB CAMERA: Audio')
+    )
+
     mic = Microphone(
         mic_callback,
         sample_rate,
         block_size=block_size,
-        device=None,
+        device=device,
         channels=channels,
     )
     mic.start()
