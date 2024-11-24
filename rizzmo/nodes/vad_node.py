@@ -8,12 +8,13 @@ import wave
 from functools import wraps
 
 import numpy as np
-from funasr import AutoModel
-
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 from easymesh.node.node import MeshNode
 from easymesh.types import Data, Topic
+from funasr import AutoModel
+
+from rizzmo.config import config
 
 
 def depends_on_listener(node: MeshNode, downstream_topic: Topic):
@@ -34,13 +35,17 @@ def depends_on_listener(node: MeshNode, downstream_topic: Topic):
 
 
 async def main():
-    node = await build_mesh_node(name='vad')
+    node = await build_mesh_node(
+        name='vad',
+        coordinator_host=config.coordinator_host,
+    )
+
     voice_detected_topic = node.get_topic_sender('voice_detected')
 
     vad_model = AutoModel(
         model='fsmn-vad',
         device='cuda',
-    )#, model_revision="v2.0.4")
+    )
 
     wav_file = wave.open('/home/austin/Downloads/recording.vad.wav', 'wb')
     wav_file.setnchannels(1)

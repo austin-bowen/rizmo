@@ -1,9 +1,10 @@
 import asyncio
 
 import numpy as np
-
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
+
+from rizzmo.config import config
 
 block_symbols = '▁▂▃▄▅▆▇█'
 
@@ -19,7 +20,11 @@ async def handle_audio(topic, data) -> None:
 
 
 async def main():
-    node = await build_mesh_node(name='audio_viz')
+    node = await build_mesh_node(
+        name='audio_viz',
+        coordinator_host=config.coordinator_host,
+    )
+
     await node.listen('audio', handle_audio)
     await forever()
 

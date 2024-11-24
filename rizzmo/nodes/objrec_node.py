@@ -6,10 +6,11 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image as PILImage
-from transformers import YolosForObjectDetection, YolosImageProcessor
-
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
+from transformers import YolosForObjectDetection, YolosImageProcessor
+
+from rizzmo.config import config
 from .image_codec import JpegImageCodec
 from .messages import Box, Detection
 
@@ -145,7 +146,11 @@ class Scaler:
 
 
 async def main():
-    node = await build_mesh_node(name='objrec')  # , coordinator_host='austin-laptop.local')
+    node = await build_mesh_node(
+        name='objrec',
+        coordinator_host=config.coordinator_host,
+    )
+
     obj_det_topic = node.get_topic_sender('objects_detected')
 
     obj_detector = HuggingFaceDetector.from_pretrained(

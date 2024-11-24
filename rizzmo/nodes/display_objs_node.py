@@ -7,12 +7,16 @@ import numpy as np
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 from rizzmo.nodes.image_codec import JpegImageCodec
+from rizzmo.config import config
 
 Image = np.ndarray
 
 
 async def main():
-    node = await build_mesh_node(name='display_objs')  # , coordinator_host='potato.local')
+    node = await build_mesh_node(
+        name='display_objs',
+        coordinator_host=config.coordinator_host,
+    )
 
     latest_timestamp = 0.
     t_last = time.time()

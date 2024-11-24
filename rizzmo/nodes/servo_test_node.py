@@ -1,6 +1,8 @@
 import asyncio
 
 from easymesh import build_mesh_node
+
+from rizzmo.config import config
 from .servo_node import ServoCommand
 
 
@@ -33,7 +35,10 @@ def get_servo_command() -> ServoCommand:
 
 
 async def main() -> None:
-    node = await build_mesh_node(name='servo')
+    node = await build_mesh_node(
+        name='servo',
+        coordinator_host=config.coordinator_host,
+    )
 
     while True:
         servo_command = await asyncio.to_thread(get_servo_command)
