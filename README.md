@@ -29,5 +29,6 @@ git clone https://github.com/austin-bowen/rizzmo.git
 cd rizzmo
 python -m venv --symlinks venv
 . venv/bin/activate
+pip install -U pip
 pip install -r requirements.txt
 ```

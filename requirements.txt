@@ -1,0 +1,2 @@
+git+https://github.com/austin-bowen/easymesh.git
+git+https://github.com/austin-bowen/pololu-maestro.git
