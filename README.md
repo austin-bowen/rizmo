@@ -18,9 +18,13 @@ TODO
 2. Setup SSH:
    1. Copy `~/.ssh/id_rsa.pub` of dev machine to `~/.ssh/authorized_keys` on Jetson Nano.
    2. Set permissions: `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`
-3. Clone this repo: `git clone https://github.com/austin-bowen/rizzmo.git`
-4. Install and setup `pyenv` ([instructions](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation)).
+3. Install and setup `pyenv` ([instructions](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation)).
    - To update: `pyenv update`
-5. Install Python 3.12: `pyenv install 3.12`
-   - The latest version is installed.
-6. Set Python 3.12 as default for `rizzmo` repo: `cd rizzmo && pyenv local 3.12`
+4. Install Python 3.12: `pyenv install 3.12 && pyenv global 3.12`
+   - The latest version is installed and set to the default.
+5. Setup `rizzmo` repo:
+   1. Clone this repo: `git clone https://github.com/austin-bowen/rizzmo.git`
+   2. Setup virtual env: `cd rizzmo && python -m venv --symlinks venv`
+   3. Activate venv and install requirements:
+      - `. venv/bin/activate`
+      - `pip install -r requirements.txt`
