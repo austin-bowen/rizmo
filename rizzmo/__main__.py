@@ -11,7 +11,7 @@ host_nodes = {
         'website_node',
     ),
     'potato': (
-        'objrec_node',
+        ('objrec_node', 2),
         'vad_node',
     ),
     'austin-laptop': (
@@ -32,7 +32,13 @@ def main():
             sleep(1)
 
         for node in nodes_to_start:
-            p.start_python_module(f'rizzmo.nodes.{node}')
+            if isinstance(node, str):
+                count = 1
+            else:
+                node, count = node
+
+            for _ in range(count):
+                p.start_python_module(f'rizzmo.nodes.{node}')
 
         try:
             p.wait()
