@@ -8,6 +8,7 @@ host_nodes = {
     'rizzmo': (
         'camera_node',
         'mic_node',
+        'obj_tracker',
         'website_node',
     ),
     'potato': (
@@ -15,8 +16,8 @@ host_nodes = {
         'vad_node',
     ),
     'austin-laptop': (
-        'display_objs_node',
         'audio_viz_node',
+        'display_objs_node',
     )
 }
 
