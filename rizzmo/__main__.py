@@ -24,6 +24,7 @@ host_nodes = {
 def main():
     host = socket.gethostname()
     nodes_to_start = host_nodes[host]
+    print(f'Starting nodes: {nodes_to_start}')
 
     with ProcessManager() as p:
         if IS_RIZZMO:
