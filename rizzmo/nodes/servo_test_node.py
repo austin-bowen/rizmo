@@ -3,18 +3,18 @@ import asyncio
 from easymesh import build_mesh_node
 
 from rizzmo.config import config
-from .servo_node import ServoCommand
+from .maestro_ctl import SetServoPosition
 
 
-def get_servo_command() -> ServoCommand:
+def get_servo_command() -> SetServoPosition:
     commands = input('<channel> <target_deg>[,] | off: ')
     if not commands:
-        return ServoCommand()
+        return SetServoPosition()
 
     if commands == 'off':
-        return ServoCommand('off', 'off', 'off')
+        return SetServoPosition('off', 'off', 'off')
 
-    servo_command = ServoCommand()
+    servo_command = SetServoPosition()
 
     for command in commands.split(','):
         channel, target_deg = command.strip().lower().split()
