@@ -1,2 +1,13 @@
 git+https://github.com/austin-bowen/easymesh.git
 git+https://github.com/austin-bowen/pololu-maestro.git
+
+Flask
+funasr
+opencv-python
+numpy
+pillow
+sounddevice
+torch
+torchvision
+torchaudio
+transformers

@@ -1,0 +1,28 @@
+import asyncio
+
+import numpy as np
+
+from easymesh import build_mesh_node
+from easymesh.asyncio import forever
+
+block_symbols = '▁▂▃▄▅▆▇█'
+
+
+async def handle_audio(topic, data) -> None:
+    indata, timestamp, sample_rate = data
+
+    power = np.abs(indata).max()
+    power = min(power, 1. - 1e-3)
+    power = int(power * len(block_symbols))
+    power = block_symbols[power]
+    print(power, end='', flush=True)
+
+
+async def main():
+    node = await build_mesh_node(name='audio_viz')
+    await node.listen('audio', handle_audio)
+    await forever()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
