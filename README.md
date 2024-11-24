@@ -32,6 +32,9 @@ python -m venv --symlinks venv
 pip install -U pip
 pip install -r requirements.txt
 
+# For sounddevice lib
+sudo apt install libportaudio2
+
 # For serial communication
 sudo usermod -aG dialout $USER
 ```
