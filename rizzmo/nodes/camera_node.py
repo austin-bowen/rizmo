@@ -1,12 +1,15 @@
+import argparse
 import asyncio
 import time
+from argparse import Namespace
 from typing import Any, Optional
 
 import cv2
 import numpy as np
-
 from easymesh import build_mesh_node
+from easymesh.argparse import add_coordinator_arg
 from easymesh.utils import require
+
 from rizzmo.nodes.image_codec import JpegImageCodec
 
 Image = np.ndarray
@@ -95,26 +98,70 @@ class CameraCaptureError(Exception):
 
 
 async def main():
+    args = parse_args()
+
     node = await build_mesh_node(
         name='camera',
-        # coordinator_host='potato.local',
+        coordinator_host=args.coordinator.host,
+        coordinator_port=args.coordinator.port,
         # load_balancer=RandomLoadBalancer(),
     )
 
-    await asyncio.gather(*(
-        _read_camera(node, camera_index) for camera_index in [
-        0,
-        # 4,
-    ]
-    ))
+    await _read_camera(
+        node,
+        args.camera_index,
+        args.camera_fps,
+        fps_limit=args.fps_limit,
+        show_raw_image=args.show_raw_image,
+        jpeg_quality=args.jpeg_quality,
+    )
+
+
+def parse_args() -> Namespace:
+    parser = argparse.ArgumentParser()
+
+    add_coordinator_arg(parser)
+
+    parser.add_argument(
+        '--camera-index', '-c',
+        type=int,
+    )
+
+    parser.add_argument(
+        '--camera-fps', '-f',
+        default=30.,
+        type=float,
+        help='Camera FPS',
+    )
+
+    parser.add_argument(
+        '--fps-limit', '-l',
+        type=float,
+        help='FPS limit',
+    )
+
+    parser.add_argument(
+        '--show-raw-image',
+        action='store_true',
+    )
+
+    parser.add_argument(
+        '--jpeg-quality',
+        default=80,
+        type=int,
+        help='JPEG quality. Range: 0-100',
+    )
+
+    return parser.parse_args()
 
 
 async def _read_camera(
         node,
         camera_index: int,
-        camera_fps: float = 30,
-        fps_limit: Optional[float] = 10,
+        camera_fps: float,
+        fps_limit: Optional[float] = None,
         show_raw_image: bool = False,
+        jpeg_quality: int = 80,
 ):
     new_image_topic = node.get_topic_sender('new_image')
     await new_image_topic.wait_for_listener()
@@ -133,7 +180,7 @@ async def _read_camera(
     )
     camera = camera_builder()
 
-    codec = JpegImageCodec(quality=80)
+    codec = JpegImageCodec(quality=jpeg_quality)
 
     while True:
         t0 = time.monotonic()
