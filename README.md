@@ -31,4 +31,7 @@ python -m venv --symlinks venv
 . venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
+
+# For serial communication
+sudo usermod -aG dialout $USER
 ```
