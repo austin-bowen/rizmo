@@ -7,6 +7,7 @@ from rizzmo.procman import ProcessManager
 host_nodes = {
     'rizzmo': (
         'camera_node',
+        'maestro_ctl',
         'mic_node',
         'obj_tracker',
         'website_node',
