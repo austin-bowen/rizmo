@@ -57,18 +57,18 @@ async def main():
         y_error = (2 * object_y / image_height) - 1
 
         object_size = (box.width * box.height) / (image_width * image_height)
+        z_error = 2 * object_size - 1
 
-        print(f'(x, y)_error: {x_error:.2f}, {y_error:.2f}')
-        print(f'size: {object_size:.2f}')
+        print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
-        eps = 0.05
-        if abs(x_error) <= eps and abs(y_error) <= eps:
+        if max((x_error ** 2 + y_error ** 2) ** 0.5, abs(z_error)) <= 0.05:
             return
 
         x_error = min(max(-1., 2 * x_error), 1.)
 
         maestro_cmd = ChangeServoPosition(
             pan_deg=-3 * x_error,
+            tilt0_deg=-1 * z_error,
             tilt1_deg=-2 * y_error,
         )
 

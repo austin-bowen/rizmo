@@ -52,7 +52,7 @@ async def main() -> None:
             if command.pan_deg is not None:
                 maestro[0] = min(max(0, maestro[0] + command.pan_us), 4090)
             if command.tilt0_deg is not None:
-                maestro[1] = min(max(0, maestro[1] + command.tilt0_us), 4090)
+                maestro[1] = min(max(1500 - 250, maestro[1] + command.tilt0_us), 1750)
             if command.tilt1_deg is not None:
                 maestro[2] = min(max(0, maestro[2] + command.tilt1_us), 4090)
 
