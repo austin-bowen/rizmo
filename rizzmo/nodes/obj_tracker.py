@@ -46,11 +46,13 @@ async def main():
         x_error = (2 * object_x / image_width) - 1
         print(f'x_error: {x_error}')
 
-        if abs(x_error) <= 0.1:
+        if abs(x_error) <= 0.05:
             return
 
+        x_error = min(max(-1., 2 * x_error), 1.)
+        delta = 3.
         maestro_cmd = ChangeServoPosition(
-            pan_deg=-1 if x_error > 0 else 1,
+            pan_deg=-delta * x_error,
         )
 
         await maestro_cmd_topic.send(maestro_cmd)
