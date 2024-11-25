@@ -6,6 +6,7 @@ from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
 from rizzmo.config import config
+from rizzmo.nodes.maestro_ctl import ChangeServoPosition
 from rizzmo.nodes.messages import Detection
 
 
@@ -30,9 +31,9 @@ async def main():
         coordinator_host=config.coordinator_host,
     )
 
-    todo_topic = node.get_topic_sender('TODO')
+    maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
 
-    # @todo_topic.depends_on_listener()
+    @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data):
         timestamp, camera_index, image_bytes, objects = data
         image_width, image_height = 1280 / 2, 720 / 2
@@ -46,7 +47,14 @@ async def main():
         x_error = (2 * object_x / image_width) - 1
         print(f'x_error: {x_error}')
 
-        await todo_topic.send(...)
+        if abs(x_error) <= 0.1:
+            return
+
+        maestro_cmd = ChangeServoPosition(
+            pan_deg=-1 if x_error > 0 else 1,
+        )
+
+        await maestro_cmd_topic.send(maestro_cmd)
 
     await node.listen('objects_detected', handle_objects_detected)
 
