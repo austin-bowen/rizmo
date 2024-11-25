@@ -44,7 +44,14 @@ async def main():
 
         object_x = tracked_object.box.x + tracked_object.box.width / 2
         x_error = (2 * object_x / image_width) - 1
-        print(f'x_error: {x_error}')
+
+        if tracked_object.label == 'person':
+            object_y = tracked_object.box.y# - .2 * tracked_object.box.height
+        else:
+            object_y = tracked_object.box.y# + tracked_object.box.height / 2
+        y_error = object_y
+
+        print(f'(x, y)_error: {x_error:.2f}, {y_error:.2f}')
 
         if abs(x_error) <= 0.05:
             return
