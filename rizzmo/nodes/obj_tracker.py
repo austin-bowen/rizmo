@@ -38,21 +38,28 @@ async def main():
         image_width, image_height = 1280 / 2, 720 / 2
 
         tracked_object = get_tracked_object(objects)
+
+        print()
         print(f'tracking: {tracked_object}')
         if tracked_object is None:
             return
 
-        object_x = tracked_object.box.x + tracked_object.box.width / 2
+        box = tracked_object.box
+
+        object_x = box.x + box.width / 2
         x_error = (2 * object_x / image_width) - 1
 
-        object_y = image_height - tracked_object.box.y
+        object_y = image_height - box.y
         if tracked_object.label == 'person':
-            object_y -= .3 * tracked_object.box.height
+            object_y -= .3 * box.height
         else:
-            object_y -= .5 * tracked_object.box.height
+            object_y -= .5 * box.height
         y_error = (2 * object_y / image_height) - 1
 
+        object_size = (box.width * box.height) / (image_width * image_height)
+
         print(f'(x, y)_error: {x_error:.2f}, {y_error:.2f}')
+        print(f'size: {object_size:.2f}')
 
         eps = 0.05
         if abs(x_error) <= eps and abs(y_error) <= eps:

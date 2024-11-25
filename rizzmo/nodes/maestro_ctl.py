@@ -26,9 +26,8 @@ async def main() -> None:
         maestro.set_limits(0, 400, 2600)
         maestro.set_limits(1, 512, 2488)
         maestro.set_limits(2, 512, 2208)
-        maestro.set_speed(0, 40)
-        maestro.set_speed(2, 40)
         for c in range(3):
+            maestro.set_speed(c, 40)
             maestro[c] = 1500
 
         async def handle_maestro_cmd(topic, command: Union[SetServoPosition, ChangeServoPosition]) -> None:
@@ -55,7 +54,7 @@ async def main() -> None:
             if command.tilt0_deg is not None:
                 maestro[1] = min(max(0, maestro[1] + command.tilt0_us), 4090)
             if command.tilt1_deg is not None:
-                maestro[2] += command.tilt1_us
+                maestro[2] = min(max(0, maestro[2] + command.tilt1_us), 4090)
 
         await node.listen('maestro_cmd', handle_maestro_cmd)
         await forever()
