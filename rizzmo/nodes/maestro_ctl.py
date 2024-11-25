@@ -27,6 +27,7 @@ async def main() -> None:
         maestro.set_limits(1, 512, 2488)
         maestro.set_limits(2, 512, 2208)
         maestro.set_speed(0, 40)
+        maestro.set_speed(2, 40)
         for c in range(3):
             maestro[c] = 1500
 
@@ -52,7 +53,7 @@ async def main() -> None:
             if command.pan_deg is not None:
                 maestro[0] = min(max(0, maestro[0] + command.pan_us), 4090)
             if command.tilt0_deg is not None:
-                maestro[1] += command.tilt0_us
+                maestro[1] = min(max(0, maestro[1] + command.tilt0_us), 4090)
             if command.tilt1_deg is not None:
                 maestro[2] += command.tilt1_us
 

@@ -45,21 +45,24 @@ async def main():
         object_x = tracked_object.box.x + tracked_object.box.width / 2
         x_error = (2 * object_x / image_width) - 1
 
+        object_y = image_height - tracked_object.box.y
         if tracked_object.label == 'person':
-            object_y = tracked_object.box.y# - .2 * tracked_object.box.height
+            object_y -= .3 * tracked_object.box.height
         else:
-            object_y = tracked_object.box.y# + tracked_object.box.height / 2
-        y_error = object_y
+            object_y -= .5 * tracked_object.box.height
+        y_error = (2 * object_y / image_height) - 1
 
         print(f'(x, y)_error: {x_error:.2f}, {y_error:.2f}')
 
-        if abs(x_error) <= 0.05:
+        eps = 0.05
+        if abs(x_error) <= eps and abs(y_error) <= eps:
             return
 
         x_error = min(max(-1., 2 * x_error), 1.)
-        delta = 3.
+
         maestro_cmd = ChangeServoPosition(
-            pan_deg=-delta * x_error,
+            pan_deg=-3 * x_error,
+            tilt1_deg=-2 * y_error,
         )
 
         await maestro_cmd_topic.send(maestro_cmd)
