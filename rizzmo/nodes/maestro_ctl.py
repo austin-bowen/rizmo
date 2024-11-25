@@ -26,6 +26,8 @@ async def main() -> None:
         maestro.set_limits(0, 400, 2600)
         maestro.set_limits(1, 512, 2488)
         maestro.set_limits(2, 512, 2208)
+        for c in range(3):
+            maestro[c] = 1500
 
         async def handle_maestro_cmd(topic, command: Union[SetServoPosition, ChangeServoPosition]) -> None:
             print('[Maestro] Received command:', command)
