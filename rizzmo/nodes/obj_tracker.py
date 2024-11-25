@@ -6,8 +6,7 @@ from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
 from rizzmo.config import config
-from rizzmo.nodes.maestro_ctl import ChangeServoPosition
-from rizzmo.nodes.messages import Detection
+from rizzmo.nodes.messages import ChangeServoPosition, Detection
 
 
 def area(detection: Detection) -> float:
