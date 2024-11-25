@@ -38,3 +38,14 @@ sudo apt install libportaudio2
 # For serial communication
 sudo usermod -aG dialout $USER
 ```
+
+Setup git:
+
+```bash
+git config --global user.name "<name>"
+git config --global user.email "<email>"
+git config credential.helper store
+
+# When trying to push, enter username, and paste personal access token
+# generated from here: https://github.com/settings/tokens
+```
