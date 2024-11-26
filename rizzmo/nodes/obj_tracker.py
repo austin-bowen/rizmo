@@ -1,4 +1,5 @@
 import asyncio
+import time
 from collections.abc import Iterable
 from typing import Optional
 
@@ -51,6 +52,7 @@ async def main():
         tracked_object = get_tracked_object(objects)
 
         print()
+        print(f'latency: {timestamp - time.time()}')
         print(f'tracking: {tracked_object}')
         if tracked_object is None:
             return
