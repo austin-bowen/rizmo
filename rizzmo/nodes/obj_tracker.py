@@ -1,4 +1,5 @@
 import asyncio
+import heapq
 from collections.abc import Iterable
 from typing import Optional
 
@@ -20,8 +21,21 @@ def get_tracked_object(
                 'person',
         ),
 ) -> Optional[Detection]:
-    objects = filter(lambda obj: obj.label in labels, objects)
-    return max(objects, default=None, key=area)
+    labels_set = set(labels)
+    objects = filter(lambda obj: obj.label in labels_set, objects)
+
+    label_priorities = {l: len(labels) - i for i, l in enumerate(labels)}
+
+    objects = heapq.nlargest(
+        1,
+        objects,
+        key=lambda o: (
+            label_priorities.get(o.label, 0),
+            area(o),
+        ),
+    )
+
+    return objects[0] if objects else None
 
 
 async def main():
@@ -57,18 +71,18 @@ async def main():
         y_error = (2 * object_y / image_height) - 1
 
         object_size = (box.width * box.height) / (image_width * image_height)
-        z_error = 2 * object_size - 1
+        z_error = min(max(-1., 3 * object_size - 1), 1.)
 
         print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
-        if max((x_error ** 2 + y_error ** 2) ** 0.5, abs(z_error)) <= 0.05:
-            return
+        if (x_error ** 2 + y_error ** 2) ** 0.5 <= 0.1:
+            x_error = y_error = 0
 
-        x_error = min(max(-1., 2 * x_error), 1.)
+        x_error = min(max(-1., 1.5 * x_error), 1.)
 
         maestro_cmd = ChangeServoPosition(
             pan_deg=-3 * x_error,
-            tilt0_deg=-1 * z_error,
+            tilt0_deg=1 * z_error,
             tilt1_deg=-2 * y_error,
         )
 
