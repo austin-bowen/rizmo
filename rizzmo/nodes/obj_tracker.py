@@ -30,7 +30,7 @@ def get_tracked_object(
         1,
         objects,
         key=lambda o: (
-            label_priorities.get(o.label, 0),
+            label_priorities[o.label],
             area(o),
         ),
     )
