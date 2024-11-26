@@ -1,5 +1,4 @@
 import asyncio
-import heapq
 from collections.abc import Iterable
 from typing import Optional
 
@@ -26,16 +25,14 @@ def get_tracked_object(
 
     label_priorities = {l: len(labels) - i for i, l in enumerate(labels)}
 
-    objects = heapq.nlargest(
-        1,
+    return max(
         objects,
         key=lambda o: (
             label_priorities[o.label],
             area(o),
         ),
+        default=None,
     )
-
-    return objects[0] if objects else None
 
 
 async def main():
