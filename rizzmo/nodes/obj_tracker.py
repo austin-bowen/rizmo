@@ -7,7 +7,7 @@ from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
 from rizzmo.config import config
-from rizzmo.nodes.messages import ChangeServoPosition, Detection
+from rizzmo.nodes.messages import ChangeServoPosition, Detection, Detections
 
 
 def area(detection: Detection) -> float:
@@ -45,14 +45,13 @@ async def main():
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
 
     @maestro_cmd_topic.depends_on_listener()
-    async def handle_objects_detected(topic, data):
-        timestamp, camera_index, image_bytes, objects = data
+    async def handle_objects_detected(topic, data: Detections):
         image_width, image_height = 1280 / 2, 720 / 2
 
-        tracked_object = get_tracked_object(objects)
+        tracked_object = get_tracked_object(data.objects)
 
         print()
-        print(f'latency: {timestamp - time.time()}')
+        print(f'latency: {data.timestamp - time.time()}')
         print(f'tracking: {tracked_object}')
         if tracked_object is None:
             return

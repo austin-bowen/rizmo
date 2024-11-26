@@ -12,7 +12,7 @@ from transformers import YolosForObjectDetection, YolosImageProcessor
 
 from rizzmo.config import config
 from .image_codec import JpegImageCodec
-from .messages import Box, Detection
+from .messages import Box, Detection, Detections
 
 Image = np.ndarray
 
@@ -177,7 +177,7 @@ async def main():
 
         objects = await asyncio.to_thread(get_objects, image_bytes)
 
-        await obj_det_topic.send((timestamp, camera_index, image_bytes, objects))
+        await obj_det_topic.send(Detections(timestamp, objects))
 
     await node.listen('new_image', handle_image)
 

@@ -17,6 +17,12 @@ class Detection:
     box: Box
 
 
+@dataclass(slots=True)
+class Detections:
+    timestamp: float
+    objects: list[Detection]
+
+
 ServoPositionDeg = Union[float, Literal['off'], None]
 
 US_PER_DEG = (
