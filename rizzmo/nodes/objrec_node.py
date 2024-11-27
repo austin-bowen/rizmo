@@ -73,7 +73,7 @@ class HuggingFaceDetector(ObjectDetector):
             model_name: str,
             model_cls,
             image_processor_cls,
-            threshold: float = 0.9,
+            threshold: float = 0.8,
             allow_labels: set[str] = None,
             device: Union[str, torch.device] = None,
     ) -> 'HuggingFaceDetector':
