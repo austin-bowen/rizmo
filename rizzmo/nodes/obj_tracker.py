@@ -48,6 +48,8 @@ async def main():
     high_fps, low_fps = 30, 5
     low_fps_future = None
 
+    last_target = None
+
     async def set_fps(fps: float) -> None:
         await node.send('set_fps_limit', fps)
 
@@ -60,29 +62,33 @@ async def main():
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
-        nonlocal low_fps_future
+        nonlocal low_fps_future, last_target
 
         latency = time.time() - data.timestamp
         image_width, image_height = 1280 / 2, 720 / 2
 
-        tracked_object = get_tracked_object(data.objects)
+        target = get_tracked_object(data.objects)
 
         print()
         print(f'latency: {latency}')
-        print(f'tracking: {tracked_object}')
-        if tracked_object is None:
+        print(f'tracking: {target}')
+        if target is None:
             if low_fps_future is None:
                 low_fps_future = asyncio.create_task(go_low_fps())
 
             return
 
-        box = tracked_object.box
+        if last_target is None or last_target.label != target.label:
+            await node.send('say', f'Tracking a {target.label}')
+        last_target = target
+
+        box = target.box
 
         object_x = box.x + box.width / 2
         x_error = (2 * object_x / image_width) - 1
 
         object_y = image_height - box.y
-        if tracked_object.label == 'person':
+        if target.label == 'person':
             object_y -= .3 * box.height
         else:
             object_y -= .5 * box.height
