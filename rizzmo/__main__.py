@@ -10,6 +10,7 @@ host_nodes = {
         'maestro_ctl',
         'mic_node',
         'obj_tracker',
+        'speech_node',
         'website_node',
     ),
     'potato': (
