@@ -60,6 +60,8 @@ async def main():
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
+        nonlocal low_fps_future
+
         latency = time.time() - data.timestamp
         image_width, image_height = 1280 / 2, 720 / 2
 
@@ -69,6 +71,9 @@ async def main():
         print(f'latency: {latency}')
         print(f'tracking: {tracked_object}')
         if tracked_object is None:
+            if low_fps_future is None:
+                low_fps_future = asyncio.create_task(go_low_fps())
+
             return
 
         box = tracked_object.box
@@ -91,11 +96,9 @@ async def main():
         if (x_error ** 2 + y_error ** 2) ** 0.5 <= 0.1:
             x_error = y_error = 0
 
-            nonlocal low_fps_future
             if low_fps_future is None:
                 low_fps_future = asyncio.create_task(go_low_fps())
         else:
-            nonlocal low_fps_future
             if low_fps_future is not None:
                 low_fps_future.cancel()
                 low_fps_future = None
