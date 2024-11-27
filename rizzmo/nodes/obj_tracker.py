@@ -44,6 +44,9 @@ async def main():
 
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
 
+    high_fps, low_fps = 30, 5
+    current_fps = high_fps
+
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
         latency = time.time() - data.timestamp
@@ -74,8 +77,16 @@ async def main():
 
         print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
+        nonlocal current_fps
         if (x_error ** 2 + y_error ** 2) ** 0.5 <= 0.1:
             x_error = y_error = 0
+            new_fps = low_fps
+        else:
+            new_fps = high_fps
+
+        if new_fps != current_fps:
+            current_fps = new_fps
+            await node.send('set_fps_limit', current_fps)
 
         x_error = min(max(-1., 1.5 * x_error), 1.)
 

@@ -190,6 +190,7 @@ async def _read_camera(
             self.fps_limit = fps_limit
 
         async def handle_set_fps_limit(self, topic, value: float):
+            print(f'New FPS limit: {value}')
             self.fps_limit = value
 
     cache = Cache()
