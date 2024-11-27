@@ -18,6 +18,7 @@ def get_tracked_object(
         objects: Iterable[Detection],
         labels=(
                 'cat',
+                'dog',
                 'person',
         ),
 ) -> Optional[Detection]:
