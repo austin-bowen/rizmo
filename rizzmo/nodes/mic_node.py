@@ -170,7 +170,7 @@ class Gate:
 
 async def main(
         sample_rate: int = 16000,
-        block_size: int = 1024,
+        block_size: int = 4096,
         channels: int = 1,
 ):
     node = await build_mesh_node(name='mic_reader')
