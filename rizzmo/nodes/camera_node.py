@@ -185,6 +185,16 @@ async def _read_camera(
 
     codec = JpegImageCodec(quality=jpeg_quality)
 
+    class Cache:
+        def __init__(self):
+            self.fps_limit = fps_limit
+
+        async def handle_set_fps_limit(self, topic, value: float):
+            self.fps_limit = value
+
+    cache = Cache()
+    await node.listen('set_fps_limit', cache.handle_set_fps_limit)
+
     while True:
         t0 = time.monotonic()
 
@@ -211,8 +221,8 @@ async def _read_camera(
             await new_image_topic.wait_for_listener(.1)
             camera = camera_builder()
 
-        if fps_limit is not None:
-            wait_time = 1 / fps_limit - (time.monotonic() - t0)
+        if cache.fps_limit is not None:
+            wait_time = 1 / cache.fps_limit - (time.monotonic() - t0)
             if wait_time > 0:
                 await asyncio.sleep(wait_time)
 
