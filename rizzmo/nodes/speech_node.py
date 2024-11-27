@@ -2,7 +2,7 @@ import asyncio
 
 import easymesh
 from easymesh.asyncio import forever
-from voicebox import ParallelVoicebox, Voicebox
+from voicebox import ParallelVoicebox, Voicebox, reliable_tts
 from voicebox.effects import Flanger, Glitch, Normalize
 from voicebox.tts import ESpeakNG
 
@@ -21,7 +21,7 @@ async def main():
 
 def build_voicebox() -> Voicebox:
     return ParallelVoicebox(
-        tts=ESpeakNG(),
+        tts=reliable_tts(ttss=[ESpeakNG()]),
         effects=[
             Flanger(),
             Glitch(),
