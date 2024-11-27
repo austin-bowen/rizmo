@@ -12,6 +12,7 @@ async def main():
 
     with build_voicebox() as voicebox:
         async def handle_say(topic, message: str) -> None:
+            print(repr(message))
             voicebox.say(message)
 
         await node.listen('say', handle_say)
