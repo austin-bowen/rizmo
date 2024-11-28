@@ -22,7 +22,8 @@ async def handle_audio(topic, data) -> None:
 async def main():
     node = await build_mesh_node(
         name='audio_viz',
-        coordinator_host=config.coordinator_host,
+        coordinator_host=config.coordinator.host,
+        coordinator_port=config.coordinator.port,
     )
 
     await node.listen('audio', handle_audio)

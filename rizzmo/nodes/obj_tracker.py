@@ -40,7 +40,8 @@ def get_tracked_object(
 async def main():
     node = await build_mesh_node(
         name='obj-tracker',
-        coordinator_host=config.coordinator_host,
+        coordinator_host=config.coordinator.host,
+        coordinator_port=config.coordinator.port,
     )
 
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')

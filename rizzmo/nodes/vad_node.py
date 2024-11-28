@@ -35,7 +35,8 @@ def depends_on_listener(node: MeshNode, downstream_topic: Topic):
 async def main():
     node = await build_mesh_node(
         name='vad',
-        coordinator_host=config.coordinator_host,
+        coordinator_host=config.coordinator.host,
+        coordinator_port=config.coordinator.port,
     )
 
     voice_detected_topic = node.get_topic_sender('voice_detected')

@@ -148,7 +148,8 @@ class Scaler:
 async def main():
     node = await build_mesh_node(
         name='objrec',
-        coordinator_host=config.coordinator_host,
+        coordinator_host=config.coordinator.host,
+        coordinator_port=config.coordinator.port,
     )
 
     obj_det_topic = node.get_topic_sender('objects_detected')
