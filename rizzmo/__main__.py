@@ -18,8 +18,7 @@ host_nodes = {
         'vad_node',
     ),
     'austin-laptop': (
-        'audio_viz_node',
-        'display_objs_node',
+        'monitor',
     )
 }
 

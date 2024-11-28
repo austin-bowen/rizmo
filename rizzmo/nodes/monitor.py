@@ -1,11 +1,16 @@
+import argparse
 import asyncio
 import time
+from argparse import Namespace
 from dataclasses import dataclass
+from typing import Any
 
 import cv2
 import numpy as np
-from easymesh import build_mesh_node
+from easymesh import build_mesh_node_from_args
+from easymesh.argparse import add_coordinator_arg, get_node_arg_parser
 from easymesh.asyncio import forever
+from easymesh.types import Endpoint
 
 from rizzmo.config import config
 from rizzmo.nodes.image_codec import JpegImageCodec
@@ -13,17 +18,17 @@ from rizzmo.nodes.messages import Detections
 
 Image = np.ndarray
 
+BLOCK_SYMBOLS = '▁▂▃▄▅▆▇█'
+TOPIC_OPTIONS = {'new_image', 'objects_detected', 'audio'}
+
 
 @dataclass
 class Cache:
     image: Image = None
 
 
-async def main():
-    node = await build_mesh_node(
-        name='display_objs',
-        coordinator_host=config.coordinator_host,
-    )
+async def main(args: Namespace):
+    node = await build_mesh_node_from_args(args=args)
 
     cache = Cache()
 
@@ -89,11 +94,46 @@ async def main():
 
         show_image()
 
-    await node.listen('new_image', handle_new_image)
-    await node.listen('objects_detected', handle_obj_detected)
+    async def handle_audio(topic, data) -> None:
+        audio, timestamp = data
+
+        power = np.abs(audio.data).max()
+        power = min(power, 1. - 1e-3)
+        power = int(power * len(BLOCK_SYMBOLS))
+        power = BLOCK_SYMBOLS[power]
+        print(power, end='', flush=True)
+
+    topics_and_handlers = {
+        'new_image': handle_new_image,
+        'objects_detected': handle_obj_detected,
+        'audio': handle_audio,
+    }
+    assert set(topics_and_handlers.keys()) == TOPIC_OPTIONS
+
+    ignore_topics = args.ignore_topics or set()
+
+    for topic, handler in topics_and_handlers.items():
+        if topic not in ignore_topics:
+            await node.listen(topic, handler)
 
     await forever()
 
 
+def get_args() -> Namespace:
+    parser = get_node_arg_parser(
+        default_node_name='monitor',
+        default_coordinator=config.coordinator,
+    )
+
+    parser.add_argument(
+        '--ignore-topics', '-i',
+        nargs='+',
+        choices=TOPIC_OPTIONS,
+        help='The topics to ignore. Default: None',
+    )
+
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(get_args()))
