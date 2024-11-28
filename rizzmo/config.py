@@ -9,7 +9,7 @@ IS_RIZZMO = socket.gethostname() == 'rizzmo'
 
 @dataclass
 class Config:
-    coordinator: Endpoint = field(default=Endpoint(
+    coordinator: Endpoint = field(default_factory=lambda: Endpoint(
         host='rizzmo.local',
         port=DEFAULT_COORDINATOR_PORT,
     ))
