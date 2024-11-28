@@ -1,15 +1,21 @@
+import argparse
 import asyncio
-import wave
 from abc import abstractmethod
 from collections.abc import Callable
 from threading import Thread
+from typing import Any, Optional
 
 import numpy as np
 import sounddevice as sd
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
-block_symbols = '▁▂▃▄▅▆▇█'
+WEBCAM_MIC = 'USB CAMERA: Audio'
+CONFERENCE_MIC = 'eMeet M0: USB Audio'
+DEFAULT_MIC = CONFERENCE_MIC
+
+DEFAULT_SAMPLE_RATE = 16000
+DEFAULT_BLOCK_SIZE = 4096
 
 
 class GainControl:
@@ -169,8 +175,9 @@ class Gate:
 
 
 async def main(
-        sample_rate: int = 16000,
-        block_size: int = 4096,
+        device: str = DEFAULT_MIC,
+        sample_rate: int = DEFAULT_SAMPLE_RATE,
+        block_size: int = DEFAULT_BLOCK_SIZE,
         channels: int = 1,
 ):
     node = await build_mesh_node(name='mic_reader')
@@ -195,21 +202,6 @@ async def main(
         signal_transform=signal_transform,
     )
 
-    if write_to_wav := 0:
-        wav_file = wave.open('/home/austin/Downloads/recording.wav', 'wb')
-        wav_file.setnchannels(channels)
-        wav_file.setsampwidth(2)
-        wav_file.setframerate(sample_rate)
-    else:
-        class DummyWavFile:
-            def writeframes(self, data):
-                pass
-
-            def close(self):
-                pass
-
-        wav_file = DummyWavFile()
-
     def mic_callback(indata: np.ndarray, frames: int, timestamp, status):
         indata = gate(indata, sample_rate)
 
@@ -224,13 +216,9 @@ async def main(
             loop,
         ).result()
 
-        wav_data = indata * 32767
-        wav_data = wav_data.astype(np.int16)
-        wav_file.writeframes(wav_data.tobytes())
-
     device = next(
         i for i, d in enumerate(sd.query_devices())
-        if d['name'].startswith('USB CAMERA: Audio')
+        if d['name'].startswith(device)
     )
 
     mic = Microphone(
@@ -242,11 +230,39 @@ async def main(
     )
     mic.start()
 
-    try:
-        await forever()
-    finally:
-        wav_file.close()
+    await forever()
+
+
+def get_args() -> dict[str, Any]:
+    parser = argparse.ArgumentParser()
+
+    def device_arg(arg_: str) -> Optional[str]:
+        return None if arg_.lower() == 'none' else arg_
+
+    parser.add_argument(
+        '--device', '-d',
+        default=DEFAULT_MIC,
+        type=device_arg,
+        help='The name prefix of the microphone device. '
+             '"None" will use system mic. Default: "%(default)s"',
+    )
+
+    parser.add_argument(
+        '--sample-rate', '-s',
+        type=int,
+        default=DEFAULT_SAMPLE_RATE,
+        help='The sample rate of the microphone. Default: %(default)s',
+    )
+
+    parser.add_argument(
+        '--block-size', '-b',
+        type=int,
+        default=DEFAULT_BLOCK_SIZE,
+        help='The block size of the microphone samples. Default: %(default)s',
+    )
+
+    return vars(parser.parse_args())
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(**get_args()))
