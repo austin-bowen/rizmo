@@ -4,10 +4,8 @@ Setup:
 """
 
 import asyncio
-import wave
 from functools import wraps
 
-import numpy as np
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 from easymesh.node.node import MeshNode
@@ -47,10 +45,10 @@ async def main():
         device='cuda',
     )
 
-    wav_file = wave.open('/home/austin/Downloads/recording.vad.wav', 'wb')
-    wav_file.setnchannels(1)
-    wav_file.setsampwidth(2)
-    wav_file.setframerate(16000)
+    # wav_file = wave.open('/home/austin/Downloads/recording.vad.wav', 'wb')
+    # wav_file.setnchannels(1)
+    # wav_file.setsampwidth(2)
+    # wav_file.setframerate(16000)
 
     voice_detected = False
     model_cache = {}
@@ -77,10 +75,12 @@ async def main():
                 voice_detected = False
         print('Voice detected:', voice_detected)
 
-        if voice_detected:
-            wav_data = indata * 32767
-            wav_data = wav_data.astype(np.int16)
-            wav_file.writeframes(wav_data.tobytes())
+        await voice_detected_topic.send((audio, timestamp, voice_detected))
+
+        # if voice_detected:
+        #     wav_data = indata * 32767
+        #     wav_data = wav_data.astype(np.int16)
+        #     wav_file.writeframes(wav_data.tobytes())
 
     await node.listen('audio', handle_audio)
 
