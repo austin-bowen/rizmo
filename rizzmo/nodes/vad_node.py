@@ -57,10 +57,10 @@ async def main():
 
     # @depends_on_listener(node, voice_detected_topic.topic)
     async def handle_audio(topic, data):
-        indata, timestamp, sample_rate = data
-        block_size = indata.shape[0]
-        indata = indata.squeeze()
-        chunk_size_ms = int(round(1000 * block_size / sample_rate))
+        audio, timestamp = data
+        block_size = audio.data.shape[0]
+        indata = audio.data.squeeze()
+        chunk_size_ms = int(round(1000 * block_size / audio.sample_rate))
 
         res = vad_model.generate(
             input=indata,

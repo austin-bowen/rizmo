@@ -1,6 +1,14 @@
 from dataclasses import dataclass
 from typing import Literal, Union
 
+import numpy as np
+
+
+@dataclass(slots=True)
+class Audio:
+    data: np.ndarray
+    sample_rate: int
+
 
 @dataclass(slots=True)
 class Box:

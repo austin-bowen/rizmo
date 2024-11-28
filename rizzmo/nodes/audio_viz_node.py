@@ -10,9 +10,9 @@ block_symbols = '▁▂▃▄▅▆▇█'
 
 
 async def handle_audio(topic, data) -> None:
-    indata, timestamp, sample_rate = data
+    audio, timestamp = data
 
-    power = np.abs(indata).max()
+    power = np.abs(audio.data).max()
     power = min(power, 1. - 1e-3)
     power = int(power * len(block_symbols))
     power = block_symbols[power]

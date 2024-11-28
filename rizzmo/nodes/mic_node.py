@@ -10,6 +10,8 @@ import sounddevice as sd
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
+from rizzmo.nodes.messages import Audio
+
 WEBCAM_MIC = 'USB CAMERA: Audio'
 CONFERENCE_MIC = 'eMeet M0: USB Audio'
 DEFAULT_MIC = CONFERENCE_MIC
@@ -181,6 +183,8 @@ async def main(
         channels: int = 1,
 ):
     node = await build_mesh_node(name='mic_reader')
+    audio_topic = node.get_topic_sender('audio')
+
     loop = asyncio.get_event_loop()
 
     # gain_control=LimitPowerGainControl(target_power=1., keep_s=2.)
@@ -211,8 +215,10 @@ async def main(
         # power = block_symbols[power]
         # print(power, end='', flush=True)
 
+        audio = Audio(indata, sample_rate)
+
         asyncio.run_coroutine_threadsafe(
-            node.send('audio', (indata, timestamp.inputBufferAdcTime, sample_rate)),
+            audio_topic.send((audio, timestamp.inputBufferAdcTime)),
             loop,
         ).result()
 
