@@ -1,16 +1,14 @@
-import argparse
+import asyncio
 import asyncio
 import time
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Any
 
 import cv2
 import numpy as np
 from easymesh import build_mesh_node_from_args
-from easymesh.argparse import add_coordinator_arg, get_node_arg_parser
+from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
-from easymesh.types import Endpoint
 
 from rizzmo.config import config
 from rizzmo.nodes.image_codec import JpegImageCodec
