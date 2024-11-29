@@ -75,8 +75,13 @@ class AveragePowerGainControl(GainControl):
 
 
 class AveragePowerGainControl2(GainControl):
-    def __init__(self, target_power: float = 1.):
+    def __init__(
+            self,
+            target_power: float = 1.,
+            max_gain: float = 100.,
+    ):
         self.target_power = target_power
+        self.max_gain = max_gain
 
         self._dt = 0.
 
@@ -86,6 +91,7 @@ class AveragePowerGainControl2(GainControl):
 
         alpha = 2.
         gain = 2 ** (alpha * self._dt) - 1
+        gain = min(gain, self.max_gain)
 
         power = np.abs(indata).max()
 
