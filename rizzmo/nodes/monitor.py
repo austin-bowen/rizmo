@@ -122,7 +122,7 @@ async def main(args: Namespace, stdscr):
         show_image()
 
     async def handle_tracking(topic, target: Detection):
-        screen.addstr(4, f'Tracking: {target.label}')
+        screen.addstr(3, f'Tracking: {target.label}')
 
     power_history = deque(maxlen=10)
 
