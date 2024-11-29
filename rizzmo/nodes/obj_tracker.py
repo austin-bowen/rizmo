@@ -10,10 +10,6 @@ from rizzmo.config import config
 from rizzmo.nodes.messages import ChangeServoPosition, Detection, Detections
 
 
-def area(detection: Detection) -> float:
-    return detection.box.width * detection.box.height
-
-
 def get_tracked_object(
         objects: Iterable[Detection],
         labels=(
@@ -31,7 +27,7 @@ def get_tracked_object(
         objects,
         key=lambda o: (
             label_priorities[o.label],
-            area(o),
+            o.box.area,
         ),
         default=None,
     )
