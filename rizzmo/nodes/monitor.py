@@ -4,6 +4,7 @@ import time
 from argparse import Namespace
 from collections import deque
 from dataclasses import dataclass
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -121,8 +122,8 @@ async def main(args: Namespace, stdscr):
 
         show_image()
 
-    async def handle_tracking(topic, target: Detection):
-        screen.addstr(3, f'Tracking: {target.label}')
+    async def handle_tracking(topic, target: Optional[Detection]):
+        screen.addstr(3, f'Tracking: {target.label if target else None}')
 
     power_history = deque(maxlen=10)
 
