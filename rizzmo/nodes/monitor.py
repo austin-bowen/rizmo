@@ -1,6 +1,8 @@
 import asyncio
+import curses
 import time
 from argparse import Namespace
+from collections import deque
 from dataclasses import dataclass
 
 import cv2
@@ -16,7 +18,12 @@ from rizzmo.nodes.messages import Detections
 Image = np.ndarray
 
 BLOCK_SYMBOLS = '▁▂▃▄▅▆▇█'
-TOPIC_OPTIONS = {'new_image', 'objects_detected', 'audio'}
+TOPIC_OPTIONS = {
+    'new_image',
+    'objects_detected',
+    'audio',
+    'voice_detected',
+}
 
 
 @dataclass
@@ -24,10 +31,32 @@ class Cache:
     image: Image = None
 
 
-async def main(args: Namespace):
+class Screen:
+    def __init__(self, stdscr):
+        self.stdscr = stdscr
+        self._strs = {}
+
+    def addstr(self, row: int, s: str, draw: bool = True) -> None:
+        self._strs[row] = s
+
+        if draw:
+            self.draw()
+
+    def draw(self) -> None:
+        self.stdscr.clear()
+        for row, s in self._strs.items():
+            self.stdscr.addstr(row, 0, s)
+        self.stdscr.refresh()
+
+
+async def main(args: Namespace, stdscr):
     node = await build_mesh_node_from_args(args=args)
 
     cache = Cache()
+
+    screen = Screen(stdscr)
+    screen.addstr(0, '# Camera')
+    screen.addstr(5, '# Audio')
 
     t_last = time.time()
     fps = 0.
@@ -43,20 +72,27 @@ async def main(args: Namespace):
         cache.image = codec.decode(image_bytes)
 
     async def handle_obj_detected(topic, data: Detections):
-        image = cache.image
-        if image is None:
-            return
-
         now = time.time()
         latency = now - data.timestamp
         nonlocal fps, t_last
         alpha = 0.1
         fps = alpha * (1 / (now - t_last)) + (1 - alpha) * fps
         t_last = now
-        print()
-        print(f'FPS    : {fps:.2f}')
-        print(f'Latency: {latency}')
-        print(f'Objects: {data.objects}')
+
+        labels = [
+            o.label for o in sorted(
+                data.objects,
+                key=lambda o: o.box.area * o.confidence,
+                reverse=True,
+            )
+        ]
+
+        screen.addstr(1, f'FPS: {fps:.2f}\t Latency: {latency:.2f}', draw=False)
+        screen.addstr(2, f'Objects: {labels}')
+
+        image = cache.image
+        if image is None:
+            return
 
         for obj in data.objects:
             box = obj.box
@@ -91,6 +127,8 @@ async def main(args: Namespace):
 
         show_image()
 
+    power_history = deque(maxlen=10)
+
     async def handle_audio(topic, data) -> None:
         audio, timestamp = data
 
@@ -98,12 +136,21 @@ async def main(args: Namespace):
         power = min(power, 1. - 1e-3)
         power = int(power * len(BLOCK_SYMBOLS))
         power = BLOCK_SYMBOLS[power]
-        print(power, end='', flush=True)
+
+        power_history.append(power)
+        power = ''.join(power_history)
+
+        screen.addstr(6, f'Audio power: {power}')
+
+    def handle_voice_detected(topic, data) -> None:
+        audio, timestamp, voice_detected = data
+        screen.addstr(7, f'Voice detected: {voice_detected}')
 
     topics_and_handlers = {
         'new_image': handle_new_image,
         'objects_detected': handle_obj_detected,
         'audio': handle_audio,
+        'voice_detected': handle_voice_detected,
     }
     assert set(topics_and_handlers.keys()) == TOPIC_OPTIONS
 
@@ -133,4 +180,5 @@ def get_args() -> Namespace:
 
 
 if __name__ == '__main__':
-    asyncio.run(main(get_args()))
+    # asyncio.run(curses.wrapper(lambda stdscr: main(get_args(), stdscr)))
+    curses.wrapper(lambda stdscr: asyncio.run(main(get_args(), stdscr)))
