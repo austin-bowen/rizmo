@@ -163,5 +163,4 @@ def get_args() -> Namespace:
 
 
 if __name__ == '__main__':
-    # asyncio.run(curses.wrapper(lambda stdscr: main(get_args(), stdscr)))
     curses.wrapper(lambda stdscr: asyncio.run(main(get_args(), stdscr)))
