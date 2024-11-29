@@ -13,17 +13,11 @@ from easymesh.asyncio import forever
 
 from rizzmo.config import config
 from rizzmo.nodes.image_codec import JpegImageCodec
-from rizzmo.nodes.messages import Detections
+from rizzmo.nodes.messages import Detection, Detections
 
 Image = np.ndarray
 
 BLOCK_SYMBOLS = '▁▂▃▄▅▆▇█'
-TOPIC_OPTIONS = {
-    'new_image',
-    'objects_detected',
-    'audio',
-    'voice_detected',
-}
 
 
 @dataclass
@@ -127,6 +121,9 @@ async def main(args: Namespace, stdscr):
 
         show_image()
 
+    async def handle_tracking(topic, target: Detection):
+        screen.addstr(4, f'Tracking: {target.label}')
+
     power_history = deque(maxlen=10)
 
     async def handle_audio(topic, data) -> None:
@@ -142,23 +139,15 @@ async def main(args: Namespace, stdscr):
 
         screen.addstr(6, f'Audio power: {power}')
 
-    def handle_voice_detected(topic, data) -> None:
+    async def handle_voice_detected(topic, data) -> None:
         audio, timestamp, voice_detected = data
         screen.addstr(7, f'Voice detected: {voice_detected}')
 
-    topics_and_handlers = {
-        'new_image': handle_new_image,
-        'objects_detected': handle_obj_detected,
-        'audio': handle_audio,
-        'voice_detected': handle_voice_detected,
-    }
-    assert set(topics_and_handlers.keys()) == TOPIC_OPTIONS
-
-    ignore_topics = args.ignore_topics or set()
-
-    for topic, handler in topics_and_handlers.items():
-        if topic not in ignore_topics:
-            await node.listen(topic, handler)
+    await node.listen('new_image', handle_new_image)
+    await node.listen('objects_detected', handle_obj_detected)
+    await node.listen('tracking', handle_tracking)
+    await node.listen('audio', handle_audio)
+    await node.listen('voice_detected', handle_voice_detected)
 
     await forever()
 
@@ -167,13 +156,6 @@ def get_args() -> Namespace:
     parser = get_node_arg_parser(
         default_node_name='monitor',
         default_coordinator=config.coordinator,
-    )
-
-    parser.add_argument(
-        '--ignore-topics', '-i',
-        nargs='+',
-        choices=TOPIC_OPTIONS,
-        help='The topics to ignore. Default: None',
     )
 
     return parser.parse_args()

@@ -40,6 +40,7 @@ async def main():
         coordinator_port=config.coordinator.port,
     )
 
+    tracking_topic = node.get_topic_sender('tracking')
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
 
     high_fps, low_fps = 30, 5
@@ -83,6 +84,7 @@ async def main():
         image_width, image_height = 1280 / 2, 720 / 2
 
         target = get_tracked_object(data.objects)
+        await tracking_topic.send(target)
 
         print()
         print(f'latency: {latency}')
