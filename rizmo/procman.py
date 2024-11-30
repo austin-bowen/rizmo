@@ -82,11 +82,9 @@ class OptionsContext:
     prev_options: Options = None
 
     def __enter__(self):
-        print('entered options context')
         self.prev_options = self.procman._options
         self.procman._options = self.options
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print('exited options context')
         self.procman._options = self.prev_options
