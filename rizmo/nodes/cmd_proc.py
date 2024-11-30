@@ -11,6 +11,19 @@ from easymesh.asyncio import forever
 from rizmo.config import config
 
 NAME = 'rizmo'
+ALT_NAMES = (
+    'resma',
+    'resmo',
+    'prisma',
+    'prismo',
+    'prizma',
+    'prizmo',
+    'risma',
+    'rismo',
+    'rizma',
+    'rizzmo',
+    'rosmo',
+)
 
 
 async def main(args: Namespace) -> None:
@@ -75,17 +88,7 @@ async def main(args: Namespace) -> None:
 def preprocess(transcript: str) -> str:
     t = transcript.lower()
 
-    for alt_name in [
-        'resma',
-        'resmo',
-        'prismo',
-        'prizmo',
-        'risma',
-        'rismo',
-        'rizma',
-        'rizzmo',
-        'rosmo',
-    ]:
+    for alt_name in ALT_NAMES:
         t = t.replace(alt_name, NAME)
 
     return t
