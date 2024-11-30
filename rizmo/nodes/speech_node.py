@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 import easymesh
 from easymesh.asyncio import forever
@@ -12,6 +13,12 @@ async def main():
     node = await easymesh.build_mesh_node('speech_node')
 
     with build_voicebox() as voicebox:
+        voicebox.say(random.choice([
+            'Hello, world!',
+            'I am awake.',
+            'I am online.',
+        ]))
+
         async def handle_say(topic, message: str) -> None:
             print(repr(message))
             voicebox.say(message)
