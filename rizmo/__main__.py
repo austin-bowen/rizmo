@@ -8,16 +8,16 @@ from rizmo.procman import ProcessManager
 
 host_nodes = {
     'rizmo': (
-        'camera_node',
+        'camera',
         'cmd_proc',
         'maestro_ctl',
-        'mic_node',
+        'mic',
         'obj_tracker',
-        'speech_node',
-        'website_node',
+        'speech',
+        'website',
     ),
     'potato': (
-        ('objrec_node', 1),
+        ('obj_rec', 1),
         'vad',
         'asr',
     ),

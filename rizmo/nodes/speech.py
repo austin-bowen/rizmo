@@ -10,7 +10,7 @@ from voicebox.tts import ESpeakNG
 
 
 async def main():
-    node = await easymesh.build_mesh_node('speech_node')
+    node = await easymesh.build_mesh_node('speech')
 
     with build_voicebox() as voicebox:
         voicebox.say(random.choice([

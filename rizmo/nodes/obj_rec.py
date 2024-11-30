@@ -147,7 +147,7 @@ class Scaler:
 
 async def main():
     node = await build_mesh_node(
-        name='objrec',
+        name='obj_rec',
         coordinator_host=config.coordinator.host,
         coordinator_port=config.coordinator.port,
     )

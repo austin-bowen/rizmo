@@ -36,7 +36,7 @@ def get_servo_command() -> SetServoPosition:
 
 async def main() -> None:
     node = await build_mesh_node(
-        name='servo',
+        name='servo_test',
         coordinator_host=config.coordinator.host,
         coordinator_port=config.coordinator.port,
     )
