@@ -1,6 +1,7 @@
 git+https://github.com/austin-bowen/easymesh.git
 git+https://github.com/austin-bowen/pololu-maestro.git
 
+accelerate
 Flask
 funasr
 opencv-python
