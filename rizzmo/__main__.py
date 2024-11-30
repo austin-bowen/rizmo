@@ -16,7 +16,7 @@ host_nodes = {
         'website_node',
     ),
     'potato': (
-        ('objrec_node', 2),
+        ('objrec_node', 1),
         'vad',
         'asr',
     ),
