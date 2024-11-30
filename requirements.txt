@@ -8,6 +8,7 @@ opencv-python
 modelscope
 numpy
 pillow
+pydub  # Needed by funasr
 sounddevice
 torch
 torchvision
