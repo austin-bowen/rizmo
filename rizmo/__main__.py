@@ -4,7 +4,7 @@ import socket
 from argparse import Namespace
 from time import sleep
 
-from rizmo.config import IS_RIZMO
+from rizmo.config import IS_RIZMO, config
 from rizmo.procman import ProcessManager
 
 host_nodes = {
@@ -37,7 +37,10 @@ def main(args: Namespace):
 
     with ProcessManager() as p:
         if IS_RIZMO:
-            p.start_python('-m', 'easymesh.coordinator')
+            p.start_python(
+                '-m', 'easymesh.coordinator',
+                '--authkey', config.mesh_authkey,
+            )
             sleep(1)
 
         for node in nodes_to_start:
