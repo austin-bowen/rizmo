@@ -78,6 +78,7 @@ def preprocess(transcript: str) -> str:
     for alt_name in [
         'resma',
         'resmo',
+        'prismo',
         'prizmo',
         'risma',
         'rismo',
