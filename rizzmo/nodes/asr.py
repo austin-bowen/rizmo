@@ -39,19 +39,25 @@ class ASR(Thread):
 
     def run(self) -> None:
         while (audio := self.queue.get()) is not None:
-            sample = dict(
-                array=audio.data.copy(),
-                sampling_rate=audio.sample_rate,
-            )
+            try:
+                self._handle_audio(audio)
+            finally:
+                self.queue.task_done()
 
-            result = self.pipe(
-                sample,
-                generate_kwargs={'language': 'english'},
-            )
+    def _handle_audio(self, audio: Audio) -> None:
+        sample = dict(
+            array=audio.data.copy(),
+            sampling_rate=audio.sample_rate,
+        )
 
-            transcript = result['text'].strip()
+        result = self.pipe(
+            sample,
+            generate_kwargs={'language': 'english'},
+        )
 
-            self.handle_transcript(transcript)
+        transcript = result['text'].strip()
+
+        self.handle_transcript(transcript)
 
     def stop(self):
         self.queue.put(None)
@@ -130,7 +136,13 @@ async def main(args: Namespace):
             asr.queue.put(full_audio)
 
     await node.listen('voice_detected', handle_voice_detected)
-    await forever()
+
+    try:
+        await forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        asr.stop()
 
 
 def parse_args() -> Namespace:
