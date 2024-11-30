@@ -1,4 +1,6 @@
+import argparse
 import socket
+from argparse import Namespace
 from time import sleep
 
 from rizzmo.config import IS_RIZZMO
@@ -24,7 +26,7 @@ host_nodes = {
 }
 
 
-def main():
+def main(args: Namespace):
     host = socket.gethostname()
     nodes_to_start = host_nodes[host]
     print(f'Starting nodes: {nodes_to_start}')
@@ -40,6 +42,10 @@ def main():
             else:
                 node, count = node
 
+            if node in args.exclude:
+                print(f'Skipping {node}')
+                continue
+
             for _ in range(count):
                 p.start_python_module(f'rizzmo.nodes.{node}')
 
@@ -49,5 +55,18 @@ def main():
             pass
 
 
+def parse_args() -> Namespace:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--exclude',
+        nargs='+',
+        default=[],
+        help='Nodes to exclude from starting',
+    )
+
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    main()
+    main(parse_args())
