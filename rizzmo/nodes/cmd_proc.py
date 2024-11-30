@@ -10,6 +10,8 @@ from easymesh.asyncio import forever
 
 from rizzmo.config import config
 
+NAME = 'rizzmo'
+
 
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
@@ -20,7 +22,7 @@ async def main(args: Namespace) -> None:
 
         transcript = preprocess(transcript)
 
-        if not talking_to_rizzmo(transcript):
+        if not talking_to_me(transcript):
             print('[Not talking to me]')
             return
 
@@ -83,20 +85,20 @@ def preprocess(transcript: str) -> str:
         'rizmo',
         'rosmo',
     ]:
-        t = t.replace(alt_name, 'rizzmo')
+        t = t.replace(alt_name, NAME)
 
     return t
 
 
-def talking_to_rizzmo(transcript: str) -> bool:
+def talking_to_me(transcript: str) -> bool:
     t = transcript.replace(',', '')
 
-    return any_phrase_in(t, (
-        'hey rizzmo',
-        'hi rizzmo',
-        'hello rizzmo',
-        'okay rizzmo',
-        'ok rizzmo',
+    return transcript.startswith(NAME) or any_phrase_in(t, (
+        f'hey {NAME}',
+        f'hi {NAME}',
+        f'hello {NAME}',
+        f'okay {NAME}',
+        f'ok {NAME}',
     ))
 
 
