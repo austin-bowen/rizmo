@@ -1,3 +1,9 @@
+"""
+Followed instructions here:
+- https://huggingface.co/learn/audio-course/en/chapter5/asr_models
+- https://huggingface.co/openai/whisper-large-v3-turbo
+"""
+
 import asyncio
 from argparse import Namespace
 from collections import deque
