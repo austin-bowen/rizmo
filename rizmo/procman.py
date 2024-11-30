@@ -1,10 +1,17 @@
 import signal
+from dataclasses import dataclass
 from subprocess import Popen, TimeoutExpired
 
 
 class ProcessManager:
-    def __init__(self, python_exe: str = 'python'):
+    def __init__(
+            self,
+            python_exe: str = 'python',
+            shell: bool = False,
+    ):
         self.python_exe = python_exe
+
+        self._options = Options()
         self.processes: list[Popen] = []
 
     def __enter__(self):
@@ -13,22 +20,30 @@ class ProcessManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
 
+    def options(self, **kwargs) -> 'OptionsContext':
+        return OptionsContext(self, Options(**kwargs))
+
     def popen(self, *args, **kwargs) -> Popen:
-        return self.add(Popen(*args, **kwargs))
+        cpu = self._options.cpu
+        cpu = ['taskset', '-c', str(cpu)] if cpu is not None else []
+
+        args = cpu + list(args)
+
+        shell = self._options.shell
+        if shell:
+            args = [' '.join(args)]
+
+        return self.add(Popen(args, shell=shell, **kwargs))
 
     def add(self, process: Popen) -> Popen:
         self.processes.append(process)
         return process
 
-    def start_python_module(self, module: str, *args, cpu: int = None) -> Popen:
-        return self.start_python('-m', module, *args, cpu=cpu)
+    def start_python_module(self, module: str, *args, **kwargs) -> Popen:
+        return self.start_python('-m', module, *args, **kwargs)
 
-    def start_python(self, *args, cpu: int = None) -> Popen:
-        return self.start_on_cpu(self.python_exe, *args, cpu=cpu)
-
-    def start_on_cpu(self, cmd, *args, cpu: int = None) -> Popen:
-        cpu = ['taskset', '-c', str(cpu)] if cpu is not None else []
-        return self.popen(cpu + [cmd, *args])
+    def start_python(self, *args, **kwargs) -> Popen:
+        return self.popen(self.python_exe, *args, **kwargs)
 
     def stop(self, timeout=10.):
         print(f'Stopping {len(self.processes)} processes...')
@@ -55,3 +70,26 @@ class ProcessManager:
     def wait(self, timeout: float = None):
         for process in self.processes:
             process.wait(timeout)
+
+
+@dataclass
+class Options:
+    cpu: int = None
+    shell: bool = False
+
+
+@dataclass
+class OptionsContext:
+    procman: ProcessManager
+    options: Options
+    prev_options: Options = None
+
+    def __enter__(self):
+        print('entered options context')
+        self.prev_options = self.procman._options
+        self.procman._options = self.options
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print('exited options context')
+        self.procman._options = self.prev_options

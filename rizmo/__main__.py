@@ -1,4 +1,5 @@
 import argparse
+import os
 import socket
 from argparse import Namespace
 from time import sleep
@@ -32,6 +33,8 @@ def main(args: Namespace):
     nodes_to_start = host_nodes[host]
     print(f'Starting nodes: {nodes_to_start}')
 
+    os.makedirs('logs', exist_ok=True)
+
     with ProcessManager() as p:
         if IS_RIZMO:
             p.start_python_module('easymesh.coordinator')
@@ -47,8 +50,13 @@ def main(args: Namespace):
                 print(f'Skipping {node}')
                 continue
 
-            for _ in range(count):
-                p.start_python_module(f'rizmo.nodes.{node}')
+            # Have to use shell mode to redirect output to a file
+            with p.options(shell=True):
+                for _ in range(count):
+                    p.start_python_module(
+                        f'rizmo.nodes.{node}',
+                        '|', 'tee', '-a', f'logs/{node}.log',
+                    )
 
         try:
             p.wait()
