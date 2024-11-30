@@ -15,7 +15,7 @@ host_nodes = {
     ),
     'potato': (
         ('objrec_node', 2),
-        'vad_node',
+        'vad',
         'asr',
     ),
     'austin-laptop': (
