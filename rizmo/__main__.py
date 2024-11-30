@@ -55,7 +55,7 @@ def main(args: Namespace):
                 for _ in range(count):
                     p.start_python(
                         '-u', '-m', f'rizmo.nodes.{node}',
-                        '|', 'tee', '-a', f'logs/{node}.log',
+                        '|', 'tee', f'logs/{node}.log',
                     )
 
         try:
