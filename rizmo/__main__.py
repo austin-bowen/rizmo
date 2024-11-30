@@ -37,7 +37,7 @@ def main(args: Namespace):
 
     with ProcessManager() as p:
         if IS_RIZMO:
-            p.start_python_module('easymesh.coordinator')
+            p.start_python('-m', 'easymesh.coordinator')
             sleep(1)
 
         for node in nodes_to_start:
