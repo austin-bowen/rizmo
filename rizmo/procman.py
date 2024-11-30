@@ -39,9 +39,6 @@ class ProcessManager:
         self.processes.append(process)
         return process
 
-    def start_python_module(self, module: str, *args, **kwargs) -> Popen:
-        return self.start_python('-m', module, *args, **kwargs)
-
     def start_python(self, *args, **kwargs) -> Popen:
         return self.popen(self.python_exe, *args, **kwargs)
 

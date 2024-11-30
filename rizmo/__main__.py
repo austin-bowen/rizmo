@@ -53,8 +53,8 @@ def main(args: Namespace):
             # Have to use shell mode to redirect output to a file
             with p.options(shell=True):
                 for _ in range(count):
-                    p.start_python_module(
-                        f'rizmo.nodes.{node}',
+                    p.start_python(
+                        '-u', '-m', f'rizmo.nodes.{node}',
                         '|', 'tee', '-a', f'logs/{node}.log',
                     )
 
