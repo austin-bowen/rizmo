@@ -46,26 +46,6 @@ async def main():
     high_fps, low_fps = 30, 5
     low_fps_future = None
 
-    target = None
-
-    async def say_tracked_object(period: float = 1.) -> None:
-        nonlocal target
-        last_target = None
-
-        while True:
-            await asyncio.sleep(period)
-
-            current_target = target
-            if (
-                    current_target is not None
-                    and (last_target is None or current_target.label != last_target.label)
-            ):
-                await node.send('say', f'Tracking a {current_target.label}.')
-
-            last_target = current_target
-
-    asyncio.create_task(say_tracked_object())
-
     async def set_fps(fps: float) -> None:
         await node.send('set_fps_limit', fps)
 
@@ -78,7 +58,7 @@ async def main():
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
-        nonlocal low_fps_future, target
+        nonlocal low_fps_future
 
         latency = time.time() - data.timestamp
         image_width, image_height = 1280 / 2, 720 / 2
