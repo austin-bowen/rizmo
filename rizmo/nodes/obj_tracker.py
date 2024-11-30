@@ -6,8 +6,8 @@ from typing import Optional
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
-from rizzmo.config import config
-from rizzmo.nodes.messages import ChangeServoPosition, Detection, Detections
+from rizmo.config import config
+from rizmo.nodes.messages import ChangeServoPosition, Detection, Detections
 
 
 def get_tracked_object(

@@ -12,7 +12,7 @@ from easymesh.node.node import MeshNode
 from easymesh.types import Data, Topic
 from funasr import AutoModel
 
-from rizzmo.config import config
+from rizmo.config import config
 
 
 def depends_on_listener(node: MeshNode, downstream_topic: Topic):

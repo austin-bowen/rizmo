@@ -8,9 +8,9 @@ from easymesh import build_mesh_node_from_args
 from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
 
-from rizzmo.config import config
+from rizmo.config import config
 
-NAME = 'rizzmo'
+NAME = 'rizmo'
 
 
 async def main(args: Namespace) -> None:
@@ -82,7 +82,7 @@ def preprocess(transcript: str) -> str:
         'risma',
         'rismo',
         'rizma',
-        'rizmo',
+        'rizzmo',
         'rosmo',
     ]:
         t = t.replace(alt_name, NAME)

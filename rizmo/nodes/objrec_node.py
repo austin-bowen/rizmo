@@ -10,7 +10,7 @@ from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 from transformers import YolosForObjectDetection, YolosImageProcessor
 
-from rizzmo.config import config
+from rizmo.config import config
 from .image_codec import JpegImageCodec
 from .messages import Box, Detection, Detections
 

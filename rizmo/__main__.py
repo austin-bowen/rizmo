@@ -3,11 +3,11 @@ import socket
 from argparse import Namespace
 from time import sleep
 
-from rizzmo.config import IS_RIZZMO
-from rizzmo.procman import ProcessManager
+from rizmo.config import IS_RIZMO
+from rizmo.procman import ProcessManager
 
 host_nodes = {
-    'rizzmo': (
+    'rizmo': (
         'camera_node',
         'cmd_proc',
         'maestro_ctl',
@@ -33,7 +33,7 @@ def main(args: Namespace):
     print(f'Starting nodes: {nodes_to_start}')
 
     with ProcessManager() as p:
-        if IS_RIZZMO:
+        if IS_RIZMO:
             p.start_python_module('easymesh.coordinator')
             sleep(1)
 
@@ -48,7 +48,7 @@ def main(args: Namespace):
                 continue
 
             for _ in range(count):
-                p.start_python_module(f'rizzmo.nodes.{node}')
+                p.start_python_module(f'rizmo.nodes.{node}')
 
         try:
             p.wait()

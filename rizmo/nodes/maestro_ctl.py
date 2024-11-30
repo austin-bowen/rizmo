@@ -12,7 +12,7 @@ from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 from maestro import Maestro
 
-from rizzmo.nodes.messages import ChangeServoPosition, SetServoPosition
+from rizmo.nodes.messages import ChangeServoPosition, SetServoPosition
 
 
 async def main() -> None:

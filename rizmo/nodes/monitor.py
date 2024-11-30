@@ -12,9 +12,9 @@ from easymesh import build_mesh_node_from_args
 from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
 
-from rizzmo.config import config
-from rizzmo.nodes.image_codec import JpegImageCodec
-from rizzmo.nodes.messages import Detection, Detections
+from rizmo.config import config
+from rizmo.nodes.image_codec import JpegImageCodec
+from rizmo.nodes.messages import Detection, Detections
 
 Image = np.ndarray
 

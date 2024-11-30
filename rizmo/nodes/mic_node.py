@@ -10,7 +10,7 @@ import sounddevice as sd
 from easymesh import build_mesh_node
 from easymesh.asyncio import forever
 
-from rizzmo.nodes.messages import Audio
+from rizmo.nodes.messages import Audio
 
 WEBCAM_MIC = 'USB CAMERA: Audio'
 CONFERENCE_MIC = 'eMeet M0: USB Audio'

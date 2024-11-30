@@ -1,6 +1,6 @@
-# rizzmo
+# Rizmo
 
-Code for my robot, Rizzmo.
+Code for my robot, Rizmo.
 
 ## Hardware
 
@@ -12,7 +12,7 @@ TODO
     1. Write the Jetson Nano Developer Kit SD card image to a microSD
        card ([instructions](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#write)).
     2. Power up and install OS.
-        - Hostname: `rizzmo`
+        - Hostname: `rizmo`
     3. Remove unnecessary programs. Install updates.
 2. Setup SSH:
     1. Copy `~/.ssh/id_rsa.pub` of dev machine to `~/.ssh/authorized_keys` on Jetson Nano.
@@ -36,8 +36,8 @@ TODO
 ## Repository Setup
 
 ```bash
-git clone https://github.com/austin-bowen/rizzmo.git
-cd rizzmo
+git clone https://github.com/austin-bowen/rizmo.git
+cd rizmo
 python -m venv --symlinks venv
 . venv/bin/activate
 pip install -U pip

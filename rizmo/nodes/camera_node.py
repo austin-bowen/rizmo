@@ -10,8 +10,8 @@ from easymesh import build_mesh_node
 from easymesh.argparse import add_coordinator_arg
 from easymesh.utils import require
 
-from rizzmo.config import config
-from rizzmo.nodes.image_codec import JpegImageCodec
+from rizmo.config import config
+from rizmo.nodes.image_codec import JpegImageCodec
 
 Image = np.ndarray
 

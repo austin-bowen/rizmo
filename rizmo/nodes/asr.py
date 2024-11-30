@@ -18,8 +18,8 @@ from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-from rizzmo.config import config
-from rizzmo.nodes.messages import Audio
+from rizmo.config import config
+from rizmo.nodes.messages import Audio
 
 PRE_BUFFER_DURATION_S = 1.
 """How much previous audio to prepend to the audio buffer when voice is detected."""

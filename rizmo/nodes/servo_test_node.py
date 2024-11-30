@@ -2,8 +2,8 @@ import asyncio
 
 from easymesh import build_mesh_node
 
-from rizzmo.config import config
-from rizzmo.nodes.messages import SetServoPosition
+from rizmo.config import config
+from rizmo.nodes.messages import SetServoPosition
 
 
 def get_servo_command() -> SetServoPosition:

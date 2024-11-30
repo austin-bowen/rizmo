@@ -4,13 +4,13 @@ from dataclasses import dataclass, field
 from easymesh.coordinator.constants import DEFAULT_COORDINATOR_PORT
 from easymesh.types import Endpoint
 
-IS_RIZZMO = socket.gethostname() == 'rizzmo'
+IS_RIZMO = socket.gethostname() == 'rizmo'
 
 
 @dataclass
 class Config:
     coordinator: Endpoint = field(default_factory=lambda: Endpoint(
-        host='rizzmo.local',
+        host='rizmo.local',
         port=DEFAULT_COORDINATOR_PORT,
     ))
 
