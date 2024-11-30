@@ -8,6 +8,7 @@ from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.weather import WeatherProvider
 
 NAME = 'rizmo'
 ALT_NAMES = (
@@ -47,6 +48,7 @@ async def main(args: Namespace) -> None:
         elif any_phrase_in(transcript, (
                 'what is today',
                 "what is today's date",
+                "what's today's date",
                 "what's today",
                 'what day is it',
         )):
@@ -56,6 +58,13 @@ async def main(args: Namespace) -> None:
                 "what's the time",
         )):
             await say_time()
+        elif any_phrase_in(transcript, (
+                "what is the weather",
+                "what is the forecast",
+                "what's the weather",
+                "what's the forecast",
+        )):
+            await say_weather()
         else:
             print('[Unrecognized command]')
 
@@ -76,12 +85,18 @@ async def main(args: Namespace) -> None:
 
         await say(f'It is {current_time}.')
 
+    async def say_weather() -> None:
+        weather = await weather_provider.get_description()
+        await say(weather)
+
     async def say(message: str) -> None:
         print(repr(message))
         await node.send('say', message)
 
     await node.listen('transcript', handle_transcript)
-    await forever()
+
+    async with WeatherProvider.build('Anderson, SC') as weather_provider:
+        await forever()
 
 
 def preprocess(transcript: str) -> str:
