@@ -21,6 +21,17 @@ TODO
     - To update: `pyenv update`
 4. Install Python 3.12: `pyenv install 3.12 && pyenv global 3.12`
     - The latest version is installed and set to the default.
+5. Set the default audio IO device:
+   1. List devices:
+      ```
+      pactl list short sinks
+      pactl list short sources
+      ```
+   2. Append lines to `/etc/pulse/default.pa`:
+      ```
+      set-default-sink <sink-name>
+      set-default-source <source-name>
+      ```
 
 ## Repository Setup
 
