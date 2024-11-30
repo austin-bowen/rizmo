@@ -1,4 +1,6 @@
 import asyncio
+from argparse import Namespace
+from collections import deque
 from collections.abc import Callable
 from queue import Queue
 from threading import Thread
@@ -6,9 +8,11 @@ from threading import Thread
 import numpy as np
 import torch
 from easymesh import build_mesh_node_from_args
+from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
+from rizzmo.config import config
 from rizzmo.nodes.messages import Audio
 
 
@@ -39,7 +43,7 @@ class ASR(Thread):
                 generate_kwargs={'language': 'english'},
             )
 
-            transcript = result['text']
+            transcript = result['text'].strip()
 
             self.handle_transcript(transcript)
 
@@ -79,14 +83,14 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
     return asr
 
 
-async def main():
-    node = await build_mesh_node_from_args(default_node_name='asr')
+async def main(args: Namespace):
+    node = await build_mesh_node_from_args(args=args)
     transcript_topic = node.get_topic_sender('transcript')
 
     loop = asyncio.get_event_loop()
 
     def handle_transcript(transcript: str) -> None:
-        print(f'Transcript: {transcript}')
+        print(repr(transcript))
 
         asyncio.run_coroutine_threadsafe(
             transcript_topic.send(transcript),
@@ -95,20 +99,23 @@ async def main():
 
     asr = build_asr_thread(handle_transcript)
 
+    most_recent_audios = deque(maxlen=4)
     audio_buffer = []
 
     async def handle_voice_detected(topic, data):
         audio, timestamp, voice_detected = data
 
+        most_recent_audios.append(audio)
+
         if voice_detected:
             if not audio_buffer:
-                print('Voice started')
-
-            audio_buffer.append(audio)
+                print('Transcribing... ')
+                audio_buffer.extend(most_recent_audios)
+            else:
+                audio_buffer.append(audio)
             return
 
         if audio_buffer:
-            print('Voice stopped')
             full_audio_data = np.concatenate([a.data for a in audio_buffer]).flatten()
             sample_rate = audio_buffer[0].sample_rate
             audio_buffer.clear()
@@ -120,5 +127,14 @@ async def main():
     await forever()
 
 
+def parse_args() -> Namespace:
+    parser = get_node_arg_parser(
+        default_node_name='asr',
+        default_coordinator=config.coordinator,
+    )
+
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))
