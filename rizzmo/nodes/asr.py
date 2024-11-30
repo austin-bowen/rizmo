@@ -21,6 +21,9 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from rizzmo.config import config
 from rizzmo.nodes.messages import Audio
 
+PRE_BUFFER_DURATION_S = 1.
+"""How much previous audio to prepend to the audio buffer when voice is detected."""
+
 
 class ASR(Thread):
     def __init__(
@@ -61,6 +64,23 @@ class ASR(Thread):
 
     def stop(self):
         self.queue.put(None)
+
+
+class MaxDurationAudioBuffer:
+    def __init__(self, max_duration: float):
+        self.max_duration = max_duration
+        self._buffer = deque()
+
+    def __iter__(self):
+        return iter(self._buffer)
+
+    def append(self, audio: Audio) -> None:
+        self._buffer.append(audio)
+
+        duration = sum(a.duration for a in self._buffer)
+        while duration > self.max_duration:
+            removed_audio = self._buffer.popleft()
+            duration -= removed_audio.duration
 
 
 def build_asr_thread(handle_transcript: Callable[[str], None]):
@@ -111,7 +131,7 @@ async def main(args: Namespace):
 
     asr = build_asr_thread(handle_transcript)
 
-    most_recent_audios = deque(maxlen=4)
+    most_recent_audios = MaxDurationAudioBuffer(max_duration=PRE_BUFFER_DURATION_S)
     audio_buffer = []
 
     async def handle_voice_detected(topic, data):
