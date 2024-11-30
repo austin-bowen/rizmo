@@ -4,7 +4,7 @@ import random
 import easymesh
 from easymesh.asyncio import forever
 from voicebox import ParallelVoicebox, Voicebox, reliable_tts
-from voicebox.effects import Flanger, Glitch, Normalize
+from voicebox.effects import Flanger, Normalize
 from voicebox.sinks import SoundDevice
 from voicebox.tts import ESpeakNG
 
@@ -32,7 +32,6 @@ def build_voicebox() -> Voicebox:
         tts=reliable_tts(ttss=[ESpeakNG()]),
         effects=[
             Flanger(),
-            Glitch(),
             Normalize(),
         ],
         sink=SoundDevice(latency=0.2),
