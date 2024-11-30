@@ -9,6 +9,7 @@ modelscope
 numpy
 pillow
 pydub  # Needed by funasr
+python-weather
 sounddevice
 torch
 torchvision
