@@ -14,7 +14,7 @@ class Config:
         port=DEFAULT_COORDINATOR_PORT,
     ))
 
-    mesh_authkey: bytes = None
+    mesh_authkey: bytes = b'rizmo'
 
     camera_index: int = 0
 
