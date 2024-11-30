@@ -1,5 +1,6 @@
 import asyncio
 import random
+from argparse import Namespace
 
 import easymesh
 from easymesh.asyncio import forever
@@ -8,9 +9,11 @@ from voicebox.effects import Flanger, Normalize
 from voicebox.sinks import SoundDevice
 from voicebox.tts import ESpeakNG
 
+from rizmo.node_args import get_rizmo_node_arg_parser
 
-async def main():
-    node = await easymesh.build_mesh_node('speech')
+
+async def main(args: Namespace) -> None:
+    node = await easymesh.build_mesh_node_from_args(args=args)
 
     with build_voicebox() as voicebox:
         voicebox.say(random.choice([
@@ -38,5 +41,10 @@ def build_voicebox() -> Voicebox:
     )
 
 
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('speech')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))

@@ -9,10 +9,12 @@ IS_RIZMO = socket.gethostname() == 'rizmo'
 
 @dataclass
 class Config:
-    coordinator: Endpoint = field(default_factory=lambda: Endpoint(
+    mesh_coordinator: Endpoint = field(default_factory=lambda: Endpoint(
         host='rizmo.local',
         port=DEFAULT_COORDINATOR_PORT,
     ))
+
+    mesh_authkey: bytes = None
 
     camera_index: int = 0
 

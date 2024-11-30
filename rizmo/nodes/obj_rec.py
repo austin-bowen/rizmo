@@ -1,16 +1,17 @@
 import asyncio
 from abc import abstractmethod
+from argparse import Namespace
 from typing import Optional, Union
 
 import cv2
 import numpy as np
 import torch
 from PIL import Image as PILImage
-from easymesh import build_mesh_node
+from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 from transformers import YolosForObjectDetection, YolosImageProcessor
 
-from rizmo.config import config
+from rizmo.node_args import get_rizmo_node_arg_parser
 from .image_codec import JpegImageCodec
 from .messages import Box, Detection, Detections
 
@@ -145,12 +146,8 @@ class Scaler:
         return detections
 
 
-async def main():
-    node = await build_mesh_node(
-        name='obj_rec',
-        coordinator_host=config.coordinator.host,
-        coordinator_port=config.coordinator.port,
-    )
+async def main(args: Namespace):
+    node = await build_mesh_node_from_args(args=args)
 
     obj_det_topic = node.get_topic_sender('objects_detected')
 
@@ -185,5 +182,10 @@ async def main():
     await forever()
 
 
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('obj-rec')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))

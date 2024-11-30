@@ -1,15 +1,16 @@
-import argparse
 import asyncio
 from abc import abstractmethod
+from argparse import Namespace
 from collections.abc import Callable
 from threading import Thread
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 import sounddevice as sd
-from easymesh import build_mesh_node
+from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
+from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import Audio
 
 WEBCAM_MIC = 'USB CAMERA: Audio'
@@ -183,12 +184,10 @@ class Gate:
 
 
 async def main(
-        device: str = DEFAULT_MIC,
-        sample_rate: int = DEFAULT_SAMPLE_RATE,
-        block_size: int = DEFAULT_BLOCK_SIZE,
+        args: Namespace,
         channels: int = 1,
 ):
-    node = await build_mesh_node(name='mic_reader')
+    node = await build_mesh_node_from_args(args=args)
     audio_topic = node.get_topic_sender('audio')
 
     loop = asyncio.get_event_loop()
@@ -202,7 +201,7 @@ async def main(
     # limiter = np.tanh
 
     def signal_transform(signal, sample_rate_):
-        return limiter(signal * gain_control.get_gain(signal, sample_rate))
+        return limiter(signal * gain_control.get_gain(signal, args.sample_rate))
 
     gate = Gate(
         threshold=0.,  # Disabled
@@ -213,7 +212,7 @@ async def main(
     )
 
     def mic_callback(indata: np.ndarray, frames: int, timestamp, status):
-        indata = gate(indata, sample_rate)
+        indata = gate(indata, args.sample_rate)
 
         # power = np.abs(indata).max()
         # power = min(power, 1. - 1e-6)
@@ -221,7 +220,7 @@ async def main(
         # power = block_symbols[power]
         # print(power, end='', flush=True)
 
-        audio = Audio(indata, sample_rate)
+        audio = Audio(indata, args.sample_rate)
 
         asyncio.run_coroutine_threadsafe(
             audio_topic.send((audio, timestamp.inputBufferAdcTime)),
@@ -230,13 +229,13 @@ async def main(
 
     device = next(
         i for i, d in enumerate(sd.query_devices())
-        if d['name'].startswith(device)
+        if d['name'].startswith(args.device)
     )
 
     mic = Microphone(
         mic_callback,
-        sample_rate,
-        block_size=block_size,
+        args.sample_rate,
+        block_size=args.block_size,
         device=device,
         channels=channels,
     )
@@ -245,8 +244,8 @@ async def main(
     await forever()
 
 
-def get_args() -> dict[str, Any]:
-    parser = argparse.ArgumentParser()
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('mic')
 
     def device_arg(arg_: str) -> Optional[str]:
         return None if arg_.lower() == 'none' else arg_
@@ -273,8 +272,8 @@ def get_args() -> dict[str, Any]:
         help='The block size of the microphone samples. Default: %(default)s',
     )
 
-    return vars(parser.parse_args())
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
-    asyncio.run(main(**get_args()))
+    asyncio.run(main(parse_args()))

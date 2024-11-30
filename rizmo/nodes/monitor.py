@@ -9,10 +9,9 @@ from typing import Optional
 import cv2
 import numpy as np
 from easymesh import build_mesh_node_from_args
-from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
 
-from rizmo.config import config
+from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
 from rizmo.nodes.messages import Detection, Detections
 
@@ -157,14 +156,10 @@ async def main(args: Namespace, stdscr):
     await forever()
 
 
-def get_args() -> Namespace:
-    parser = get_node_arg_parser(
-        default_node_name='monitor',
-        default_coordinator=config.coordinator,
-    )
-
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('monitor')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-    curses.wrapper(lambda stdscr: asyncio.run(main(get_args(), stdscr)))
+    curses.wrapper(lambda stdscr: asyncio.run(main(parse_args(), stdscr)))

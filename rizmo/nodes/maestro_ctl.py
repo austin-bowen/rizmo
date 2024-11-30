@@ -6,17 +6,19 @@ Limits:
 """
 
 import asyncio
+from argparse import Namespace
 from typing import Union
 
-from easymesh import build_mesh_node
+from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 from maestro import Maestro
 
+from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, SetServoPosition
 
 
-async def main() -> None:
-    node = await build_mesh_node(name='maestro-ctl')
+async def main(args: Namespace) -> None:
+    node = await build_mesh_node_from_args(args=args)
 
     print('Connecting to Maestro...')
     with Maestro.connect('mini12', tty='/dev/ttyACM0') as maestro:
@@ -65,5 +67,10 @@ async def main() -> None:
                 maestro[c] = 1500
 
 
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('maestro-ctl')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))

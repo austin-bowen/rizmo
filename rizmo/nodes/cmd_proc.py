@@ -5,10 +5,9 @@ from collections.abc import Iterable
 from datetime import datetime
 
 from easymesh import build_mesh_node_from_args
-from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
 
-from rizmo.config import config
+from rizmo.node_args import get_rizmo_node_arg_parser
 
 NAME = 'rizmo'
 ALT_NAMES = (
@@ -111,11 +110,7 @@ def any_phrase_in(transcript: str, phrases: Iterable[str]) -> bool:
 
 
 def parse_args() -> Namespace:
-    parser = get_node_arg_parser(
-        default_node_name='cmd_proc',
-        default_coordinator=config.coordinator,
-    )
-
+    parser = get_rizmo_node_arg_parser('cmd_proc')
     return parser.parse_args()
 
 

@@ -14,11 +14,10 @@ from threading import Thread
 import numpy as np
 import torch
 from easymesh import build_mesh_node_from_args
-from easymesh.argparse import get_node_arg_parser
 from easymesh.asyncio import forever
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-from rizmo.config import config
+from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import Audio
 
 PRE_BUFFER_DURATION_S = 1.
@@ -166,11 +165,7 @@ async def main(args: Namespace):
 
 
 def parse_args() -> Namespace:
-    parser = get_node_arg_parser(
-        default_node_name='asr',
-        default_coordinator=config.coordinator,
-    )
-
+    parser = get_rizmo_node_arg_parser('asr')
     return parser.parse_args()
 
 

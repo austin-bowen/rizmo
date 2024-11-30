@@ -1,12 +1,14 @@
 import asyncio
+from argparse import Namespace
 from dataclasses import dataclass
 from io import BytesIO
 from threading import Thread
 
+from easymesh import build_mesh_node_from_args
+from easymesh.asyncio import forever
 from flask import Flask, render_template_string, send_file
 
-from easymesh import build_mesh_node
-from easymesh.asyncio import forever
+from rizmo.node_args import get_rizmo_node_arg_parser
 
 app = Flask(__name__)
 
@@ -61,8 +63,8 @@ def image():
     return send_file(BytesIO(cache.image_bytes), mimetype='image/jpeg')
 
 
-async def main() -> None:
-    node = await build_mesh_node(name='website')
+async def main(args: Namespace) -> None:
+    node = await build_mesh_node_from_args(args=args)
 
     async def handle_image(topic, data):
         timestamp, camera_index, image_bytes = data
@@ -75,5 +77,10 @@ async def main() -> None:
     await forever()
 
 
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('website')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))

@@ -4,15 +4,16 @@ Setup:
 """
 
 import asyncio
+from argparse import Namespace
 from functools import wraps
 
-from easymesh import build_mesh_node
+from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 from easymesh.node.node import MeshNode
 from easymesh.types import Data, Topic
 from funasr import AutoModel
 
-from rizmo.config import config
+from rizmo.node_args import get_rizmo_node_arg_parser
 
 
 def depends_on_listener(node: MeshNode, downstream_topic: Topic):
@@ -32,12 +33,8 @@ def depends_on_listener(node: MeshNode, downstream_topic: Topic):
     return decorator
 
 
-async def main():
-    node = await build_mesh_node(
-        name='vad',
-        coordinator_host=config.coordinator.host,
-        coordinator_port=config.coordinator.port,
-    )
+async def main(args: Namespace) -> None:
+    node = await build_mesh_node_from_args(args=args)
 
     voice_detected_topic = node.get_topic_sender('voice_detected')
 
@@ -88,8 +85,14 @@ async def main():
     try:
         await forever()
     finally:
-        wav_file.close()
+        # wav_file.close()
+        pass
+
+
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('vad')
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))

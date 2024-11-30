@@ -1,12 +1,13 @@
 import asyncio
 import time
+from argparse import Namespace
 from collections.abc import Iterable
 from typing import Optional
 
-from easymesh import build_mesh_node
+from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
-from rizmo.config import config
+from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, Detection, Detections
 
 
@@ -33,12 +34,8 @@ def get_tracked_object(
     )
 
 
-async def main():
-    node = await build_mesh_node(
-        name='obj-tracker',
-        coordinator_host=config.coordinator.host,
-        coordinator_port=config.coordinator.port,
-    )
+async def main(args: Namespace) -> None:
+    node = await build_mesh_node_from_args(args=args)
 
     tracking_topic = node.get_topic_sender('tracking')
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
@@ -118,5 +115,10 @@ async def main():
     await forever()
 
 
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('obj-tracker')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))

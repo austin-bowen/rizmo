@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import time
 from argparse import Namespace
@@ -6,11 +5,11 @@ from typing import Any, Optional
 
 import cv2
 import numpy as np
-from easymesh import build_mesh_node
-from easymesh.argparse import add_coordinator_arg
+from easymesh import build_mesh_node_from_args
 from easymesh.utils import require
 
 from rizmo.config import config
+from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
 
 Image = np.ndarray
@@ -98,15 +97,8 @@ class CameraCaptureError(Exception):
     pass
 
 
-async def main():
-    args = parse_args()
-
-    node = await build_mesh_node(
-        name='camera',
-        coordinator_host=args.coordinator.host,
-        coordinator_port=args.coordinator.port,
-        # load_balancer=RandomLoadBalancer(),
-    )
+async def main(args: Namespace) -> None:
+    node = await build_mesh_node_from_args(args=args)
 
     await _read_camera(
         node,
@@ -119,9 +111,7 @@ async def main():
 
 
 def parse_args() -> Namespace:
-    parser = argparse.ArgumentParser()
-
-    add_coordinator_arg(parser)
+    parser = get_rizmo_node_arg_parser('camera')
 
     parser.add_argument(
         '--camera-index', '-c',
@@ -229,4 +219,4 @@ async def _read_camera(
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main(parse_args()))
