@@ -74,6 +74,8 @@ def preprocess(transcript: str) -> str:
     t = transcript.lower()
 
     for alt_name in [
+        'resma',
+        'resmo',
         'prizmo',
         'risma',
         'rismo',
@@ -87,7 +89,9 @@ def preprocess(transcript: str) -> str:
 
 
 def talking_to_rizzmo(transcript: str) -> bool:
-    return any_phrase_in(transcript.replace(',', ''), (
+    t = transcript.replace(',', '')
+
+    return any_phrase_in(t, (
         'hey rizzmo',
         'hi rizzmo',
         'hello rizzmo',
