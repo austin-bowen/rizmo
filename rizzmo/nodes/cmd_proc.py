@@ -21,7 +21,7 @@ async def main(args: Namespace) -> None:
         transcript = preprocess(transcript)
 
         if not talking_to_rizzmo(transcript):
-            print('[Not talking to me.]')
+            print('[Not talking to me]')
             return
 
         if any_phrase_in(transcript, (
@@ -42,6 +42,8 @@ async def main(args: Namespace) -> None:
                 "what's the time",
         )):
             await say_time()
+        else:
+            print('[Unrecognized command]')
 
     async def shutdown() -> None:
         await say('Shutting down.')
@@ -72,17 +74,20 @@ def preprocess(transcript: str) -> str:
     t = transcript.lower()
 
     for alt_name in [
-        'rizmo',
         'prizmo',
+        'risma',
+        'rismo',
         'rizma',
+        'rizmo',
+        'rosmo',
     ]:
-        t.replace(alt_name, 'rizzmo')
+        t = t.replace(alt_name, 'rizzmo')
 
     return t
 
 
 def talking_to_rizzmo(transcript: str) -> bool:
-    return any_phrase_in(transcript, (
+    return any_phrase_in(transcript.replace(',', ''), (
         'hey rizzmo',
         'hi rizzmo',
         'hello rizzmo',
