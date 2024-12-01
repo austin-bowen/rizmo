@@ -7,6 +7,7 @@ from datetime import datetime
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
+from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.weather import WeatherProvider
 
@@ -112,7 +113,7 @@ async def main(args: Namespace) -> None:
 
     await node.listen('transcript', handle_transcript)
 
-    async with WeatherProvider.build('Anderson, SC') as weather_provider:
+    async with WeatherProvider.build(config.weather_location) as weather_provider:
         await forever()
 
 

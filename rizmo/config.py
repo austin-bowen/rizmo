@@ -18,5 +18,7 @@ class Config:
 
     camera_index: int = 0
 
+    weather_location: str = 'Anderson, SC'
+
 
 config = Config()

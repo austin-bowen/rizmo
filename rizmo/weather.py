@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 import python_weather
 
+from rizmo.config import config
+
 
 class WeatherProvider:
     def __init__(self, client: python_weather.Client, location: str):
@@ -50,7 +52,7 @@ class Weather:
 
 
 async def main():
-    async with WeatherProvider.build('Anderson, SC') as weather_provider:
+    async with WeatherProvider.build(config.weather_location) as weather_provider:
         print(await weather_provider.get_description())
 
 
