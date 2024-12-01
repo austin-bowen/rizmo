@@ -146,12 +146,16 @@ async def main(args: Namespace, stdscr):
     async def handle_transcript(topic, data) -> None:
         screen.addstr(8, f'Transcript: {data!r}')
 
+    async def handle_say(topic, data: str) -> None:
+        screen.addstr(9, f'Said: {data!r}')
+
     await node.listen('new_image', handle_new_image)
     await node.listen('objects_detected', handle_obj_detected)
     await node.listen('tracking', handle_tracking)
     await node.listen('audio', handle_audio)
     await node.listen('voice_detected', handle_voice_detected)
     await node.listen('transcript', handle_transcript)
+    await node.listen('say', handle_say)
 
     await forever()
 
