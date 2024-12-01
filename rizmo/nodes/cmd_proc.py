@@ -64,7 +64,7 @@ async def main(args: Namespace) -> None:
                 "what's the weather",
                 "what's the forecast",
         )):
-            await say_weather()
+            await say_weather(transcript)
         else:
             print('[Unrecognized command]')
 
@@ -85,9 +85,26 @@ async def main(args: Namespace) -> None:
 
         await say(f'It is {current_time}.')
 
-    async def say_weather() -> None:
-        weather = await weather_provider.get_description()
-        await say(weather)
+    async def say_weather(transcript: str) -> None:
+        today = tomorrow = this_week = False
+
+        if 'today' in transcript:
+            today = True
+        if 'tomorrow' in transcript:
+            tomorrow = True
+        if 'this week' in transcript:
+            this_week = True
+        if not (today or tomorrow or this_week):
+            today = tomorrow = True
+
+        weather = await weather_provider.get_weather()
+
+        if today:
+            await say(weather.today)
+        if tomorrow:
+            await say(weather.tomorrow)
+        if this_week:
+            await say(weather.this_week)
 
     async def say(message: str) -> None:
         print(repr(message))

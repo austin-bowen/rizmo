@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 
 import python_weather
 
@@ -22,17 +23,30 @@ class WeatherProvider:
     async def close(self) -> None:
         await self.client.close()
 
-    async def get_description(self) -> str:
+    async def get_weather(self) -> 'Weather':
         weather = await self.client.get(self.location)
 
         forecast = next(iter(weather))
         high = forecast.highest_temperature
         low = forecast.lowest_temperature
 
-        return (
+        today = (
             f'It is {weather.temperature} degrees and {weather.kind}, '
             f'with a forecasted high of {high}, and a low of {low}.'
         )
+
+        # TODO
+        tomorrow = f'Tomorrow, {today}'
+        this_week = f'This week, {today}'
+
+        return Weather(today, tomorrow, this_week)
+
+
+@dataclass
+class Weather:
+    today: str
+    tomorrow: str
+    this_week: str
 
 
 async def main():
