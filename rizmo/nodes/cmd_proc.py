@@ -96,7 +96,7 @@ async def main(args: Namespace) -> None:
         if 'tomorrow' in transcript:
             tomorrow = True
         if 'this week' in transcript:
-            this_week = True
+            today = tomorrow = this_week = True
         if not (today or tomorrow or this_week):
             today = tomorrow = True
 
