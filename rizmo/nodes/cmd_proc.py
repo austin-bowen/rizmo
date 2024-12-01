@@ -87,6 +87,8 @@ async def main(args: Namespace) -> None:
         await say(f'It is {current_time}.')
 
     async def say_weather(transcript: str) -> None:
+        await say('Checking.')
+
         today = tomorrow = this_week = False
 
         if 'today' in transcript:
