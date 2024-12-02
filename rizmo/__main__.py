@@ -40,7 +40,7 @@ host_nodes = {
 def main(args: Namespace):
     host = socket.gethostname()
     nodes_to_start = host_nodes[host]
-    print(f'Starting nodes: {nodes_to_start}')
+    print(f'Starting nodes: {[n.name for n in nodes_to_start]}')
 
     os.makedirs('logs', exist_ok=True)
 
