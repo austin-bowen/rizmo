@@ -108,7 +108,7 @@ async def main(args: Namespace) -> None:
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
-        x_gain = -3 * gain_scalar
+        x_gain = -2 * gain_scalar
         y_gain = -2 * gain_scalar
         z_gain = 1 * gain_scalar
 
