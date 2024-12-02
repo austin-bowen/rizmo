@@ -79,7 +79,9 @@ async def main(args: Namespace) -> None:
         box = target.box
 
         object_x = box.x + box.width / 2
-        x_error = (2 * object_x / image_width) - 1
+        # Using image_height rather than image_width so the x and y errors
+        # are in the same units
+        x_error = (2 * object_x / image_height) - 1
 
         object_y = image_height - box.y
         if target.label == 'person':
@@ -103,8 +105,6 @@ async def main(args: Namespace) -> None:
                 low_fps_future.cancel()
                 low_fps_future = None
                 await go_high_fps()
-
-        x_error = min(max(-1., 1.5 * x_error), 1.)
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
