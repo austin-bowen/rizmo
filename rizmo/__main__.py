@@ -2,28 +2,37 @@ import argparse
 import os
 import socket
 from argparse import Namespace
+from dataclasses import dataclass, field
 from time import sleep
 
 from rizmo.config import IS_RIZMO, config
 from rizmo.procman import ProcessManager
 
+
+@dataclass
+class Node:
+    name: str
+    args: list[str] = field(default_factory=list)
+    count: int = 1
+
+
 host_nodes = {
     'rizmo': (
-        'camera',
-        'cmd_proc',
-        'maestro_ctl',
-        'mic',
-        'obj_tracker',
-        'speech',
-        'website',
+        Node('camera'),
+        Node('cmd_proc'),
+        Node('maestro_ctl'),
+        Node('mic'),
+        Node('obj_tracker'),
+        Node('speech'),
+        Node('website'),
     ),
     'potato': (
-        ('obj_rec', 2),
-        'vad',
-        'asr',
+        Node('obj_rec', count=2),
+        Node('vad'),
+        Node('asr'),
     ),
     'austin-laptop': (
-        'monitor',
+        Node('monitor'),
     )
 }
 
@@ -44,21 +53,17 @@ def main(args: Namespace):
             sleep(1)
 
         for node in nodes_to_start:
-            if isinstance(node, str):
-                count = 1
-            else:
-                node, count = node
-
-            if node in args.exclude:
-                print(f'Skipping {node}')
+            if node.name in args.exclude:
+                print(f'Skipping {node.name}')
                 continue
 
             # Have to use shell mode to redirect output to a file
             with p.options(shell=True):
-                for _ in range(count):
+                for _ in range(node.count):
                     p.start_python(
-                        '-u', '-m', f'rizmo.nodes.{node}',
-                        '|', 'tee', f'logs/{node}.log',
+                        '-u', '-m', f'rizmo.nodes.{node.name}',
+                        *node.args,
+                        '|', 'tee', f'logs/{node.name}.log',
                     )
 
         try:
