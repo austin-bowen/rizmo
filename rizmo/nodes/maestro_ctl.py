@@ -17,6 +17,8 @@ from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, SetServoPosition
 from rizmo.signal import graceful_shutdown_on_sigterm
 
+CENTER = 1500
+
 
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
@@ -31,7 +33,7 @@ async def main(args: Namespace) -> None:
         maestro.set_limits(2, 512, 2208)
         for c in range(3):
             maestro.set_speed(c, 40)
-            maestro[c] = 1500
+            maestro[c] = CENTER
 
         async def handle_maestro_cmd(topic, command: Union[SetServoPosition, ChangeServoPosition]) -> None:
             print('[Maestro] Received command:', command)
@@ -55,7 +57,7 @@ async def main(args: Namespace) -> None:
             if command.pan_deg is not None:
                 maestro[0] = min(max(0, maestro[0] + command.pan_us), 4090)
             if command.tilt0_deg is not None:
-                maestro[1] = min(max(1500, maestro[1] + command.tilt0_us), 1750)
+                maestro[1] = min(max(CENTER, maestro[1] + command.tilt0_us), 1750)
             if command.tilt1_deg is not None:
                 maestro[2] = min(max(0, maestro[2] + command.tilt1_us), 4090)
 
@@ -64,8 +66,12 @@ async def main(args: Namespace) -> None:
         try:
             await forever()
         finally:
+            await node.stop_listening('maestro_cmd')
+
             for c in range(3):
-                maestro[c] = 1500
+                maestro[c] = CENTER
+
+            await asyncio.to_thread(maestro.wait_until_done_moving)
 
 
 def parse_args() -> Namespace:
