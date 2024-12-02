@@ -5,6 +5,7 @@ from easymesh import build_mesh_node_from_args
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import SetServoPosition
+from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 def get_servo_command() -> SetServoPosition:
@@ -49,4 +50,5 @@ def parse_args() -> Namespace:
 
 
 if __name__ == '__main__':
+    graceful_shutdown_on_sigterm()
     asyncio.run(main(parse_args()))

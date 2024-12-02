@@ -9,6 +9,7 @@ from easymesh.asyncio import forever
 from flask import Flask, render_template_string, send_file
 
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.signal import graceful_shutdown_on_sigterm
 
 app = Flask(__name__)
 
@@ -83,4 +84,5 @@ def parse_args() -> Namespace:
 
 
 if __name__ == '__main__':
+    graceful_shutdown_on_sigterm()
     asyncio.run(main(parse_args()))

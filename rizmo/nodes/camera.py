@@ -11,6 +11,7 @@ from easymesh.utils import require
 from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
+from rizmo.signal import graceful_shutdown_on_sigterm
 
 Image = np.ndarray
 
@@ -219,4 +220,5 @@ async def _read_camera(
 
 
 if __name__ == '__main__':
+    graceful_shutdown_on_sigterm()
     asyncio.run(main(parse_args()))

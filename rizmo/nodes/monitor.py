@@ -14,6 +14,7 @@ from easymesh.asyncio import forever
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
 from rizmo.nodes.messages import Detection, Detections
+from rizmo.signal import graceful_shutdown_on_sigterm
 
 Image = np.ndarray
 
@@ -166,4 +167,5 @@ def parse_args() -> Namespace:
 
 
 if __name__ == '__main__':
+    graceful_shutdown_on_sigterm()
     curses.wrapper(lambda stdscr: asyncio.run(main(parse_args(), stdscr)))

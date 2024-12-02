@@ -19,6 +19,7 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import Audio
+from rizmo.signal import graceful_shutdown_on_sigterm
 
 PRE_BUFFER_DURATION_S = 1.
 """How much previous audio to prepend to the audio buffer when voice is detected."""
@@ -170,4 +171,5 @@ def parse_args() -> Namespace:
 
 
 if __name__ == '__main__':
+    graceful_shutdown_on_sigterm()
     asyncio.run(main(parse_args()))

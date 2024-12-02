@@ -15,6 +15,7 @@ from maestro import Maestro
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, SetServoPosition
+from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
@@ -73,4 +74,5 @@ def parse_args() -> Namespace:
 
 
 if __name__ == '__main__':
+    graceful_shutdown_on_sigterm()
     asyncio.run(main(parse_args()))

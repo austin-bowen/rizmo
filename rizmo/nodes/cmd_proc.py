@@ -9,6 +9,7 @@ from easymesh.asyncio import forever
 
 from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
 NAME = 'rizmo'
@@ -150,4 +151,5 @@ def parse_args() -> Namespace:
 
 
 if __name__ == '__main__':
+    graceful_shutdown_on_sigterm()
     asyncio.run(main(parse_args()))
