@@ -6,10 +6,10 @@ from typing import Optional, Union
 import cv2
 import numpy as np
 import torch
+import ultralytics
 from PIL import Image as PILImage
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
-from transformers import YolosForObjectDetection, YolosImageProcessor
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -127,6 +127,51 @@ class HuggingFaceDetector(ObjectDetector):
         return objects
 
 
+class UltralyticsDetector(ObjectDetector):
+    def __init__(
+            self,
+            model: ultralytics.YOLO,
+            conf: float,
+    ):
+        self.model = model
+        self.conf = conf
+
+    @classmethod
+    def from_pretrained(
+            cls,
+            model_name: str,
+            conf: float,
+    ) -> 'UltralyticsDetector':
+        model = ultralytics.YOLO(model_name)
+        return cls(model, conf)
+
+    def get_objects(self, image: Image) -> list[Detection]:
+        result = self.model(image, conf=self.conf)[0]
+
+        return [self._to_detection(box) for box in result.boxes]
+
+    def _to_detection(self, ul_box) -> Detection:
+        label_idx = ul_box.cls.item()
+        label = self.model.names[label_idx]
+
+        confidence = ul_box.conf.item()
+
+        xyxy = ul_box.xyxy.cpu().numpy()[0]
+        xyxy = [round(it) for it in xyxy]
+        box = Box(
+            x=xyxy[0],
+            y=xyxy[1],
+            width=xyxy[2] - xyxy[0],
+            height=xyxy[3] - xyxy[1],
+        )
+
+        return Detection(
+            label,
+            confidence,
+            box,
+        )
+
+
 class Scaler:
     def __init__(self, factor: int):
         self.factor = factor
@@ -152,12 +197,18 @@ async def main(args: Namespace):
 
     obj_det_topic = node.get_topic_sender('objects_detected')
 
-    obj_detector = HuggingFaceDetector.from_pretrained(
-        # 'facebook/detr-resnet-50', DetrForObjectDetection, DetrImageProcessor,
-        # 'facebook/detr-resnet-101', DetrForObjectDetection, DetrImageProcessor,
-        'hustvl/yolos-tiny', YolosForObjectDetection, YolosImageProcessor,
-        # 'hustvl/yolos-small', YolosForObjectDetection, YolosImageProcessor,
-        # allow_labels={'person', 'cat'},
+    # obj_detector = HuggingFaceDetector.from_pretrained(
+    #     # 'facebook/detr-resnet-50', DetrForObjectDetection, DetrImageProcessor,
+    #     # 'facebook/detr-resnet-101', DetrForObjectDetection, DetrImageProcessor,
+    #     'hustvl/yolos-tiny', YolosForObjectDetection, YolosImageProcessor,
+    #     # 'hustvl/yolos-small', YolosForObjectDetection, YolosImageProcessor,
+    #     # allow_labels={'person', 'cat'},
+    # )
+
+    obj_detector = UltralyticsDetector.from_pretrained(
+        'yolo11n.pt',
+        # 'yolo11x.pt',
+        conf=.5,
     )
 
     scaler = Scaler(1)
