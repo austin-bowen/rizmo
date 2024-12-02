@@ -24,16 +24,18 @@ async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
     print('Connecting to Maestro...')
-    with Maestro.connect('mini12', tty='/dev/ttyACM0') as maestro:
+    with Maestro.connect('mini12', tty='/dev/ttyACM0', safe_close=False) as maestro:
         print('Connected!')
+
+        def center_servos():
+            for c in range(3):
+                maestro[c] = CENTER
 
         maestro.stop()
         maestro.set_limits(0, 400, 2600)
         maestro.set_limits(1, 512, 2488)
         maestro.set_limits(2, 512, 2208)
-        for c in range(3):
-            maestro.set_speed(c, 40)
-            maestro[c] = CENTER
+        center_servos()
 
         async def handle_maestro_cmd(topic, command: Union[SetServoPosition, ChangeServoPosition]) -> None:
             print('[Maestro] Received command:', command)
@@ -66,12 +68,7 @@ async def main(args: Namespace) -> None:
         try:
             await forever()
         finally:
-            await node.stop_listening('maestro_cmd')
-
-            for c in range(3):
-                maestro[c] = CENTER
-
-            await asyncio.to_thread(maestro.wait_until_done_moving)
+            center_servos()
 
 
 def parse_args() -> Namespace:
