@@ -22,6 +22,7 @@ TILT0 = 1
 TILT1 = 2
 
 CENTER = 1500
+SPEED = 40
 
 
 async def main(args: Namespace) -> None:
@@ -33,6 +34,7 @@ async def main(args: Namespace) -> None:
 
         def center_servos():
             for c in (PAN, TILT0, TILT1):
+                maestro.set_speed(c, SPEED)
                 maestro[c] = CENTER
 
         maestro.stop()
