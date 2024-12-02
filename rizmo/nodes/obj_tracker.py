@@ -79,9 +79,9 @@ async def main(args: Namespace) -> None:
         box = target.box
 
         object_x = box.x + box.width / 2
-        # Using image_height rather than image_width so the x and y errors
-        # are in the same units
-        x_error = (2 * object_x / image_height) - 1
+        # Calculate x_error in same scale as image height
+        # so x_error and y_error have same scale
+        x_error = (2 * object_x - image_width) / image_height
 
         object_y = image_height - box.y
         if target.label == 'person':
