@@ -11,6 +11,9 @@ from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, Detection, Detections
 from rizmo.signal import graceful_shutdown_on_sigterm
 
+AVG_LATENCY = 0.0463
+"""Gains were tuned with this average latency."""
+
 
 def get_tracked_object(
         objects: Iterable[Detection],
@@ -103,10 +106,16 @@ async def main(args: Namespace) -> None:
 
         x_error = min(max(-1., 1.5 * x_error), 1.)
 
+        # This decreases gain as latency increases to prevent overshooting
+        gain_scalar = AVG_LATENCY / latency
+        x_gain = -3 * gain_scalar
+        y_gain = -2 * gain_scalar
+        z_gain = 1 * gain_scalar
+
         maestro_cmd = ChangeServoPosition(
-            pan_deg=-3 * x_error,
-            tilt0_deg=1 * z_error,
-            tilt1_deg=-2 * y_error,
+            pan_deg=x_gain * x_error,
+            tilt0_deg=z_gain * z_error,
+            tilt1_deg=y_gain * y_error,
         )
 
         await maestro_cmd_topic.send(maestro_cmd)
