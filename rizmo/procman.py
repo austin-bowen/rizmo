@@ -4,11 +4,7 @@ from subprocess import Popen, TimeoutExpired
 
 
 class ProcessManager:
-    def __init__(
-            self,
-            python_exe: str = 'python',
-            shell: bool = False,
-    ):
+    def __init__(self, python_exe: str = 'python'):
         self.python_exe = python_exe
 
         self._options = Options()
@@ -44,7 +40,6 @@ class ProcessManager:
 
     def stop(self, timeout=10.):
         print(f'Stopping {len(self.processes)} processes...')
-
         for process in self.processes:
             process.send_signal(signal.SIGTERM)
 
@@ -56,13 +51,12 @@ class ProcessManager:
                 print(f'Process {process.pid} did not stop in time.')
                 procs_to_kill.append(process)
 
-        if procs_to_kill:
-            for process in procs_to_kill:
-                print(f'Killing process {process.pid}')
-                process.kill()
+        for process in procs_to_kill:
+            print(f'Killing process {process.pid}')
+            process.kill()
 
-            for process in procs_to_kill:
-                process.wait()
+        for process in procs_to_kill:
+            process.wait()
 
     def wait(self, timeout: float = None):
         for process in self.processes:
