@@ -25,43 +25,6 @@ class ObjectDetector:
         ...
 
 
-class CascadeDetector(ObjectDetector):
-    def __init__(self):
-        self.human_face_classifier = cv2.CascadeClassifier(
-            cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-        )
-        self.cat_face_classifier = cv2.CascadeClassifier(
-            cv2.data.haarcascades + 'haarcascade_frontalcatface.xml'
-        )
-        self.use_classifiers = {
-            'human_face',
-            # 'cat_face',
-        }
-
-    def get_objects(self, image: Image) -> list[Detection]:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        objects = []
-
-        for label, classifier in [
-            ('human_face', self.human_face_classifier),
-            ('cat_face', self.cat_face_classifier),
-        ]:
-            if label not in self.use_classifiers:
-                continue
-
-            detections = classifier.detectMultiScale(
-                gray,
-                scaleFactor=1.1,
-                minNeighbors=5,
-                minSize=(30, 30),
-            )
-
-            objects.extend(Detection(label, 1.0, *coords) for coords in detections)
-
-        return objects
-
-
 class HuggingFaceDetector(ObjectDetector):
     def __init__(self, model, image_processor, threshold: float, allow_labels: Optional[set[str]]):
         self.model = model
