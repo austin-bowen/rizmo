@@ -15,29 +15,6 @@ AVG_LATENCY = 0.0463
 """Gains were tuned with this average latency."""
 
 
-def get_tracked_object(
-        objects: Iterable[Detection],
-        labels=(
-                'cat',
-                'dog',
-                'person',
-        ),
-) -> Optional[Detection]:
-    labels_set = set(labels)
-    objects = filter(lambda obj: obj.label in labels_set, objects)
-
-    label_priorities = {l: len(labels) - i for i, l in enumerate(labels)}
-
-    return max(
-        objects,
-        key=lambda o: (
-            label_priorities[o.label],
-            o.box.area,
-        ),
-        default=None,
-    )
-
-
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
@@ -123,6 +100,29 @@ async def main(args: Namespace) -> None:
     await node.listen('objects_detected', handle_objects_detected)
 
     await forever()
+
+
+def get_tracked_object(
+        objects: Iterable[Detection],
+        labels=(
+                'cat',
+                'dog',
+                'person',
+        ),
+) -> Optional[Detection]:
+    labels_set = set(labels)
+    objects = filter(lambda obj: obj.label in labels_set, objects)
+
+    label_priorities = {l: len(labels) - i for i, l in enumerate(labels)}
+
+    return max(
+        objects,
+        key=lambda o: (
+            label_priorities[o.label],
+            o.box.area,
+        ),
+        default=None,
+    )
 
 
 def parse_args() -> Namespace:
