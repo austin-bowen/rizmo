@@ -66,7 +66,7 @@ async def main(args: Namespace) -> None:
         for c in SERVOS:
             maestro[c] = CENTER
 
-    print(f'Connecting to Maestro on {args.tty:r}...')
+    print(f'Connecting to Maestro on {args.tty!r}...')
     with Maestro.connect('mini12', tty=args.tty, safe_close=False) as maestro:
         print('Connected!')
 
