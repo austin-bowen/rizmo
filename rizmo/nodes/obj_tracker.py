@@ -79,7 +79,7 @@ async def main(args: Namespace) -> None:
 
         if abs(x_error) < 0.2:
             x_error = cache.prev_x_error = 0
-        if abs(y_error) < 0.05:
+        if abs(y_error) < 0.1:
             y_error = 0
 
         if x_error == 0 and y_error == 0:
@@ -94,7 +94,7 @@ async def main(args: Namespace) -> None:
         # PD control
         pan_deg = 3 * x_error + 8 * (x_error - cache.prev_x_error)
         tilt0_deg = 1 * z_error
-        tilt1_deg = 3 * y_error
+        tilt1_deg = 2.5 * y_error
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
