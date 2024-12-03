@@ -110,49 +110,31 @@ class UltralyticsDetector(ObjectDetector):
 
     def get_objects(self, image: Image) -> list[Detection]:
         result = self.model(image, conf=self.conf)[0]
-
         return [self._to_detection(box) for box in result.boxes]
 
     def _to_detection(self, ul_box) -> Detection:
+        return Detection(
+            self._get_label(ul_box),
+            self._get_confidence(ul_box),
+            self._get_box(ul_box),
+        )
+
+    def _get_label(self, ul_box) -> str:
         label_idx = ul_box.cls.item()
-        label = self.model.names[label_idx]
+        return self.model.names[label_idx]
 
-        confidence = ul_box.conf.item()
+    def _get_confidence(self, ul_box) -> float:
+        return ul_box.conf.item()
 
+    def _get_box(self, ul_box) -> Box:
         xyxy = ul_box.xyxy.cpu().numpy()[0]
         xyxy = [round(it) for it in xyxy]
-        box = Box(
+        return Box(
             x=xyxy[0],
             y=xyxy[1],
             width=xyxy[2] - xyxy[0],
             height=xyxy[3] - xyxy[1],
         )
-
-        return Detection(
-            label,
-            confidence,
-            box,
-        )
-
-
-class Scaler:
-    def __init__(self, factor: int):
-        self.factor = factor
-
-    def scale_down_image(self, image: np.ndarray) -> np.ndarray:
-        return image if self.factor == 1 else image[::self.factor, ::self.factor, :]
-
-    def scale_up_detections(self, detections: list[Detection]) -> list[Detection]:
-        if self.factor == 1:
-            return detections
-
-        for det in detections:
-            det.box.x *= self.factor
-            det.box.y *= self.factor
-            det.box.width *= self.factor
-            det.box.height *= self.factor
-
-        return detections
 
 
 async def main(args: Namespace):
@@ -174,15 +156,11 @@ async def main(args: Namespace):
         conf=.5,
     )
 
-    scaler = Scaler(1)
-
     codec = JpegImageCodec()
 
     def get_objects(image_bytes: bytes) -> list[Detection]:
         image = codec.decode(image_bytes)
-        scaled_image = scaler.scale_down_image(image)
-        objects = obj_detector.get_objects(scaled_image)
-        return scaler.scale_up_detections(objects)
+        return obj_detector.get_objects(image)
 
     @obj_det_topic.depends_on_listener()
     async def handle_image(topic, data):
