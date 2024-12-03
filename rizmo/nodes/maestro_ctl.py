@@ -17,6 +17,8 @@ from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, SetServoPosition
 from rizmo.signal import graceful_shutdown_on_sigterm
 
+DEFAULT_TTY = '/dev/ttyACM0'
+
 PAN = 0
 TILT0 = 1
 TILT1 = 2
@@ -64,8 +66,8 @@ async def main(args: Namespace) -> None:
         for c in SERVOS:
             maestro[c] = CENTER
 
-    print('Connecting to Maestro...')
-    with Maestro.connect('mini12', tty='/dev/ttyACM0', safe_close=False) as maestro:
+    print(f'Connecting to Maestro on {args.tty:r}...')
+    with Maestro.connect('mini12', tty=args.tty, safe_close=False) as maestro:
         print('Connected!')
 
         # Setup servos
@@ -87,6 +89,13 @@ async def main(args: Namespace) -> None:
 
 def parse_args() -> Namespace:
     parser = get_rizmo_node_arg_parser('maestro-ctl')
+
+    parser.add_argument(
+        '--tty',
+        default=DEFAULT_TTY,
+        help="The tty device to connect to the Maestro controller. Default: %(default)s",
+    )
+
     return parser.parse_args()
 
 
