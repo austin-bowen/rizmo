@@ -67,7 +67,7 @@ async def main(args: Namespace) -> None:
 
         object_y = image_height - box.y
         if target.label == 'person':
-            object_y -= .3 * box.height
+            object_y -= .3 * box.height if object_y < image_height - 10 else 0
         else:
             object_y -= .5 * box.height
         y_error = (2 * object_y / image_height) - 1
