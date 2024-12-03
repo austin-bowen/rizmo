@@ -2,6 +2,7 @@ import asyncio
 import time
 from argparse import Namespace
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import Optional
 
 from easymesh import build_mesh_node_from_args
@@ -22,7 +23,12 @@ async def main(args: Namespace) -> None:
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
 
     high_fps, low_fps = 30, 5
-    low_fps_future = None
+
+    @dataclass
+    class Cache:
+        low_fps_future: asyncio.Future = None
+
+    cache = Cache()
 
     async def set_fps(fps: float) -> None:
         await node.send('set_fps_limit', fps)
@@ -36,8 +42,6 @@ async def main(args: Namespace) -> None:
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
-        nonlocal low_fps_future
-
         latency = time.time() - data.timestamp
         image_width, image_height = 1280 / 2, 720 / 2
 
@@ -48,8 +52,8 @@ async def main(args: Namespace) -> None:
         print(f'latency: {latency}')
         print(f'tracking: {target}')
         if target is None:
-            if low_fps_future is None:
-                low_fps_future = asyncio.create_task(go_low_fps())
+            if cache.low_fps_future is None:
+                cache.low_fps_future = asyncio.create_task(go_low_fps())
 
             return
 
@@ -75,12 +79,12 @@ async def main(args: Namespace) -> None:
         if (x_error ** 2 + y_error ** 2) ** 0.5 <= 0.1:
             x_error = y_error = 0
 
-            if low_fps_future is None:
-                low_fps_future = asyncio.create_task(go_low_fps())
+            if cache.low_fps_future is None:
+                cache.low_fps_future = asyncio.create_task(go_low_fps())
         else:
-            if low_fps_future is not None:
-                low_fps_future.cancel()
-                low_fps_future = None
+            if cache.low_fps_future is not None:
+                cache.low_fps_future.cancel()
+                cache.low_fps_future = None
                 await go_high_fps()
 
         # This decreases gain as latency increases to prevent overshooting
