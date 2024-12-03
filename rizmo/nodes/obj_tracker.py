@@ -12,7 +12,7 @@ from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, Detection, Detections
 from rizmo.signal import graceful_shutdown_on_sigterm
 
-AVG_LATENCY = 0.0463
+AVG_LATENCY = 0.0367
 """Gains were tuned with this average latency."""
 
 
@@ -27,6 +27,7 @@ async def main(args: Namespace) -> None:
     @dataclass
     class Cache:
         low_fps_future: asyncio.Future = None
+        prev_x_error: float = 0.
 
     cache = Cache()
 
@@ -76,9 +77,12 @@ async def main(args: Namespace) -> None:
 
         print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
-        if (x_error ** 2 + y_error ** 2) ** 0.5 <= 0.1:
-            x_error = y_error = 0
+        if abs(x_error) < 0.2:
+            x_error = cache.prev_x_error = 0
+        if abs(y_error) < 0.05:
+            y_error = 0
 
+        if x_error == 0 and y_error == 0:
             if cache.low_fps_future is None:
                 cache.low_fps_future = asyncio.create_task(go_low_fps())
         else:
@@ -87,16 +91,19 @@ async def main(args: Namespace) -> None:
                 cache.low_fps_future = None
                 await go_high_fps()
 
+        # PD control
+        pan_deg = 3 * x_error + 8 * (x_error - cache.prev_x_error)
+        tilt0_deg = 1 * z_error
+        tilt1_deg = 3 * y_error
+
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
-        x_gain = -2 * gain_scalar
-        y_gain = -2 * gain_scalar
-        z_gain = 1 * gain_scalar
+        cache.prev_x_error = x_error
 
         maestro_cmd = ChangeServoPosition(
-            pan_deg=x_gain * x_error,
-            tilt0_deg=z_gain * z_error,
-            tilt1_deg=y_gain * y_error,
+            pan_deg=-pan_deg * gain_scalar,
+            tilt0_deg=tilt0_deg * gain_scalar,
+            tilt1_deg=-tilt1_deg * gain_scalar,
         )
 
         await maestro_cmd_topic.send(maestro_cmd)
