@@ -130,7 +130,8 @@ def parse_args() -> Namespace:
         '--resolution', '-r',
         default=config.camera_resolution,
         type=resolution_type,
-        help='Camera resolution as "width,height". Default: %(default)s. '
+        metavar='WIDTH,HEIGHT',
+        help='Camera resolution. Default: %(default)s. '
              'Other options: 640,360; 1920,1080',
     )
 
