@@ -37,6 +37,11 @@ class Detection:
 @dataclass(slots=True)
 class Detections:
     timestamp: float
+    """Timestamp of when the image was taken."""
+
+    image_size: tuple[int, int]
+    """Width and height of the image."""
+
     objects: list[Detection]
 
 

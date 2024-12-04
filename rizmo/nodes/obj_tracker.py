@@ -44,7 +44,7 @@ async def main(args: Namespace) -> None:
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
         latency = time.time() - data.timestamp
-        image_width, image_height = 1280 / 2, 720 / 2
+        image_width, image_height = data.image_size
 
         target = get_tracked_object(data.objects)
         await tracking_topic.send(target)

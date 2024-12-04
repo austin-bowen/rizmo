@@ -158,17 +158,18 @@ async def main(args: Namespace):
 
     codec = JpegImageCodec()
 
-    def get_objects(image_bytes: bytes) -> list[Detection]:
+    def get_objects(image_bytes: bytes) -> tuple[tuple[int, int], list[Detection]]:
         image = codec.decode(image_bytes)
-        return obj_detector.get_objects(image)
+        image_size = (image.shape[1], image.shape[0])
+        return image_size, obj_detector.get_objects(image)
 
     @obj_det_topic.depends_on_listener()
     async def handle_image(topic, data):
         timestamp, camera_index, image_bytes = data
 
-        objects = await asyncio.to_thread(get_objects, image_bytes)
+        image_size, objects = await asyncio.to_thread(get_objects, image_bytes)
 
-        await obj_det_topic.send(Detections(timestamp, objects))
+        await obj_det_topic.send(Detections(timestamp, image_size, objects))
 
     await node.listen('new_image', handle_image)
 
