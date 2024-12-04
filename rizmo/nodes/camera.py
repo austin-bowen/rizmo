@@ -198,7 +198,6 @@ async def _read_camera(
             continue
 
         timestamp = time.time()
-        image = image[::2, ::2]
         image_bytes = codec.encode(image)
         await new_image_topic.send((timestamp, camera_index, image_bytes))
 
