@@ -104,6 +104,7 @@ async def main(args: Namespace) -> None:
     await _read_camera(
         node,
         args.camera_index,
+        args.resolution,
         args.camera_fps,
         fps_limit=args.fps_limit,
         show_raw_image=args.show_raw_image,
@@ -119,6 +120,19 @@ def parse_args() -> Namespace:
         default=config.camera_index,
         type=int,
         help='Camera index. Default: %(default)s',
+    )
+
+    def resolution_type(value: str) -> tuple[int, int]:
+        w, h = value.split(',', maxsplit=1)
+        return int(w), int(h)
+
+    default = ','.join(config.camera_resolution)
+    parser.add_argument(
+        '--resolution', '-r',
+        default=config.camera_resolution,
+        type=resolution_type,
+        help=f'Camera resolution as "width,height". Default: {default}. '
+             f'Other options: 640,360; 1920,1080',
     )
 
     parser.add_argument(
@@ -152,6 +166,7 @@ def parse_args() -> Namespace:
 async def _read_camera(
         node,
         camera_index: int,
+        resolution: tuple[int, int],
         camera_fps: float,
         fps_limit: Optional[float] = None,
         show_raw_image: bool = False,
@@ -162,9 +177,7 @@ async def _read_camera(
 
     camera_builder = lambda: Camera(
         camera_index,
-        # resolution=(640, 360),
-        resolution=(1280, 720),
-        # resolution=(1920, 1080),
+        resolution,
         fps=camera_fps,
         codec='MJPG',
         props={

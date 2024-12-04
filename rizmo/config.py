@@ -17,6 +17,7 @@ class Config:
     mesh_authkey: bytes = b'rizmo'
 
     camera_index: int = 0
+    camera_resolution: tuple[int, int] = (1280, 720)
 
     weather_location: str = 'Anderson, SC'
 
