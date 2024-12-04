@@ -126,13 +126,12 @@ def parse_args() -> Namespace:
         w, h = value.split(',', maxsplit=1)
         return int(w), int(h)
 
-    default = ','.join(config.camera_resolution)
     parser.add_argument(
         '--resolution', '-r',
         default=config.camera_resolution,
         type=resolution_type,
-        help=f'Camera resolution as "width,height". Default: {default}. '
-             f'Other options: 640,360; 1920,1080',
+        help='Camera resolution as "width,height". Default: %(default)s. '
+             'Other options: 640,360; 1920,1080',
     )
 
     parser.add_argument(
