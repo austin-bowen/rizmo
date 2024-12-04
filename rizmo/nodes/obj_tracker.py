@@ -28,6 +28,7 @@ async def main(args: Namespace) -> None:
     class Cache:
         low_fps_future: asyncio.Future = None
         prev_x_error: float = 0.
+        last_t: float = float('-inf')
 
     cache = Cache()
 
@@ -43,7 +44,8 @@ async def main(args: Namespace) -> None:
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
-        latency = time.time() - data.timestamp
+        now = time.time()
+        latency = now - data.timestamp
         image_width, image_height = data.image_size
 
         target = get_tracked_object(data.objects)
@@ -79,7 +81,7 @@ async def main(args: Namespace) -> None:
 
         if abs(x_error) < 0.2:
             x_error = cache.prev_x_error = 0
-        if abs(y_error) < 0.1:
+        if abs(y_error) < 0.15:
             y_error = 0
 
         if x_error == 0 and y_error == 0:
@@ -92,13 +94,15 @@ async def main(args: Namespace) -> None:
                 await go_high_fps()
 
         # PD control
-        pan_deg = 3 * x_error + 8 * (x_error - cache.prev_x_error)
+        dt = now - cache.last_t
+        pan_deg = 2.5 * x_error + 0.25 * (x_error - cache.prev_x_error) / dt
         tilt0_deg = 1 * z_error
         tilt1_deg = 2.5 * y_error
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
         cache.prev_x_error = x_error
+        cache.last_t = now
 
         maestro_cmd = ChangeServoPosition(
             pan_deg=-pan_deg * gain_scalar,
