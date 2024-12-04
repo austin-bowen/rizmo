@@ -10,7 +10,14 @@ def graceful_shutdown_on_sigterm():
     the signal as SIGINT.
     """
 
-    def _handler(signum, frame):
-        os.kill(os.getpid(), signal.SIGINT)
+    handled = False
 
+    def _handler(signum, frame):
+        nonlocal handled
+
+        if not handled:
+            handled = True
+            os.kill(os.getpid(), signal.SIGINT)
+
+    signal.signal(signal.SIGHUP, _handler)
     signal.signal(signal.SIGTERM, _handler)
