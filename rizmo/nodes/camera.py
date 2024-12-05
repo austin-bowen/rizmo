@@ -162,8 +162,6 @@ async def _read_camera(
     delayed_low_fps = DelayedCallback(3, low_fps)
 
     while True:
-        t0 = time.monotonic()
-
         try:
             image = await camera.get_image()
         except CameraCaptureError as e:
@@ -172,29 +170,26 @@ async def _read_camera(
             continue
 
         timestamp = time.time()
-        image_bytes = codec.encode(image)
-
-        print('.', end='', flush=True)
-
-        if cache.fps_limit is None or (timestamp - cache.t_last_send) >= 1 / cache.fps_limit:
-            await new_image_topic.send((timestamp, camera_index, image_bytes))
-            cache.t_last_send = timestamp
-
-            if cache.fps_limit is not None:
-                print('s', end='', flush=True)
-
         motion = motion_detector.is_motion(image)
 
         if motion != cache.prev_motion:
-            if motion:
+            cache.prev_motion = motion
+
+            if not motion:
+                await delayed_low_fps.schedule()
+            else:
                 await delayed_low_fps.cancel()
 
                 if cache.fps_limit != max_fps:
                     print(f'\nSwitching to high FPS: {max_fps}')
                     cache.fps_limit = max_fps
-            else:
-                await delayed_low_fps.schedule()
-        cache.prev_motion = motion
+
+        if cache.fps_limit is None or (timestamp - cache.t_last_send) >= 1 / cache.fps_limit:
+            image_bytes = codec.encode(image)
+            await new_image_topic.send((timestamp, camera_index, image_bytes))
+
+            cache.t_last_send = timestamp
+            print('.', end='', flush=True)
 
         if show_raw_image:
             cv2.imshow(f'Camera {camera_index}: Raw Image', image)
@@ -204,11 +199,6 @@ async def _read_camera(
             await camera.close()
             await new_image_topic.wait_for_listener(.1)
             camera = camera_builder()
-
-        # if cache.fps_limit is not None:
-        #     wait_time = 1 / cache.fps_limit - (time.monotonic() - t0)
-        #     if wait_time > 0:
-        #         await asyncio.sleep(wait_time)
 
 
 def parse_args() -> Namespace:
