@@ -155,6 +155,7 @@ async def _read_camera(
     cache = Cache()
 
     async def low_fps():
+        print(f'\nSwitching to low FPS: {min_fps}')
         cache.fps_limit = min_fps
 
     delayed_low_fps = DelayedCallback(3, low_fps)
@@ -182,7 +183,8 @@ async def _read_camera(
 
         if motion:
             await delayed_low_fps.cancel()
-            cache.fps_limit = fps_limit
+            print(f'\nSwitching to high FPS: {max_fps}')
+            cache.fps_limit = max_fps
         else:
             await delayed_low_fps.schedule()
 
