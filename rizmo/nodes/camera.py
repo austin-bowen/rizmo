@@ -150,6 +150,7 @@ async def _read_camera(
 
     class Cache:
         fps_limit: float = max_fps
+        t_last_send: float = 0.
         prev_motion: bool = None
 
     cache = Cache()
@@ -172,7 +173,10 @@ async def _read_camera(
 
         timestamp = time.time()
         image_bytes = codec.encode(image)
-        await new_image_topic.send((timestamp, camera_index, image_bytes))
+
+        if cache.fps_limit is None or (timestamp - cache.t_last_send) >= 1 / cache.fps_limit:
+            await new_image_topic.send((timestamp, camera_index, image_bytes))
+            cache.t_last_send = timestamp
 
         print('.', end='', flush=True)
 
@@ -198,10 +202,10 @@ async def _read_camera(
             await new_image_topic.wait_for_listener(.1)
             camera = camera_builder()
 
-        if cache.fps_limit is not None:
-            wait_time = 1 / cache.fps_limit - (time.monotonic() - t0)
-            if wait_time > 0:
-                await asyncio.sleep(wait_time)
+        # if cache.fps_limit is not None:
+        #     wait_time = 1 / cache.fps_limit - (time.monotonic() - t0)
+        #     if wait_time > 0:
+        #         await asyncio.sleep(wait_time)
 
 
 def parse_args() -> Namespace:
