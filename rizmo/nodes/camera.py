@@ -181,8 +181,10 @@ async def _read_camera(
         if motion != cache.prev_motion:
             if motion:
                 await delayed_low_fps.cancel()
-                print(f'\nSwitching to high FPS: {max_fps}')
-                cache.fps_limit = max_fps
+
+                if cache.fps_limit != max_fps:
+                    print(f'\nSwitching to high FPS: {max_fps}')
+                    cache.fps_limit = max_fps
             else:
                 await delayed_low_fps.schedule()
         cache.prev_motion = motion
