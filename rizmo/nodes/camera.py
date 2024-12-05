@@ -146,14 +146,16 @@ async def _read_camera(
 
     codec = JpegImageCodec(quality=jpeg_quality)
 
+    min_fps, max_fps = 5, fps_limit
+
     class Cache:
-        fps_limit: float = fps_limit
+        fps_limit: float = max_fps
         prev_motion: bool = False
 
     cache = Cache()
 
     async def low_fps():
-        cache.fps_limit = 5.
+        cache.fps_limit = min_fps
 
     delayed_low_fps = DelayedCallback(3, low_fps)
 
