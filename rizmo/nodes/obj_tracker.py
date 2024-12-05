@@ -22,25 +22,12 @@ async def main(args: Namespace) -> None:
     tracking_topic = node.get_topic_sender('tracking')
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
 
-    high_fps, low_fps = 30, 5
-
     @dataclass
     class Cache:
-        low_fps_future: asyncio.Future = None
         prev_x_error: float = 0.
         last_t: float = float('-inf')
 
     cache = Cache()
-
-    async def set_fps(fps: float) -> None:
-        await node.send('set_fps_limit', fps)
-
-    async def go_low_fps() -> None:
-        await asyncio.sleep(3)
-        await set_fps(low_fps)
-
-    async def go_high_fps() -> None:
-        await set_fps(high_fps)
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
@@ -54,11 +41,6 @@ async def main(args: Namespace) -> None:
         print()
         print(f'latency: {latency}')
         print(f'tracking: {target}')
-        if target is None:
-            if cache.low_fps_future is None:
-                cache.low_fps_future = asyncio.create_task(go_low_fps())
-
-            return
 
         box = target.box
 
@@ -83,15 +65,6 @@ async def main(args: Namespace) -> None:
             x_error = cache.prev_x_error = 0
         if abs(y_error) < 0.15:
             y_error = 0
-
-        if x_error == 0 and y_error == 0:
-            if cache.low_fps_future is None:
-                cache.low_fps_future = asyncio.create_task(go_low_fps())
-        else:
-            if cache.low_fps_future is not None:
-                cache.low_fps_future.cancel()
-                cache.low_fps_future = None
-                await go_high_fps()
 
         # PD control
         dt = now - cache.last_t
