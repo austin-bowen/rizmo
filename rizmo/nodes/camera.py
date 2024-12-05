@@ -139,7 +139,7 @@ async def _read_camera(
     camera = camera_builder()
 
     motion_detector = DynamicThresholdPixelChangeMotionDetector(
-        change=0.1,
+        change=0.15,
         alpha=0.01,
         subsample=8,
     )
