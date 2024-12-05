@@ -150,7 +150,7 @@ async def _read_camera(
 
     class Cache:
         fps_limit: float = max_fps
-        prev_motion: bool = False
+        prev_motion: bool = None
 
     cache = Cache()
 
@@ -177,16 +177,15 @@ async def _read_camera(
         print('.', end='', flush=True)
 
         motion = motion_detector.is_motion(image)
-        if motion != cache.prev_motion:
-            cache.prev_motion = motion
-            print(f'\nMotion: {motion}')
 
-        if motion:
-            await delayed_low_fps.cancel()
-            print(f'\nSwitching to high FPS: {max_fps}')
-            cache.fps_limit = max_fps
-        else:
-            await delayed_low_fps.schedule()
+        if motion != cache.prev_motion:
+            if motion:
+                await delayed_low_fps.cancel()
+                print(f'\nSwitching to high FPS: {max_fps}')
+                cache.fps_limit = max_fps
+            else:
+                await delayed_low_fps.schedule()
+        cache.prev_motion = motion
 
         if show_raw_image:
             cv2.imshow(f'Camera {camera_index}: Raw Image', image)
