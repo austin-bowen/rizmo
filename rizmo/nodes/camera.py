@@ -140,7 +140,7 @@ async def _read_camera(
     motion_detector = DynamicThresholdPixelChangeMotionDetector(
         change=0.1,
         alpha=0.01,
-        subsample=1,
+        subsample=8,
     )
 
     codec = JpegImageCodec(quality=jpeg_quality)
