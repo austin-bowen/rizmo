@@ -9,7 +9,7 @@ from easymesh import build_mesh_node_from_args
 from easymesh.utils import require
 
 from rizmo.config import config
-from rizmo.motion_detector import PixelChangeMotionDetector
+from rizmo.motion_detector import DynamicThresholdPixelChangeMotionDetector
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -137,7 +137,11 @@ async def _read_camera(
     )
     camera = camera_builder()
 
-    motion_detector = PixelChangeMotionDetector(threshold=.5, subsample=1)
+    motion_detector = DynamicThresholdPixelChangeMotionDetector(
+        change=0.1,
+        alpha=0.01,
+        subsample=1,
+    )
 
     codec = JpegImageCodec(quality=jpeg_quality)
 
@@ -168,8 +172,10 @@ async def _read_camera(
 
         print('.', end='', flush=True)
 
+        t00 = time.monotonic()
         motion = motion_detector.is_motion(image)
-        print(f'Motion: {motion}\t diff={motion_detector.diff:.4f}')
+        t00 = time.monotonic() - t00
+        print(f'Motion: {motion}\t diff={motion_detector.diff:.4f}\t avg_diff={motion_detector.avg_diff:.4f}\t t={t00:.4f}')
 
         if show_raw_image:
             cv2.imshow(f'Camera {camera_index}: Raw Image', image)
