@@ -8,6 +8,7 @@ import numpy as np
 from easymesh import build_mesh_node_from_args
 from easymesh.utils import require
 
+from rizmo.asyncio import DelayedCallback
 from rizmo.config import config
 from rizmo.motion_detector import DynamicThresholdPixelChangeMotionDetector
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -146,15 +147,15 @@ async def _read_camera(
     codec = JpegImageCodec(quality=jpeg_quality)
 
     class Cache:
-        def __init__(self):
-            self.fps_limit = fps_limit
-
-        async def handle_set_fps_limit(self, topic, value: float):
-            print(f'New FPS limit: {value}')
-            self.fps_limit = value
+        fps_limit: float = fps_limit
+        prev_motion: bool = False
 
     cache = Cache()
-    await node.listen('set_fps_limit', cache.handle_set_fps_limit)
+
+    async def low_fps():
+        cache.fps_limit = 5.
+
+    delayed_low_fps = DelayedCallback(3, low_fps)
 
     while True:
         t0 = time.monotonic()
@@ -172,10 +173,16 @@ async def _read_camera(
 
         print('.', end='', flush=True)
 
-        t00 = time.monotonic()
         motion = motion_detector.is_motion(image)
-        t00 = time.monotonic() - t00
-        print(f'Motion: {motion}\t diff={motion_detector.diff:.4f}\t avg_diff={motion_detector.avg_diff:.4f}\t t={t00:.4f}')
+        if motion != cache.prev_motion:
+            cache.prev_motion = motion
+            print(f'\nMotion: {motion}')
+
+        if motion:
+            await delayed_low_fps.cancel()
+            cache.fps_limit = fps_limit
+        else:
+            await delayed_low_fps.schedule()
 
         if show_raw_image:
             cv2.imshow(f'Camera {camera_index}: Raw Image', image)
