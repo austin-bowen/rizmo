@@ -178,8 +178,10 @@ async def _read_camera(
 
         if cache.fps_limit is None or (timestamp - cache.t_last_send) >= 1 / cache.fps_limit:
             await new_image_topic.send((timestamp, camera_index, image_bytes))
-            print('s', end='', flush=True)
             cache.t_last_send = timestamp
+
+            if cache.fps_limit is not None:
+                print('s', end='', flush=True)
 
         motion = motion_detector.is_motion(image)
 
