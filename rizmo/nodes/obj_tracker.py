@@ -42,6 +42,9 @@ async def main(args: Namespace) -> None:
         print(f'latency: {latency}')
         print(f'tracking: {target}')
 
+        if target is None:
+            return
+
         box = target.box
 
         object_x = box.x + box.width / 2
