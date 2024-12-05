@@ -112,57 +112,6 @@ async def main(args: Namespace) -> None:
     )
 
 
-def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('camera')
-
-    parser.add_argument(
-        '--camera-index', '-c',
-        default=config.camera_index,
-        type=int,
-        help='Camera index. Default: %(default)s',
-    )
-
-    def resolution_type(value: str) -> tuple[int, int]:
-        w, h = value.split(',', maxsplit=1)
-        return int(w), int(h)
-
-    parser.add_argument(
-        '--resolution', '-r',
-        default=config.camera_resolution,
-        type=resolution_type,
-        metavar='WIDTH,HEIGHT',
-        help='Camera resolution. Default: %(default)s. '
-             'Other options: 640,360; 1920,1080',
-    )
-
-    parser.add_argument(
-        '--camera-fps', '-f',
-        default=30.,
-        type=float,
-        help='Camera FPS. Default: %(default)s',
-    )
-
-    parser.add_argument(
-        '--fps-limit', '-l',
-        type=float,
-        help='FPS limit',
-    )
-
-    parser.add_argument(
-        '--show-raw-image',
-        action='store_true',
-    )
-
-    parser.add_argument(
-        '--jpeg-quality',
-        default=80,
-        type=int,
-        help='JPEG quality. Default: %(default)s. Range: 0-100',
-    )
-
-    return parser.parse_args()
-
-
 async def _read_camera(
         node,
         camera_index: int,
@@ -229,6 +178,57 @@ async def _read_camera(
             wait_time = 1 / cache.fps_limit - (time.monotonic() - t0)
             if wait_time > 0:
                 await asyncio.sleep(wait_time)
+
+
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser('camera')
+
+    parser.add_argument(
+        '--camera-index', '-c',
+        default=config.camera_index,
+        type=int,
+        help='Camera index. Default: %(default)s',
+    )
+
+    def resolution_type(value: str) -> tuple[int, int]:
+        w, h = value.split(',', maxsplit=1)
+        return int(w), int(h)
+
+    parser.add_argument(
+        '--resolution', '-r',
+        default=config.camera_resolution,
+        type=resolution_type,
+        metavar='WIDTH,HEIGHT',
+        help='Camera resolution. Default: %(default)s. '
+             'Other options: 640,360; 1920,1080',
+    )
+
+    parser.add_argument(
+        '--camera-fps', '-f',
+        default=30.,
+        type=float,
+        help='Camera FPS. Default: %(default)s',
+    )
+
+    parser.add_argument(
+        '--fps-limit', '-l',
+        type=float,
+        help='FPS limit',
+    )
+
+    parser.add_argument(
+        '--show-raw-image',
+        action='store_true',
+    )
+
+    parser.add_argument(
+        '--jpeg-quality',
+        default=80,
+        type=int,
+        help='JPEG quality. Default: %(default)s. Range: 0-100',
+    )
+
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
