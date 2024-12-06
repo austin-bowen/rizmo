@@ -90,3 +90,18 @@ class ChangeServoPosition:
     @property
     def tilt1_us(self) -> float:
         return self.tilt1_deg * US_PER_DEG[2]
+
+
+@dataclass
+class SetHeadSpeed:
+    pan_dps: float = None
+    tilt_dps: float = None
+    lean_dps: float = None
+
+    @property
+    def pan_speed_us_per_second(self) -> float:
+        return self.pan_dps * US_PER_DEG[0]
+
+    @property
+    def tilt_speed_us_per_second(self) -> float:
+        return self.tilt_dps * US_PER_DEG[2]

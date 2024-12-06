@@ -14,7 +14,7 @@ from easymesh.asyncio import forever
 from maestro import Maestro
 
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import ChangeServoPosition, SetServoPosition
+from rizmo.nodes.messages import ChangeServoPosition, SetHeadSpeed, SetServoPosition
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 DEFAULT_TTY = '/dev/ttyACM0'
@@ -39,6 +39,8 @@ async def main(args: Namespace) -> None:
             set_servo_position(command)
         elif isinstance(command, ChangeServoPosition):
             change_servo_position(command)
+        elif isinstance(command, SetHeadSpeed):
+            set_head_speed(command)
         else:
             raise RuntimeError(f'Invalid command: {command}')
 
@@ -58,7 +60,22 @@ async def main(args: Namespace) -> None:
         if command.tilt1_deg is not None:
             maestro[TILT1] = min(max(0., maestro.get_position(TILT1) + command.tilt1_us), 4090.)
 
-    def set_servo_speeds(speed: int) -> None:
+    def set_head_speed(command: SetHeadSpeed) -> None:
+        runtime = 0.5
+
+        if command.pan_dps is not None:
+            speed = command.pan_speed_us_per_second
+            maestro.set_speed(PAN, max(abs(speed), 25))
+            position = maestro.get_position(PAN)
+            maestro[PAN] = position + speed * runtime
+
+        if command.tilt_dps is not None:
+            speed = command.tilt_speed_us_per_second
+            maestro.set_speed(TILT1, max(abs(speed), 25))
+            position = maestro.get_position(TILT1)
+            maestro[TILT1] = position + speed * runtime
+
+    def set_servo_speeds(speed: float) -> None:
         for c in SERVOS:
             maestro.set_speed(c, speed)
 
