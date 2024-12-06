@@ -168,4 +168,5 @@ def parse_args() -> Namespace:
 
 if __name__ == '__main__':
     graceful_shutdown_on_sigterm()
-    curses.wrapper(lambda stdscr: asyncio.run(main(parse_args(), stdscr)))
+    _args = parse_args()
+    curses.wrapper(lambda stdscr: asyncio.run(main(_args, stdscr)))
