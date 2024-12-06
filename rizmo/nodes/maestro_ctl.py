@@ -26,7 +26,7 @@ TILT1 = 2
 SERVOS = (PAN, TILT0, TILT1)
 
 CENTER = 1500.
-SPEED = 40
+SPEED = 1000.
 
 
 async def main(args: Namespace) -> None:
@@ -83,7 +83,7 @@ async def main(args: Namespace) -> None:
         try:
             await forever()
         finally:
-            set_servo_speeds(10)
+            set_servo_speeds(250)
             center_servos()
 
 
