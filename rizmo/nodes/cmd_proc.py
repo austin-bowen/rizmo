@@ -73,7 +73,7 @@ async def main(args: Namespace) -> None:
     async def shutdown() -> None:
         await say('Shutting down.')
         await asyncio.sleep(3)
-        subprocess.run(['sudo', 'poweroff'])
+        subprocess.run(['sudo', 'shutdown', '-h', 'now'])
 
     async def say_date() -> None:
         current_date = datetime.now()
