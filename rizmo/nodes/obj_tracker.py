@@ -9,7 +9,7 @@ from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import ChangeServoPosition, Detection, Detections
+from rizmo.nodes.messages import Detection, Detections, SetHeadSpeed
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 AVG_LATENCY = 0.0367
@@ -64,26 +64,24 @@ async def main(args: Namespace) -> None:
 
         print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
-        if abs(x_error) < 0.2:
+        if abs(x_error) < 0.15:
             x_error = cache.prev_x_error = 0
         if abs(y_error) < 0.15:
             y_error = 0
 
         # PD control
         dt = now - cache.last_t
-        pan_deg = 2.5 * x_error + 0.25 * (x_error - cache.prev_x_error) / dt
-        tilt0_deg = 1 * z_error
-        tilt1_deg = 2.5 * y_error
+        pan_dps = 150 * x_error + 20 * (x_error - cache.prev_x_error) / dt
+        tilt_dps = 90 * y_error
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
         cache.prev_x_error = x_error
         cache.last_t = now
 
-        maestro_cmd = ChangeServoPosition(
-            pan_deg=-pan_deg * gain_scalar,
-            tilt0_deg=tilt0_deg * gain_scalar,
-            tilt1_deg=-tilt1_deg * gain_scalar,
+        maestro_cmd = SetHeadSpeed(
+            pan_dps=-pan_dps * gain_scalar,
+            tilt_dps=-tilt_dps * gain_scalar,
         )
 
         await maestro_cmd_topic.send(maestro_cmd)
