@@ -3,7 +3,7 @@ import curses
 import time
 from argparse import Namespace
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import cv2
@@ -24,6 +24,7 @@ BLOCK_SYMBOLS = '▁▂▃▄▅▆▇█'
 @dataclass
 class Cache:
     image: Image = None
+    objects: list[Detection] = field(default_factory=list)
 
 
 class Screen:
@@ -59,37 +60,11 @@ async def main(args: Namespace, stdscr):
     codec = JpegImageCodec()
 
     def show_image() -> None:
-        cv2.imshow(f'Camera & Detected Objects', cache.image)
-        cv2.waitKey(1)
-
-    async def handle_new_image(topic, data):
-        timestamp, camera_index, image_bytes = data
-        cache.image = codec.decode(image_bytes)
-
-    async def handle_obj_detected(topic, data: Detections):
-        now = time.time()
-        latency = now - data.timestamp
-        nonlocal fps, t_last
-        alpha = 0.1
-        fps = alpha * (1 / (now - t_last)) + (1 - alpha) * fps
-        t_last = now
-
-        labels = [
-            o.label for o in sorted(
-                data.objects,
-                key=lambda o: o.box.area * o.confidence,
-                reverse=True,
-            )
-        ]
-
-        screen.addstr(1, f'FPS: {fps:.2f}\t Latency: {latency:.2f}', draw=False)
-        screen.addstr(2, f'Objects: {labels}')
-
         image = cache.image
         if image is None:
             return
 
-        for obj in data.objects:
+        for obj in cache.objects:
             box = obj.box
 
             cv2.rectangle(
@@ -120,6 +95,37 @@ async def main(args: Namespace, stdscr):
                 1,
             )
 
+        draw_crosshair(image, width=20, thickness=2, color=(255, 255, 255))
+        draw_crosshair(image, width=20, thickness=1, color=(0, 0, 0))
+
+        cv2.imshow(f'Camera & Detected Objects', image)
+        cv2.waitKey(1)
+
+    async def handle_new_image(topic, data):
+        timestamp, camera_index, image_bytes = data
+        cache.image = codec.decode(image_bytes)
+        show_image()
+
+    async def handle_obj_detected(topic, data: Detections):
+        now = time.time()
+        latency = now - data.timestamp
+        nonlocal fps, t_last
+        alpha = 0.1
+        fps = alpha * (1 / (now - t_last)) + (1 - alpha) * fps
+        t_last = now
+
+        labels = [
+            o.label for o in sorted(
+                data.objects,
+                key=lambda o: o.box.area * o.confidence,
+                reverse=True,
+            )
+        ]
+
+        screen.addstr(1, f'FPS: {fps:.2f}\t Latency: {latency:.2f}', draw=False)
+        screen.addstr(2, f'Objects: {labels}')
+
+        cache.objects = data.objects
         show_image()
 
     async def handle_tracking(topic, target: Optional[Detection]):
@@ -159,6 +165,30 @@ async def main(args: Namespace, stdscr):
     await node.listen('say', handle_say)
 
     await forever()
+
+
+def draw_crosshair(image: Image, width: int, thickness: int, color=(128, 128, 128)) -> None:
+    h, w = image.shape[:2]
+    center_x, center_y = w // 2, h // 2
+    width //= 2
+
+    # Draw horizontal line
+    cv2.line(
+        image,
+        (center_x - width, center_y),
+        (center_x + width, center_y),
+        color,
+        thickness,
+    )
+
+    # Draw vertical line
+    cv2.line(
+        image,
+        (center_x, center_y - width),
+        (center_x, center_y + width),
+        color,
+        thickness,
+    )
 
 
 def parse_args() -> Namespace:
