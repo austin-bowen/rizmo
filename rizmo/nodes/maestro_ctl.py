@@ -26,7 +26,8 @@ TILT1 = 2
 SERVOS = (PAN, TILT0, TILT1)
 
 CENTER = 1500.
-SPEED = 1000.
+DEFAULT_SPEED_USPS = 1000.
+SPEED_LIMIT_DPS = 90.
 
 
 async def main(args: Namespace) -> None:
@@ -60,18 +61,22 @@ async def main(args: Namespace) -> None:
         if command.tilt1_deg is not None:
             maestro[TILT1] = min(max(0., maestro.get_position(TILT1) + command.tilt1_us), 4090.)
 
-    def set_head_speed(command: SetHeadSpeed) -> None:
-        runtime = 0.5
+    def set_head_speed(cmd: SetHeadSpeed) -> None:
+        runtime = 0.1
 
-        if command.pan_dps is not None:
-            speed = command.pan_speed_us_per_second
+        if cmd.pan_dps is not None:
+            cmd.pan_dps = min(max(-SPEED_LIMIT_DPS, cmd.pan_dps), SPEED_LIMIT_DPS)
+            speed = cmd.pan_speed_us_per_second
             maestro.set_speed(PAN, max(abs(speed), 25))
+
             position = maestro.get_position(PAN)
             maestro[PAN] = position + speed * runtime
 
-        if command.tilt_dps is not None:
-            speed = command.tilt_speed_us_per_second
+        if cmd.tilt_dps is not None:
+            cmd.tilt_dps = min(max(-SPEED_LIMIT_DPS, cmd.tilt_dps), SPEED_LIMIT_DPS)
+            speed = cmd.tilt_speed_us_per_second
             maestro.set_speed(TILT1, max(abs(speed), 25))
+
             position = maestro.get_position(TILT1)
             maestro[TILT1] = position + speed * runtime
 
@@ -92,7 +97,7 @@ async def main(args: Namespace) -> None:
         maestro.set_limits(PAN, 400, 2600)
         maestro.set_limits(TILT0, 512, 2488)
         maestro.set_limits(TILT1, 512, 2208)
-        set_servo_speeds(SPEED)
+        set_servo_speeds(DEFAULT_SPEED_USPS)
         center_servos()
 
         await node.listen('maestro_cmd', handle_maestro_cmd)
