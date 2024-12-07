@@ -109,6 +109,7 @@ async def main(args: Namespace) -> None:
         args.resolution,
         args.camera_fps,
         fps_limit=args.fps_limit,
+        min_fps=args.min_fps,
         show_raw_image=args.show_raw_image,
         jpeg_quality=args.jpeg_quality,
     )
@@ -120,6 +121,7 @@ async def _read_camera(
         resolution: tuple[int, int],
         camera_fps: float,
         fps_limit: Optional[float] = None,
+        min_fps: float = 1.,
         show_raw_image: bool = False,
         jpeg_quality: int = 80,
 ):
@@ -146,7 +148,7 @@ async def _read_camera(
 
     codec = JpegImageCodec(quality=jpeg_quality)
 
-    min_fps, max_fps = 5, fps_limit
+    max_fps = fps_limit
 
     class Cache:
         fps_limit: float = max_fps
@@ -232,9 +234,16 @@ def parse_args() -> Namespace:
     )
 
     parser.add_argument(
+        '--min-fps',
+        default=1.,
+        type=float,
+        help='Minimum FPS. Default: %(default)s',
+    )
+
+    parser.add_argument(
         '--fps-limit', '-l',
         type=float,
-        help='FPS limit',
+        help='FPS limit. Default: %(default)s',
     )
 
     parser.add_argument(
