@@ -50,6 +50,10 @@ class DelayedCallback:
         await asyncio.sleep(self._delay)
         await self._coro(*self._args, **self._kwargs)
 
+    async def reschedule(self) -> None:
+        await self.cancel()
+        await self.schedule()
+
     async def cancel(self):
         """
         Cancel the scheduled coroutine if it is still pending.

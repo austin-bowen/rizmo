@@ -2,12 +2,13 @@ import asyncio
 import time
 from argparse import Namespace
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
+from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import Detection, Detections, SetHeadSpeed
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -24,10 +25,22 @@ async def main(args: Namespace) -> None:
 
     @dataclass
     class Cache:
+        label_priorities: dict[str, int] = field(default_factory=lambda: {
+            'cat': 0,
+            'dog': 0,
+            'person': 1,
+        })
+        max_priority = float('inf')
+
         prev_x_error: float = 0.
         last_t: float = float('-inf')
 
+        async def reset_max_priority(self):
+            self.max_priority = float('inf')
+
     cache = Cache()
+
+    reset_max_priority = DelayedCallback(5, cache.reset_max_priority)
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
@@ -35,8 +48,13 @@ async def main(args: Namespace) -> None:
         latency = now - data.timestamp
         image_width, image_height = data.image_size
 
-        target = get_tracked_object(data.objects)
-        await tracking_topic.send(target)
+        target = get_tracked_object(
+            data.objects,
+            {
+                l: p for l, p in cache.label_priorities.items()
+                if p <= cache.max_priority
+            },
+        )
 
         print()
         print(f'latency: {latency}')
@@ -44,6 +62,9 @@ async def main(args: Namespace) -> None:
 
         if target is None:
             return
+
+        cache.max_priority = cache.label_priorities[target.label]
+        await reset_max_priority.reschedule()
 
         box = target.box
 
@@ -85,6 +106,7 @@ async def main(args: Namespace) -> None:
         )
 
         await maestro_cmd_topic.send(maestro_cmd)
+        await tracking_topic.send(target)
 
     await node.listen('objects_detected', handle_objects_detected)
 
@@ -93,21 +115,14 @@ async def main(args: Namespace) -> None:
 
 def get_tracked_object(
         objects: Iterable[Detection],
-        labels=(
-                'cat',
-                'dog',
-                'person',
-        ),
+        label_priorities: dict[str, int],
 ) -> Optional[Detection]:
-    labels_set = set(labels)
-    objects = filter(lambda obj: obj.label in labels_set, objects)
-
-    label_priorities = {l: len(labels) - i for i, l in enumerate(labels)}
+    objects = filter(lambda obj: obj.label in label_priorities.keys(), objects)
 
     return max(
         objects,
         key=lambda o: (
-            label_priorities[o.label],
+            -label_priorities[o.label],
             o.box.area,
         ),
         default=None,
