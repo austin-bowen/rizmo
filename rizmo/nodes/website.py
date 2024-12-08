@@ -73,7 +73,11 @@ async def main(args: Namespace) -> None:
 
     await node.listen('new_image', handle_image)
 
-    Thread(target=app.run, kwargs=dict(host='0.0.0.0')).start()
+    Thread(
+        target=app.run,
+        kwargs=dict(host='0.0.0.0'),
+        daemon=True,
+    ).start()
 
     await forever()
 
