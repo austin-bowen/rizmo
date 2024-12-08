@@ -48,6 +48,11 @@ async def main(args: Namespace) -> None:
         )):
             await shutdown()
         elif any_phrase_in(transcript, (
+            'reboot now',
+            'restart now',
+        )):
+            await reboot()
+        elif any_phrase_in(transcript, (
                 'what is today',
                 "what is today's date",
                 "what's today's date",
@@ -74,6 +79,11 @@ async def main(args: Namespace) -> None:
         await say('Shutting down.')
         await asyncio.sleep(3)
         subprocess.run(['sudo', 'shutdown', '-h', 'now'])
+
+    async def reboot() -> None:
+        await say('Okay, be right back, rebooting.')
+        await asyncio.sleep(3)
+        subprocess.run(['sudo', 'reboot'])
 
     async def say_date() -> None:
         current_date = datetime.now()
