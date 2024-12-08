@@ -60,6 +60,8 @@ class SetServoPosition:
     tilt0_deg: ServoPositionDeg = None
     tilt1_deg: ServoPositionDeg = None
 
+    speed_dps: float = None
+
     @property
     def pan_us(self) -> float:
         return 0. if self.pan_deg == 'off' else 1500 + self.pan_deg * US_PER_DEG[0]
@@ -71,6 +73,18 @@ class SetServoPosition:
     @property
     def tilt1_us(self) -> float:
         return 0. if self.tilt1_deg == 'off' else 1500 - self.tilt1_deg * US_PER_DEG[2]
+
+    @property
+    def pan_speed_us_per_second(self) -> float:
+        return self.speed_dps * US_PER_DEG[0]
+
+    @property
+    def tilt0_speed_us_per_second(self) -> float:
+        return self.speed_dps * US_PER_DEG[1]
+
+    @property
+    def tilt1_speed_us_per_second(self) -> float:
+        return self.speed_dps * US_PER_DEG[2]
 
 
 @dataclass

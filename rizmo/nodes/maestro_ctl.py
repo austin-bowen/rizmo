@@ -45,13 +45,18 @@ async def main(args: Namespace) -> None:
         else:
             raise RuntimeError(f'Invalid command: {command}')
 
-    def set_servo_position(command: SetServoPosition):
-        if command.pan_deg is not None:
-            maestro[PAN] = command.pan_us
-        if command.tilt0_deg is not None:
-            maestro[TILT0] = command.tilt0_us
-        if command.tilt1_deg is not None:
-            maestro[TILT1] = command.tilt1_us
+    def set_servo_position(cmd: SetServoPosition) -> None:
+        if cmd.speed_dps is not None:
+            maestro.set_speed(PAN, cmd.pan_speed_us_per_second)
+            maestro.set_speed(TILT0, cmd.tilt0_speed_us_per_second)
+            maestro.set_speed(TILT1, cmd.tilt1_speed_us_per_second)
+
+        if cmd.pan_deg is not None:
+            maestro[PAN] = cmd.pan_us
+        if cmd.tilt0_deg is not None:
+            maestro[TILT0] = cmd.tilt0_us
+        if cmd.tilt1_deg is not None:
+            maestro[TILT1] = cmd.tilt1_us
 
     def change_servo_position(command: ChangeServoPosition):
         if command.pan_deg is not None:
