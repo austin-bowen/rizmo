@@ -64,6 +64,7 @@ async def main(args: Namespace, stdscr):
         image = cache.image
         if image is None:
             return
+        image = image.copy()
 
         for obj in cache.objects:
             box = obj.box
