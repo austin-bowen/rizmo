@@ -110,7 +110,7 @@ async def main(args: Namespace) -> None:
 
 
 def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('maestro-ctl')
+    parser = get_rizmo_node_arg_parser(__file__)
 
     parser.add_argument(
         '--tty',

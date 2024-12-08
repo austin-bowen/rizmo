@@ -166,7 +166,7 @@ async def main(args: Namespace):
 
 
 def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('asr')
+    parser = get_rizmo_node_arg_parser(__file__)
     return parser.parse_args()
 
 

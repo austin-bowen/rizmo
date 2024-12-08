@@ -246,7 +246,7 @@ async def main(
 
 
 def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('mic')
+    parser = get_rizmo_node_arg_parser(__file__)
 
     def device_arg(arg_: str) -> Optional[str]:
         return None if arg_.lower() == 'none' else arg_

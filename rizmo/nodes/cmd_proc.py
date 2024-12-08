@@ -156,7 +156,7 @@ def any_phrase_in(transcript: str, phrases: Iterable[str]) -> bool:
 
 
 def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('cmd_proc')
+    parser = get_rizmo_node_arg_parser(__file__)
     return parser.parse_args()
 
 

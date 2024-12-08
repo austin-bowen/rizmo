@@ -204,7 +204,7 @@ async def _read_camera(
 
 
 def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('camera')
+    parser = get_rizmo_node_arg_parser(__file__)
 
     parser.add_argument(
         '--camera-index', '-c',

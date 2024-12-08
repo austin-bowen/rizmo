@@ -43,7 +43,7 @@ def build_voicebox() -> Voicebox:
 
 
 def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('speech')
+    parser = get_rizmo_node_arg_parser(__file__)
     return parser.parse_args()
 
 

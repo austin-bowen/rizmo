@@ -217,7 +217,7 @@ class RenderThread(Thread):
 
 
 def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser('monitor')
+    parser = get_rizmo_node_arg_parser(__file__)
     return parser.parse_args()
 
 
