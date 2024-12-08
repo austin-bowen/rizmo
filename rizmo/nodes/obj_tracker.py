@@ -32,6 +32,8 @@ async def main(args: Namespace) -> None:
         })
         max_priority = float('inf')
 
+        last_target: Detection = None
+
         prev_x_error: float = 0.
         last_t: float = float('-inf')
 
@@ -60,8 +62,14 @@ async def main(args: Namespace) -> None:
         print(f'latency: {latency}')
         print(f'tracking: {target}')
 
-        if target is None:
-            return
+        try:
+            if target is None:
+                if cache.last_target is not None:
+                    await tracking_topic.send(None)
+
+                return
+        finally:
+            cache.last_target = target
 
         cache.max_priority = cache.label_priorities[target.label]
         await reset_max_priority.reschedule()
