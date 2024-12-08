@@ -83,7 +83,8 @@ async def main(args: Namespace) -> None:
             maestro.set_speed(TILT1, max(abs(speed), 25))
 
             position = maestro.get_position(TILT1)
-            maestro[TILT1] = position + speed * runtime
+            position = position + speed * runtime
+            maestro[TILT1] = max(position, 750)
 
     def set_servo_speeds(speed: float) -> None:
         for c in SERVOS:
