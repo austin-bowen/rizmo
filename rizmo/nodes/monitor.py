@@ -4,6 +4,7 @@ import time
 from argparse import Namespace
 from collections import deque
 from dataclasses import dataclass, field
+from threading import Event, Thread
 from typing import Optional
 
 import cv2
@@ -104,10 +105,14 @@ async def main(args: Namespace, stdscr):
     async def handle_new_image(topic, data):
         timestamp, camera_index, image_bytes = data
         cache.image = codec.decode(image_bytes)
-        show_image()
+        image_ready_event.set()
 
     async def handle_obj_detected(topic, data: Detections):
         now = time.time()
+
+        cache.objects = data.objects
+        image_ready_event.set()
+
         latency = now - data.timestamp
         nonlocal fps, t_last
         alpha = 0.1
@@ -124,9 +129,6 @@ async def main(args: Namespace, stdscr):
 
         screen.addstr(1, f'FPS: {fps:.2f}\t Latency: {latency:.2f}', draw=False)
         screen.addstr(2, f'Objects: {labels}')
-
-        cache.objects = data.objects
-        show_image()
 
     async def handle_tracking(topic, target: Optional[Detection]):
         screen.addstr(3, f'Tracking: {target.label if target else None}')
@@ -155,6 +157,9 @@ async def main(args: Namespace, stdscr):
 
     async def handle_say(topic, data: str) -> None:
         screen.addstr(9, f'Said: {data!r}')
+
+    image_ready_event = Event()
+    RenderThread(show_image, image_ready_event, fps=30).start()
 
     await node.listen('new_image', handle_new_image)
     await node.listen('objects_detected', handle_obj_detected)
@@ -189,6 +194,26 @@ def draw_crosshair(image: Image, width: int, thickness: int, color=(128, 128, 12
         color,
         thickness,
     )
+
+
+class RenderThread(Thread):
+    def __init__(self, render_func, image_ready_event: Event, fps: float):
+        super().__init__(daemon=True)
+        self.render_func = render_func
+        self.image_ready_event = image_ready_event
+        self.fps = fps
+
+    def run(self):
+        while True:
+            t0 = time.monotonic()
+            self.image_ready_event.wait()
+            self.image_ready_event.clear()
+
+            self.render_func()
+            dt = time.monotonic() - t0
+
+            delay = max(0., 1 / self.fps - dt)
+            time.sleep(delay)
 
 
 def parse_args() -> Namespace:
