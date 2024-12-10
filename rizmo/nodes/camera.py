@@ -100,6 +100,19 @@ class CameraCaptureError(Exception):
     pass
 
 
+class CameraCoveredDetector:
+    def __init__(self, threshold: float, subsample: int):
+        self.threshold = threshold
+        self.subsample = subsample
+
+    def is_covered(self, image: Image) -> bool:
+        image = image[::self.subsample, ::self.subsample]
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        mean = np.mean(image)
+        print('mean:', mean)
+        return mean < self.threshold
+
+
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
@@ -140,6 +153,11 @@ async def _read_camera(
     )
     camera = camera_builder()
 
+    covered_detector = CameraCoveredDetector(
+        threshold=50,
+        subsample=16,
+    )
+
     motion_detector = DynamicThresholdPixelChangeMotionDetector(
         change=0.15,
         alpha=0.01,
@@ -172,6 +190,10 @@ async def _read_camera(
             continue
 
         timestamp = time.time()
+
+        covered = covered_detector.is_covered(image)
+        print('covered:', covered)
+
         motion = motion_detector.is_motion(image)
 
         if motion != cache.prev_motion:
