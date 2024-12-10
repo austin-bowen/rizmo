@@ -109,7 +109,6 @@ class CameraCoveredDetector:
         image = image[::self.subsample, ::self.subsample]
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         mean = np.mean(image)
-        print('mean:', mean)
         return mean < self.threshold
 
 
@@ -154,7 +153,7 @@ async def _read_camera(
     camera = camera_builder()
 
     covered_detector = CameraCoveredDetector(
-        threshold=50,
+        threshold=8,
         subsample=16,
     )
 
@@ -192,9 +191,8 @@ async def _read_camera(
         timestamp = time.time()
 
         covered = covered_detector.is_covered(image)
-        print('covered:', covered)
-
         motion = motion_detector.is_motion(image)
+        motion = motion and not covered
 
         if motion != cache.prev_motion:
             cache.prev_motion = motion
