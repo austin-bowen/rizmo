@@ -191,8 +191,7 @@ async def _read_camera(
         timestamp = time.time()
 
         covered = covered_detector.is_covered(image)
-        motion = motion_detector.is_motion(image)
-        motion = motion and not covered
+        motion = not covered and motion_detector.is_motion(image)
 
         if motion != cache.prev_motion:
             cache.prev_motion = motion
