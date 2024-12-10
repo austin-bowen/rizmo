@@ -37,6 +37,12 @@ async def main(args: Namespace) -> None:
         prev_x_error: float = 0.
         last_t: float = float('-inf')
 
+        dead_zone_growth_time: float = 5.
+        max_x_dead_zone: float = 0.2
+        max_y_dead_zone: float = 0.2
+        x_dead_zone: float = 0.
+        y_dead_zone: float = 0.
+
         async def reset_max_priority(self):
             self.max_priority = float('inf')
 
@@ -47,6 +53,7 @@ async def main(args: Namespace) -> None:
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
         now = time.time()
+        dt = now - state.last_t
         latency = now - data.timestamp
         image_width, image_height = data.image_size
 
@@ -93,13 +100,27 @@ async def main(args: Namespace) -> None:
 
         print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
-        if abs(x_error) < 0.15:
+        if abs(x_error) < state.x_dead_zone:
             x_error = state.prev_x_error = 0
-        if abs(y_error) < 0.15:
+        if abs(x_error) > state.max_x_dead_zone:
+            state.x_dead_zone = 0.
+        else:
+            state.x_dead_zone = min(
+                state.x_dead_zone + state.max_x_dead_zone * dt / state.dead_zone_growth_time,
+                state.max_x_dead_zone,
+            )
+
+        if abs(y_error) < state.y_dead_zone:
             y_error = 0
+        if abs(y_error) > state.max_y_dead_zone:
+            state.y_dead_zone = 0.
+        else:
+            state.y_dead_zone = min(
+                state.y_dead_zone + state.max_y_dead_zone * dt / state.dead_zone_growth_time,
+                state.max_y_dead_zone,
+            )
 
         # PD control
-        dt = now - state.last_t
         pan_dps = 150 * x_error + 20 * (x_error - state.prev_x_error) / dt
         tilt_dps = 90 * y_error
 
