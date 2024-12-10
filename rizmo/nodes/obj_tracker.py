@@ -24,7 +24,7 @@ async def main(args: Namespace) -> None:
     maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
 
     @dataclass
-    class Cache:
+    class State:
         label_priorities: dict[str, int] = field(default_factory=lambda: {
             'cat': 0,
             'dog': 0,
@@ -40,9 +40,9 @@ async def main(args: Namespace) -> None:
         async def reset_max_priority(self):
             self.max_priority = float('inf')
 
-    cache = Cache()
+    state = State()
 
-    reset_max_priority = DelayedCallback(5, cache.reset_max_priority)
+    reset_max_priority = DelayedCallback(5, state.reset_max_priority)
 
     @maestro_cmd_topic.depends_on_listener()
     async def handle_objects_detected(topic, data: Detections):
@@ -53,8 +53,8 @@ async def main(args: Namespace) -> None:
         target = get_tracked_object(
             data.objects,
             {
-                l: p for l, p in cache.label_priorities.items()
-                if p <= cache.max_priority
+                l: p for l, p in state.label_priorities.items()
+                if p <= state.max_priority
             },
         )
 
@@ -64,14 +64,14 @@ async def main(args: Namespace) -> None:
 
         try:
             if target is None:
-                if cache.last_target is not None:
+                if state.last_target is not None:
                     await tracking_topic.send(None)
 
                 return
         finally:
-            cache.last_target = target
+            state.last_target = target
 
-        cache.max_priority = cache.label_priorities[target.label]
+        state.max_priority = state.label_priorities[target.label]
         await reset_max_priority.reschedule()
 
         box = target.box
@@ -94,19 +94,19 @@ async def main(args: Namespace) -> None:
         print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
         if abs(x_error) < 0.15:
-            x_error = cache.prev_x_error = 0
+            x_error = state.prev_x_error = 0
         if abs(y_error) < 0.15:
             y_error = 0
 
         # PD control
-        dt = now - cache.last_t
-        pan_dps = 150 * x_error + 20 * (x_error - cache.prev_x_error) / dt
+        dt = now - state.last_t
+        pan_dps = 150 * x_error + 20 * (x_error - state.prev_x_error) / dt
         tilt_dps = 90 * y_error
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
-        cache.prev_x_error = x_error
-        cache.last_t = now
+        state.prev_x_error = x_error
+        state.last_t = now
 
         maestro_cmd = SetHeadSpeed(
             pan_dps=-pan_dps * gain_scalar,
