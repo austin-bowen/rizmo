@@ -141,7 +141,10 @@ class ToolHandler:
         #         parameters=dict(
         #             type='object',
         #             properties=dict(
-        #                 arg=dict(type='string'),
+        #                 arg=dict(
+        #                     type='string',
+        #                     description='Description of arg.',
+        #                 ),
         #             ),
         #             required=['arg'],
         #             additionalProperties=False,
@@ -151,13 +154,7 @@ class ToolHandler:
         dict(
             type='function',
             function=dict(
-                name='get_current_date',
-            ),
-        ),
-        dict(
-            type='function',
-            function=dict(
-                name='get_current_time',
+                name='get_current_date_time',
             ),
         ),
         dict(
@@ -194,13 +191,12 @@ class ToolHandler:
         result = await func(**kwargs)
         return json.dumps(result)
 
-    async def get_current_date(self) -> str:
-        current_date = datetime.now()
-        return current_date.strftime('%A, %B %d, %Y')
-
-    async def get_current_time(self) -> str:
-        current_time = datetime.now()
-        return current_time.strftime('%I:%M %p')
+    async def get_current_date_time(self) -> dict:
+        now = datetime.now()
+        return dict(
+            date=now.strftime('%A, %B %d, %Y'),
+            time=now.strftime('%I:%M %p'),
+        )
 
     async def get_weather(self) -> dict:
         weather = await self.weather_provider.get_weather()
