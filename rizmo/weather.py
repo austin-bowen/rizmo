@@ -71,7 +71,9 @@ class WeatherProvider:
             f'and lows around {low}.'
         )
 
-        return Weather(today, tomorrow, this_week)
+        moon_phase = weather.daily_forecasts[0].moon_phase.value
+
+        return Weather(today, tomorrow, this_week, moon_phase)
 
 
 @dataclass
@@ -79,6 +81,7 @@ class Weather:
     today: str
     tomorrow: str
     this_week: str
+    moon_phase: str
 
 
 def most_common(items: Iterable):

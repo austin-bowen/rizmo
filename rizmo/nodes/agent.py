@@ -177,6 +177,9 @@ class ToolHandler:
             type='function',
             function=dict(
                 name='get_weather',
+                description=
+                'Gets the weather for today, tomorrow, and the week, '
+                'as well as the current moon phase.',
             ),
         ),
         dict(
