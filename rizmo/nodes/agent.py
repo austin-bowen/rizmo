@@ -56,7 +56,8 @@ async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender('say')
 
-    client = OpenAI(api_key=open('.openai_api_key', 'r').read())
+    api_key = open('.openai_api_key', 'r').read().strip()
+    client = OpenAI(api_key=api_key)
 
     chat = Chat(
         client,
