@@ -164,12 +164,6 @@ class ToolHandler:
         #         ),
         #     ),
         # ),
-        # dict(
-        #     type='function',
-        #     function=dict(
-        #         name='get_current_date_time',
-        #     ),
-        # ),
         dict(
             type='function',
             description='Gets system CPU, memory, and disk usage, and CPU temperature in Celsius.',
@@ -213,13 +207,6 @@ class ToolHandler:
         kwargs = json.loads(func_spec.arguments)
         result = await func(**kwargs)
         return json.dumps(result)
-
-    async def get_current_date_time(self) -> dict:
-        now = datetime.now()
-        return dict(
-            date=now.strftime('%A, %B %d, %Y'),
-            time=now.strftime('%I:%M %p'),
-        )
 
     async def get_system_status(self) -> dict:
         cpu_usage_percent = psutil.cpu_percent(interval=0.5)
