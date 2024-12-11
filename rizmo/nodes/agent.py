@@ -38,6 +38,9 @@ ALT_NAMES = (
 MAIN_SYSTEM_MESSAGE = '''
 You are a robot named Rizmo. Keep your responses short. Write as if you were
 speaking out loud.
+
+If the user says the phrase "rest in a deep and dreamless slumber", then you
+should call the "shutdown" function.
 '''.strip()
 
 CONVO_DETECTOR_SYSTEM_MESSAGE = '''
@@ -129,7 +132,11 @@ async def main(args: Namespace) -> None:
             state.last_datetime = now
 
     await node.listen('transcript', handle_transcript)
-    await forever()
+
+    try:
+        await forever()
+    finally:
+        client.close()
 
 
 class ToolHandler:
