@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Iterable, Literal
 
+import psutil
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 from easymesh.node.node import TopicSender
@@ -138,6 +139,7 @@ class ToolHandler:
         #     type='function',
         #     function=dict(
         #         name='name',
+        #         description='Description of function.',
         #         parameters=dict(
         #             type='object',
         #             properties=dict(
@@ -155,6 +157,13 @@ class ToolHandler:
             type='function',
             function=dict(
                 name='get_current_date_time',
+            ),
+        ),
+        dict(
+            type='function',
+            description='Gets system CPU, memory, and disk usage.',
+            function=dict(
+                name='get_system_usage',
             ),
         ),
         dict(
@@ -196,6 +205,17 @@ class ToolHandler:
         return dict(
             date=now.strftime('%A, %B %d, %Y'),
             time=now.strftime('%I:%M %p'),
+        )
+
+    async def get_system_usage(self) -> dict:
+        cpu_usage_percent = psutil.cpu_percent(interval=0.5)
+        memory_usage = psutil.virtual_memory()
+        disk_usage = psutil.disk_usage('/')
+
+        return dict(
+            cpu_usage_percent=cpu_usage_percent,
+            memory_usage_percent=memory_usage.percent,
+            disk_usage_percent=disk_usage.percent,
         )
 
     async def get_weather(self) -> dict:

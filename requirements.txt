@@ -20,3 +20,4 @@ voicebox-tts
 
 # Node: agent
 openai
+psutil
