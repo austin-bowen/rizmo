@@ -17,3 +17,6 @@ torchaudio
 transformers
 ultralytics
 voicebox-tts
+
+# Node: agent
+openai
