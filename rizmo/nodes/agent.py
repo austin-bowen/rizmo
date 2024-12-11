@@ -20,16 +20,17 @@ from rizmo.weather import WeatherProvider
 
 NAME = 'rizmo'
 ALT_NAMES = (
-    'resma',
-    'resmo',
     'prisma',
     'prismo',
     'prizma',
     'prizmo',
+    'resma',
+    'resmo',
     'risma',
     'rismo',
     'rizma',
     'rizzmo',
+    'rosma',
     'rosmo',
 )
 
