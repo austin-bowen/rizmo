@@ -161,9 +161,9 @@ class ToolHandler:
         ),
         dict(
             type='function',
-            description='Gets system CPU, memory, and disk usage.',
+            description='Gets system CPU, memory, and disk usage, and CPU temperature in Celsius.',
             function=dict(
-                name='get_system_usage',
+                name='get_system_status',
             ),
         ),
         dict(
@@ -207,15 +207,22 @@ class ToolHandler:
             time=now.strftime('%I:%M %p'),
         )
 
-    async def get_system_usage(self) -> dict:
+    async def get_system_status(self) -> dict:
         cpu_usage_percent = psutil.cpu_percent(interval=0.5)
         memory_usage = psutil.virtual_memory()
         disk_usage = psutil.disk_usage('/')
+
+        temps = psutil.sensors_temperatures()
+        cpu_temp_c = (
+            temps['thermal-fan-est'][0].current
+            if 'thermal-fan-est' in temps else 'unknown'
+        )
 
         return dict(
             cpu_usage_percent=cpu_usage_percent,
             memory_usage_percent=memory_usage.percent,
             disk_usage_percent=disk_usage.percent,
+            cpu_temp_c=cpu_temp_c,
         )
 
     async def get_weather(self) -> dict:
