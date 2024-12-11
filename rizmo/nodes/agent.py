@@ -27,6 +27,8 @@ ALT_NAMES = (
     'prizmo',
     'resma',
     'resmo',
+    'rezma',
+    'rezmo',
     'risma',
     'rismo',
     'rizma',
