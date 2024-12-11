@@ -18,8 +18,8 @@ class Node:
 
 host_nodes = {
     'rizmo': (
+        Node('agent'),
         Node('camera'),
-        Node('cmd_proc'),
         Node('maestro_ctl'),
         Node('mic'),
         Node('obj_tracker'),
