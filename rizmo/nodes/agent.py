@@ -4,17 +4,17 @@ import subprocess
 from argparse import Namespace
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Iterable, Literal
+from typing import Iterable
 
 import psutil
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 from easymesh.node.node import TopicSender
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessage
 from openai.types.chat.chat_completion_message_tool_call import Function
 
 from rizmo.config import config
+from rizmo.llm_utils import Chat, with_datetime
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
@@ -35,15 +35,19 @@ ALT_NAMES = (
     'rosmo',
 )
 
-MAIN_SYSTEM_MESSAGE = '''
+MAIN_SYSTEM_PROMPT = '''
 You are a robot named Rizmo. Keep your responses short. Write as if you were
 speaking out loud.
 
 If the user says the phrase "rest in a deep and dreamless slumber", then you
 should call the "shutdown" function.
+
+Context:
+- Current date: {date}
+- Current time: {time}
 '''.strip()
 
-CONVO_DETECTOR_SYSTEM_MESSAGE = '''
+CONVO_DETECTOR_SYSTEM_PROMPT = '''
 You are a robot named Rizmo. You will receive transcripts of audio, and you must
 determine if the transcripts are part of a conversation with you, or not.
 
@@ -67,7 +71,7 @@ async def main(args: Namespace) -> None:
         client,
         model='gpt-4o-mini',
         store=False,
-        system_message=MAIN_SYSTEM_MESSAGE,
+        system_prompt_builder=lambda: with_datetime(MAIN_SYSTEM_PROMPT),
         tools=ToolHandler.TOOLS,
     )
 
@@ -76,7 +80,7 @@ async def main(args: Namespace) -> None:
             client,
             model='gpt-4o-mini',
             store=False,
-            system_message=CONVO_DETECTOR_SYSTEM_MESSAGE,
+            system_prompt_builder=lambda: CONVO_DETECTOR_SYSTEM_PROMPT,
         ),
     )
 
@@ -160,12 +164,12 @@ class ToolHandler:
         #         ),
         #     ),
         # ),
-        dict(
-            type='function',
-            function=dict(
-                name='get_current_date_time',
-            ),
-        ),
+        # dict(
+        #     type='function',
+        #     function=dict(
+        #         name='get_current_date_time',
+        #     ),
+        # ),
         dict(
             type='function',
             description='Gets system CPU, memory, and disk usage, and CPU temperature in Celsius.',
@@ -268,41 +272,6 @@ class ToolHandler:
             stdout=result.stdout.decode(),
             stderr=result.stderr.decode(),
         )
-
-
-class Chat:
-    def __init__(
-            self,
-            client: OpenAI,
-            model: str,
-            system_message: str,
-            **kwargs,
-    ):
-        self.client = client
-        self.model = model
-        self.kwargs = kwargs
-
-        self.messages = [
-            dict(role='system', content=system_message),
-        ]
-
-    def add(self, role: Literal['user', 'assistant'], content: str) -> None:
-        self.messages.append(dict(role=role, content=content))
-
-    def get_response(self, user_content: str = None) -> ChatCompletionMessage:
-        if user_content:
-            self.add('user', user_content)
-
-        response = self.client.chat.completions.create(
-            messages=self.messages,
-            model=self.model,
-            **self.kwargs,
-        )
-        message = response.choices[0].message
-
-        self.messages.append(message)
-
-        return message
 
 
 class ConvoDetector:
