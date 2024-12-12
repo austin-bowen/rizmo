@@ -19,7 +19,7 @@ from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
-NAME = 'rizmo'
+NAME = 'Rizmo'
 ALT_NAMES = (
     'prisma',
     'prismo',
@@ -58,7 +58,7 @@ for short phrases, which may appear as phrases like "Thank you", or "Shh",
 or ".", which are probably not part of a conversation with you.
 
 If you think the transcript is part of a conversation with you, respond with "yes";
-otherwise, respond with "no". 
+otherwise, respond with "no".
 '''
 
 
@@ -72,8 +72,8 @@ async def main(args: Namespace) -> None:
     chat = Chat(
         client,
         model='gpt-4o-mini',
-        store=False,
         system_prompt_builder=lambda: with_datetime(MAIN_SYSTEM_PROMPT),
+        store=False,
         tools=ToolHandler.TOOLS,
     )
 
@@ -81,13 +81,14 @@ async def main(args: Namespace) -> None:
         Chat(
             client,
             model='gpt-4o-mini',
-            store=False,
             system_prompt_builder=lambda: CONVO_DETECTOR_SYSTEM_PROMPT,
+            store=False,
         ),
     )
 
     @dataclass
     class State:
+        in_conversation: bool = False
         last_datetime: datetime = datetime.now()
 
     state = State()
@@ -106,15 +107,23 @@ async def main(args: Namespace) -> None:
 
             transcript = preprocess(transcript)
 
-            if not talking_to_me(transcript):
+            if talking_to_me(transcript):
+                state.in_conversation = True
+
+            if not state.in_conversation:
                 print('[Not talking to me]')
                 return
 
-            # if not convo_detector.is_conversation(transcript):
-            #     print('[Not talking to me]')
-            #     return
+            if any_phrase_in(transcript, (
+                'pause conversation',
+                'pause convo',
+            )):
+                print('[Conversation paused]')
+                state.in_conversation = False
+                return
 
-            response = chat.get_response(transcript)
+            chat.add_user_message(transcript)
+            response = await chat.get_response()
             while True:
                 print('Rizmo:', response)
 
@@ -124,14 +133,9 @@ async def main(args: Namespace) -> None:
                 for tool_call in response.tool_calls:
                     result = await tool_handler.handle(tool_call.function)
                     print(f'Tool call: {tool_call.function.name} -> {result}')
+                    chat.add_tool_message(tool_call.id, result)
 
-                    chat.messages.append(dict(
-                        role='tool',
-                        content=result,
-                        tool_call_id=tool_call.id,
-                    ))
-
-                response = chat.get_response()
+                response = await chat.get_response()
 
             await say_topic.send(response.content)
         finally:
@@ -267,8 +271,10 @@ class ConvoDetector:
     def __init__(self, chat: Chat):
         self.chat = chat
 
-    def is_conversation(self, transcript: str) -> bool:
-        response = self.chat.get_response(transcript).content
+    async def is_conversation(self, transcript: str) -> bool:
+        self.chat.add_user_message(transcript)
+        response = await self.chat.get_response()
+        response = response.content
 
         if response == 'yes':
             return True

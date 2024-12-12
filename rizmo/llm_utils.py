@@ -1,6 +1,7 @@
+import asyncio
 from collections.abc import Callable
 from datetime import datetime
-from typing import Literal
+from typing import Any
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
@@ -21,24 +22,29 @@ class Chat:
 
         self.messages = []
 
-    def add(self, role: Literal['user', 'assistant'], content: str) -> None:
-        self.messages.append(dict(role=role, content=content))
+    def add_user_message(self, content: str) -> None:
+        self.messages.append(dict(role='user', content=content))
 
-    def get_response(self, user_content: str = None) -> ChatCompletionMessage:
-        if user_content:
-            self.add('user', user_content)
+    def add_tool_message(self, tool_call_id: str, result: Any) -> None:
+        self.messages.append(dict(
+            role='tool',
+            content=result,
+            tool_call_id=tool_call_id,
+        ))
 
+    async def get_response(self) -> ChatCompletionMessage:
         system_prompt = self.system_prompt_builder()
 
-        messages = [
-                       dict(role='system', content=system_prompt),
-                   ] + self.messages
+        messages = [dict(role='system', content=system_prompt)]
+        messages += self.messages
 
-        response = self.client.chat.completions.create(
+        response = await asyncio.to_thread(
+            self.client.chat.completions.create,
             messages=messages,
             model=self.model,
             **self.kwargs,
         )
+
         message = response.choices[0].message
 
         self.messages.append(message)
