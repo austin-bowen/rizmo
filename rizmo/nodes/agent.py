@@ -19,7 +19,7 @@ from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
-NAME = 'Rizmo'
+NAME = 'rizmo'
 ALT_NAMES = (
     'prisma',
     'prismo',
@@ -41,8 +41,10 @@ MAIN_SYSTEM_PROMPT = '''
 You are a robot named Rizmo. Keep your responses short. Write as if you were
 speaking out loud.
 
-If the user says the phrase "rest in a deep and dreamless slumber", then you
-should call the "shutdown" function.
+Here are some phrases you should listen for and how to respond to them:
+- "rest in a deep and dreamless slumber": call the "shutdown" function.
+- "stop/cease all motor functions": call the "motor_system" function with the "enabled" argument set to "false".
+- "bring yourself back online": call the "motor_system" function with the "enabled" argument set to "true".
 
 Context:
 - Current date: {date}
@@ -115,8 +117,8 @@ async def main(args: Namespace) -> None:
                 return
 
             if any_phrase_in(transcript, (
-                'pause conversation',
-                'pause convo',
+                    'pause conversation',
+                    'pause convo',
             )):
                 print('[Conversation paused]')
                 state.in_conversation = False
@@ -189,6 +191,24 @@ class ToolHandler:
         dict(
             type='function',
             function=dict(
+                name='motor_system',
+                description='Controls the motor system.',
+                parameters=dict(
+                    type='object',
+                    properties=dict(
+                        enabled=dict(
+                            type='boolean',
+                            description='Whether to enable or disable the motor system.',
+                        ),
+                    ),
+                    required=['enabled'],
+                    additionalProperties=False,
+                ),
+            ),
+        ),
+        dict(
+            type='function',
+            function=dict(
                 name='reboot',
             ),
         ),
@@ -235,6 +255,10 @@ class ToolHandler:
     async def get_weather(self) -> dict:
         weather = await self.weather_provider.get_weather()
         return asdict(weather)
+
+    async def motor_system(self, enabled: bool) -> None:
+        # TODO
+        print('Motor system enabled:', enabled)
 
     async def reboot(self) -> dict:
         await self.say_topic.send('Be right back, rebooting.')
