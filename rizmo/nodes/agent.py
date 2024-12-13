@@ -9,13 +9,14 @@ from typing import Iterable
 import psutil
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
-from easymesh.node.node import TopicSender
+from easymesh.node.node import MeshNode
 from openai import OpenAI
 from openai.types.chat.chat_completion_message_tool_call import Function
 
 from rizmo.config import config
 from rizmo.llm_utils import Chat, with_datetime
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import MotorSystemCommand
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
@@ -96,7 +97,7 @@ async def main(args: Namespace) -> None:
     state = State()
 
     tool_handler = ToolHandler(
-        say_topic,
+        node,
         weather_provider=WeatherProvider.build(config.weather_location),
     )
 
@@ -222,10 +223,11 @@ class ToolHandler:
 
     def __init__(
             self,
-            say_topic: TopicSender,
+            node: MeshNode,
             weather_provider: WeatherProvider,
     ):
-        self.say_topic = say_topic
+        self.say_topic = node.get_topic_sender('say')
+        self.motor_system_topic = node.get_topic_sender('motor_system')
         self.weather_provider = weather_provider
 
     async def handle(self, func_spec: Function) -> str:
@@ -257,8 +259,7 @@ class ToolHandler:
         return asdict(weather)
 
     async def motor_system(self, enabled: bool) -> None:
-        # TODO
-        print('Motor system enabled:', enabled)
+        await self.motor_system_topic.send(MotorSystemCommand(enabled=enabled))
 
     async def reboot(self) -> dict:
         await self.say_topic.send('Be right back, rebooting.')

@@ -45,6 +45,11 @@ class Detections:
     objects: list[Detection]
 
 
+@dataclass
+class MotorSystemCommand:
+    enabled: bool
+
+
 ServoPositionDeg = Union[float, Literal['off'], None]
 
 US_PER_DEG = (
