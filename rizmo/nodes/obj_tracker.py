@@ -134,7 +134,9 @@ async def main(args: Namespace) -> None:
             tilt_dps=-tilt_dps * gain_scalar,
         )
 
-        await maestro_cmd_topic.send(maestro_cmd)
+        if maestro_cmd.pan_dps != 0 or maestro_cmd.tilt_dps != 0:
+            await maestro_cmd_topic.send(maestro_cmd)
+
         await tracking_topic.send(target)
 
     await node.listen('objects_detected', handle_objects_detected)
