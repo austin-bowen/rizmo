@@ -343,6 +343,7 @@ def talking_to_me(transcript: str) -> bool:
 
 
 def any_phrase_in(transcript: str, phrases: Iterable[str]) -> bool:
+    transcript = transcript.lower()
     return any(phrase in transcript for phrase in phrases)
 
 
