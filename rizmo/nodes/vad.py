@@ -5,6 +5,7 @@ Setup:
 
 import asyncio
 from argparse import Namespace
+from dataclasses import dataclass, field
 from functools import wraps
 
 from easymesh import build_mesh_node_from_args
@@ -44,15 +45,14 @@ async def main(args: Namespace) -> None:
         device='cuda',
     )
 
-    # wav_file = wave.open('/home/austin/Downloads/recording.vad.wav', 'wb')
-    # wav_file.setnchannels(1)
-    # wav_file.setsampwidth(2)
-    # wav_file.setframerate(16000)
+    @dataclass
+    class State:
+        model_cache: dict = field(default_factory=dict)
+        voice_detected: bool = False
 
-    voice_detected = False
-    model_cache = {}
+    state = State()
 
-    # @depends_on_listener(node, voice_detected_topic.topic)
+    @voice_detected_topic.depends_on_listener()
     async def handle_audio(topic, data):
         audio, timestamp = data
         block_size = audio.data.shape[0]
@@ -61,32 +61,29 @@ async def main(args: Namespace) -> None:
 
         res = vad_model.generate(
             input=indata,
-            cache=model_cache,
+            cache=state.model_cache,
             is_final=False,
             chunk_size=chunk_size_ms,
         )
 
-        nonlocal voice_detected
+        voice_detected = state.voice_detected
         for detection in res[0]['value']:
             if detection[0] != -1:
                 voice_detected = True
             elif detection[1] != -1:
                 voice_detected = False
-        print('Voice detected:', voice_detected)
+
+        if voice_detected != state.voice_detected:
+            print('Voice detected:', state.voice_detected)
+            state.voice_detected = voice_detected
 
         await voice_detected_topic.send((audio, timestamp, voice_detected))
-
-        # if voice_detected:
-        #     wav_data = indata * 32767
-        #     wav_data = wav_data.astype(np.int16)
-        #     wav_file.writeframes(wav_data.tobytes())
 
     await node.listen('audio', handle_audio)
 
     try:
         await forever()
     finally:
-        # wav_file.close()
         pass
 
 

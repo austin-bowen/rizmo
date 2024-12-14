@@ -10,6 +10,7 @@ import sounddevice as sd
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
+from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import Audio
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -17,9 +18,6 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 WEBCAM_MIC = 'USB CAMERA: Audio'
 CONFERENCE_MIC = 'eMeet M0: USB Audio'
 DEFAULT_MIC = CONFERENCE_MIC
-
-DEFAULT_SAMPLE_RATE = 16000
-DEFAULT_BLOCK_SIZE = 4096
 
 
 class GainControl:
@@ -36,54 +34,21 @@ class FixedGain(GainControl):
         return self.gain
 
 
-class LimitPowerGainControl(GainControl):
-    def __init__(self, target_power: float = 0.5, keep_s: float = 2.):
-        self.keep_s = keep_s
-        self.target_power = target_power
+class LimitedMaxPowerGainControl(GainControl):
+    """
+    Increases the gain exponentially until the max power of the signal
+    reaches the target power.
+    """
 
-        self._raw_powers = []
-
-    def get_gain(self, indata: np.ndarray, sample_rate: int) -> float:
-        # power = np.abs(indata).mean()
-        power = np.abs(indata).max()
-
-        self._raw_powers.append(power)
-        self._raw_powers = self._raw_powers[-round(sample_rate * self.keep_s / len(indata)):]
-
-        # gain = self.target_power / (max(self._raw_powers) + 1e-6)
-        gain = self.target_power / (power + 1e-6)
-
-        return gain
-
-
-class AveragePowerGainControl(GainControl):
-    def __init__(self, target_power: float = .8):
-        self.target_power = target_power
-
-        self._gain = 1.
-
-    def get_gain(self, indata: np.ndarray, sample_rate: int) -> float:
-        power = np.abs(indata).max()
-
-        gained_power = self._gain * power
-
-        if gained_power < self.target_power:
-            samples = indata.shape[0]
-            self._gain *= 1 + 2 * samples / sample_rate
-        else:
-            self._gain = self.target_power / (power + 1e-6)
-
-        return self._gain
-
-
-class AveragePowerGainControl2(GainControl):
     def __init__(
             self,
             target_power: float = 1.,
             max_gain: float = 100.,
+            alpha: float = 2.,
     ):
         self.target_power = target_power
         self.max_gain = max_gain
+        self.alpha = alpha
 
         self._dt = 0.
 
@@ -91,19 +56,15 @@ class AveragePowerGainControl2(GainControl):
         samples = indata.shape[0]
         self._dt += samples / sample_rate
 
-        alpha = 2.
-        gain = 2 ** (alpha * self._dt) - 1
+        gain = 2 ** (self.alpha * self._dt) - 1
         gain = min(gain, self.max_gain)
 
         power = np.abs(indata).max()
 
         gained_power = gain * power
-
         if gained_power > self.target_power:
             gain = self.target_power / (power + 1e-6)
-            self._dt = np.log2(gain + 1) / alpha
-
-        print(f'{self._dt:.2f}\t{gain}')
+            self._dt = np.log2(gain + 1) / self.alpha
 
         return gain
 
@@ -193,13 +154,14 @@ async def main(
 
     loop = asyncio.get_event_loop()
 
-    # gain_control=LimitPowerGainControl(target_power=1., keep_s=2.)
-    # gain_control=FixedGain(1.)
-    gain_control = AveragePowerGainControl2()
+    gain_control = LimitedMaxPowerGainControl()
+    if args.gain == 'auto':
+        gain_control = LimitedMaxPowerGainControl()
+    else:
+        gain = float(args.gain)
+        gain_control = FixedGain(gain)
 
     limiter = lambda signal: np.clip(signal, -1, 1)
-
-    # limiter = np.tanh
 
     def signal_transform(signal, sample_rate_):
         return limiter(signal * gain_control.get_gain(signal, args.sample_rate))
@@ -214,13 +176,6 @@ async def main(
 
     def mic_callback(indata: np.ndarray, frames: int, timestamp, status):
         indata = gate(indata, args.sample_rate)
-
-        # power = np.abs(indata).max()
-        # power = min(power, 1. - 1e-6)
-        # power = int(power * len(block_symbols))
-        # power = block_symbols[power]
-        # print(power, end='', flush=True)
-
         audio = Audio(indata, args.sample_rate)
 
         asyncio.run_coroutine_threadsafe(
@@ -262,15 +217,22 @@ def parse_args() -> Namespace:
     parser.add_argument(
         '--sample-rate', '-s',
         type=int,
-        default=DEFAULT_SAMPLE_RATE,
+        default=config.mic_sample_rate,
         help='The sample rate of the microphone. Default: %(default)s',
     )
 
     parser.add_argument(
         '--block-size', '-b',
         type=int,
-        default=DEFAULT_BLOCK_SIZE,
+        default=config.mic_block_size,
         help='The block size of the microphone samples. Default: %(default)s',
+    )
+
+    parser.add_argument(
+        '--gain', '-g',
+        default='auto',
+        help='The gain control to use. Can be a number for constant gain, '
+             'or "auto" for automatic gain adjustment. Default: %(default)s',
     )
 
     return parser.parse_args()
