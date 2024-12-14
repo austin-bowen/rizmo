@@ -74,7 +74,7 @@ async def main(args: Namespace) -> None:
                 voice_detected = False
 
         if voice_detected != state.voice_detected:
-            print('Voice detected:', state.voice_detected)
+            print('Voice detected:', voice_detected)
             state.voice_detected = voice_detected
 
         await voice_detected_topic.send((audio, timestamp, voice_detected))
