@@ -183,10 +183,13 @@ async def main(
             loop,
         ).result()
 
-    device = next(
-        i for i, d in enumerate(sd.query_devices())
-        if d['name'].startswith(args.device)
-    )
+    if args.device is None:
+        device = None
+    else:
+        device = next(
+            i for i, d in enumerate(sd.query_devices())
+            if d['name'].startswith(args.device)
+        )
 
     mic = Microphone(
         mic_callback,
