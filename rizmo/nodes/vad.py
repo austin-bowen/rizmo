@@ -6,33 +6,13 @@ Setup:
 import asyncio
 from argparse import Namespace
 from dataclasses import dataclass, field
-from functools import wraps
 
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
-from easymesh.node.node import MeshNode
-from easymesh.types import Data, Topic
 from funasr import AutoModel
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
-
-
-def depends_on_listener(node: MeshNode, downstream_topic: Topic):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(topic_: Topic, data_: Data) -> None:
-            if not await node.topic_has_listeners(downstream_topic):
-                await node.stop_listening(topic_)
-                await node.wait_for_listener(downstream_topic)
-                await node.listen(topic_, wrapper)
-                return
-
-            return await func(topic_, data_)
-
-        return wrapper
-
-    return decorator
 
 
 async def main(args: Namespace) -> None:
@@ -59,7 +39,8 @@ async def main(args: Namespace) -> None:
         indata = audio.data.squeeze()
         chunk_size_ms = int(round(1000 * block_size / audio.sample_rate))
 
-        res = vad_model.generate(
+        res = await asyncio.to_thread(
+            vad_model.generate,
             input=indata,
             cache=state.model_cache,
             is_final=False,
@@ -80,11 +61,7 @@ async def main(args: Namespace) -> None:
         await voice_detected_topic.send((audio, timestamp, voice_detected))
 
     await node.listen('audio', handle_audio)
-
-    try:
-        await forever()
-    finally:
-        pass
+    await forever()
 
 
 def parse_args() -> Namespace:
