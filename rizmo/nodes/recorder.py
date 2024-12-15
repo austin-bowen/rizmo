@@ -18,7 +18,14 @@ async def main(args: Namespace) -> None:
 
     async def handle_audio(topic, data) -> None:
         audio: Audio = data[0]
+        await save_audio(audio)
 
+    async def handle_voice_detected(topic, data) -> None:
+        audio, _, voice_detected = data
+        if voice_detected:
+            await save_audio(audio)
+
+    async def save_audio(audio: Audio) -> None:
         require(
             audio.sample_rate == args.sample_rate,
             f'Expected sample rate {args.sample_rate}, got {audio.sample_rate}',
@@ -36,7 +43,11 @@ async def main(args: Namespace) -> None:
         wav_file.setsampwidth(2)
         wav_file.setframerate(args.sample_rate)
 
-        await node.listen('audio', handle_audio)
+        if args.voice_only:
+            await node.listen('voice_detected', handle_voice_detected)
+        else:
+            await node.listen('audio', handle_audio)
+
         await forever()
 
 
@@ -54,6 +65,12 @@ def parse_args() -> Namespace:
         type=int,
         default=config.mic_sample_rate,
         help='The expected sample rate of the audio. Default: %(default)s',
+    )
+
+    parser.add_argument(
+        '--voice-only', '-v',
+        action='store_true',
+        help='Only record audio when voice is detected.',
     )
 
     return parser.parse_args()
