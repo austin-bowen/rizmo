@@ -149,7 +149,7 @@ async def main(args: Namespace):
             return
 
         if audio_buffer:
-            full_audio_data = np.concatenate([a.data for a in audio_buffer]).flatten()
+            full_audio_data = np.concatenate([a.signal for a in audio_buffer]).flatten()
             sample_rate = audio_buffer[0].sample_rate
             audio_buffer.clear()
 
