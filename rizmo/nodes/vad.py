@@ -40,7 +40,7 @@ async def main(args: Namespace) -> None:
     def filter_motor_noise(signal_: np.ndarray, sample_rate: int) -> np.ndarray:
         return motor_noise_filter(VoiceboxAudio(signal_, sample_rate)).signal
 
-    # @voice_detected_topic.depends_on_listener()
+    @voice_detected_topic.depends_on_listener()
     async def handle_audio(topic, data):
         audio, timestamp = data
         block_size = audio.data.shape[0]
