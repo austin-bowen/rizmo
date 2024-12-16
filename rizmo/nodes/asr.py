@@ -16,9 +16,9 @@ import torch
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from voicebox.audio import Audio
 
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import Audio
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 PRE_BUFFER_DURATION_S = 1.
@@ -49,7 +49,7 @@ class ASR(Thread):
 
     def _handle_audio(self, audio: Audio) -> None:
         sample = dict(
-            array=audio.data.copy(),
+            array=audio.signal.copy(),
             sampling_rate=audio.sample_rate,
         )
 
@@ -77,10 +77,10 @@ class MaxDurationAudioBuffer:
     def append(self, audio: Audio) -> None:
         self._buffer.append(audio)
 
-        duration = sum(a.duration for a in self._buffer)
+        duration = sum(a.len_seconds for a in self._buffer)
         while duration > self.max_duration:
             removed_audio = self._buffer.popleft()
-            duration -= removed_audio.duration
+            duration -= removed_audio.len_seconds
 
 
 def build_asr_thread(handle_transcript: Callable[[str], None]):
@@ -135,7 +135,8 @@ async def main(args: Namespace):
     audio_buffer = []
 
     async def handle_voice_detected(topic, data):
-        audio, timestamp, voice_detected = data
+        audio, _, voice_detected = data
+        audio = Audio(audio.data, audio.sample_rate)
 
         most_recent_audios.append(audio)
 
@@ -153,7 +154,9 @@ async def main(args: Namespace):
             audio_buffer.clear()
 
             full_audio = Audio(full_audio_data, sample_rate)
-            asr.queue.put(full_audio)
+
+            if full_audio.len_seconds >= args.min_duration:
+                asr.queue.put(full_audio)
 
     await node.listen('voice_detected', handle_voice_detected)
 
@@ -167,6 +170,14 @@ async def main(args: Namespace):
 
 def parse_args() -> Namespace:
     parser = get_rizmo_node_arg_parser(__file__)
+
+    parser.add_argument(
+        '--min-duration',
+        type=float,
+        default=1.,
+        help='Minimum duration of audio, in seconds, to transcribe. Default: %(default)s',
+    )
+
     return parser.parse_args()
 
 
