@@ -157,6 +157,8 @@ async def main(args: Namespace):
 
             if full_audio.len_seconds >= args.min_duration:
                 asr.queue.put(full_audio)
+            else:
+                print('[Too short]')
 
     await node.listen('voice_detected', handle_voice_detected)
 
