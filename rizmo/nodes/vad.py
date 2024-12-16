@@ -7,9 +7,12 @@ import asyncio
 from argparse import Namespace
 from dataclasses import dataclass, field
 
+import numpy as np
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 from funasr import AutoModel
+from voicebox.audio import Audio as VoiceboxAudio
+from voicebox.effects import Filter
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -32,12 +35,19 @@ async def main(args: Namespace) -> None:
 
     state = State()
 
-    @voice_detected_topic.depends_on_listener()
+    motor_noise_filter = Filter.build('lowpass', freq=3300, order=4)
+
+    def filter_motor_noise(signal_: np.ndarray, sample_rate: int) -> np.ndarray:
+        return motor_noise_filter(VoiceboxAudio(signal_, sample_rate)).signal
+
+    # @voice_detected_topic.depends_on_listener()
     async def handle_audio(topic, data):
         audio, timestamp = data
         block_size = audio.data.shape[0]
         indata = audio.data.squeeze()
         chunk_size_ms = int(round(1000 * block_size / audio.sample_rate))
+
+        indata = filter_motor_noise(indata, audio.sample_rate)
 
         res = await asyncio.to_thread(
             vad_model.generate,
