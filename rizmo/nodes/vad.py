@@ -58,6 +58,11 @@ async def main(args: Namespace) -> None:
             print('Voice detected:', voice_detected)
             state.voice_detected = voice_detected
 
+            # Elements of cache['stats'] seem to grow without bound;
+            # clear it so it will be re-initialized and memory freed.
+            if not voice_detected:
+                state.model_cache.clear()
+
         await voice_detected_topic.send((audio, timestamp, voice_detected))
 
     await node.listen('audio', handle_audio)

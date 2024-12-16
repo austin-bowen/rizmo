@@ -32,6 +32,16 @@ TODO
       set-default-sink <sink-name>
       set-default-source <source-name>
       ```
+6. Install the [`jetson_inference`](https://github.com/dusty-nv/jetson-inference/tree/master) library:
+   1. [Follow these instructions](https://github.com/dusty-nv/jetson-inference/blob/master/docs/building-repo-2.md) to install it from source to the system's Python 3.6 site packages.
+   2. Create a Python 3.6 venv: \
+      `python3.6 -m venv --system-site-packages --symlinks venv3.6`
+   3. Update pip and make sure the lib can be imported:
+      ```
+      . venv3.6/bin/activate
+      pip install -U pip
+      python -c "import jetson_inference"
+      ```
 
 ## Repository Setup
 
