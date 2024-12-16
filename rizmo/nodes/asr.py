@@ -176,7 +176,7 @@ def parse_args() -> Namespace:
     parser.add_argument(
         '--min-duration',
         type=float,
-        default=1.,
+        default=1.5,
         help='Minimum duration of audio, in seconds, to transcribe. Default: %(default)s',
     )
 
