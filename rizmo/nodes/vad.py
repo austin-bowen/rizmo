@@ -35,7 +35,7 @@ async def main(args: Namespace) -> None:
 
     state = State()
 
-    motor_noise_filter = Filter.build('lowpass', freq=3300, order=4)
+    motor_noise_filter = Filter.build('lowpass', freq=3000, order=6)
 
     def filter_motor_noise(signal_: np.ndarray, sample_rate: int) -> np.ndarray:
         return motor_noise_filter(VoiceboxAudio(signal_, sample_rate)).signal
