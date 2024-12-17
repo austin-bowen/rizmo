@@ -139,7 +139,7 @@ async def main(args: Namespace, stdscr):
     async def handle_audio(topic, data) -> None:
         audio, timestamp = data
 
-        power = np.abs(audio.data).max()
+        power = np.abs(audio.signal).max()
         power = min(power, 1. - 1e-3)
         power = int(power * len(BLOCK_SYMBOLS))
         power = BLOCK_SYMBOLS[power]

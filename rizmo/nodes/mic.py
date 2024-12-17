@@ -9,10 +9,10 @@ import numpy as np
 import sounddevice as sd
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
+from voicebox.audio import Audio
 
 from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import Audio
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 WEBCAM_MIC = 'USB CAMERA: Audio'

@@ -1,19 +1,6 @@
 from dataclasses import dataclass
 from typing import Literal, Union
 
-import numpy as np
-
-
-@dataclass(slots=True)
-class Audio:
-    data: np.ndarray
-    sample_rate: int
-
-    @property
-    def duration(self) -> float:
-        """Duration of the audio in seconds."""
-        return self.data.size / self.sample_rate
-
 
 @dataclass(slots=True)
 class Box:

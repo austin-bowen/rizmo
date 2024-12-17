@@ -136,7 +136,6 @@ async def main(args: Namespace):
 
     async def handle_voice_detected(topic, data):
         audio, _, voice_detected = data
-        audio = Audio(audio.data, audio.sample_rate)
 
         most_recent_audios.append(audio)
 

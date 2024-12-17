@@ -43,8 +43,8 @@ async def main(args: Namespace) -> None:
     @voice_detected_topic.depends_on_listener()
     async def handle_audio(topic, data):
         audio, timestamp = data
-        block_size = audio.data.shape[0]
-        indata = audio.data.squeeze()
+        block_size = audio.signal.shape[0]
+        indata = audio.signal.squeeze()
         chunk_size_ms = int(round(1000 * block_size / audio.sample_rate))
 
         indata = filter_motor_noise(indata, audio.sample_rate)
