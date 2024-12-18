@@ -134,6 +134,10 @@ async def main(args: Namespace) -> None:
                 print('[Conversation paused]')
                 state.in_conversation = False
                 await say_topic.send('Okay.')
+
+                chat.add_user_message(transcript)
+                chat.add_assistant_message('Okay.')
+
                 return
 
             chat.add_user_message(transcript)

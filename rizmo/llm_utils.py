@@ -25,6 +25,9 @@ class Chat:
     def add_user_message(self, content: str) -> None:
         self.messages.append(dict(role='user', content=content))
 
+    def add_assistant_message(self, content: str) -> None:
+        self.messages.append(dict(role='assistant', content=content))
+
     def add_tool_message(self, tool_call_id: str, result: Any) -> None:
         self.messages.append(dict(
             role='tool',
