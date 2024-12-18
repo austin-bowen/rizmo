@@ -23,7 +23,7 @@ host_nodes = {
         Node('maestro_ctl'),
         Node('mic'),
         Node('obj_tracker'),
-        Node('speech'),
+        Node('voice'),
         Node('website'),
     ),
     'potato': (
