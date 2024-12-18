@@ -16,7 +16,7 @@ torchvision
 torchaudio
 transformers
 ultralytics
-voicebox-tts
+voicebox-tts[amazon-polly]
 
 # Node: agent
 openai

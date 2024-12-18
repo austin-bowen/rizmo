@@ -24,5 +24,7 @@ class Config:
 
     weather_location: str = 'Anderson, SC'
 
+    aws_region: str = 'us-east-1'
+
 
 config = Config()
