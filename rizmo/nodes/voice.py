@@ -5,7 +5,7 @@ from argparse import Namespace
 import easymesh
 from easymesh.asyncio import forever
 from voicebox import ParallelVoicebox, Voicebox, reliable_tts
-from voicebox.effects import Flanger, Normalize, Tail
+from voicebox.effects import Flanger, Tail
 from voicebox.sinks import SoundDevice
 from voicebox.tts import AmazonPolly, ESpeakNG
 
@@ -53,7 +53,6 @@ def build_voicebox(tts: str) -> Voicebox:
         effects=[
             Tail(0.5),
             Flanger(),
-            Normalize(),
         ],
         sink=SoundDevice(latency=0.2),
     )
