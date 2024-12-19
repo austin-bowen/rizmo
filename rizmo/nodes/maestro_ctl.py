@@ -87,15 +87,11 @@ async def main(args: Namespace) -> None:
             position = maestro.get_position(PAN)
             maestro[PAN] = position + speed * runtime
 
-        tilt1_target, tilt1_speed = None, 0.
+        tilt1_target_diff = 0.
         if cmd.tilt_dps is not None:
             cmd.tilt_dps = min(max(-SPEED_LIMIT_DPS, cmd.tilt_dps), SPEED_LIMIT_DPS)
             speed = cmd.tilt_speed_us_per_second
-            tilt1_speed = max(abs(speed), 25)
-
-            position = maestro.get_position(TILT1)
-            position = position + speed * runtime
-            tilt1_target = max(position, 750)
+            tilt1_target_diff += speed * runtime
 
         if cmd.lean_dps is not None:
             cmd.lean_dps = min(max(-SPEED_LIMIT_DPS / 2, cmd.lean_dps), SPEED_LIMIT_DPS / 2)
@@ -106,13 +102,15 @@ async def main(args: Namespace) -> None:
             position = position + speed * runtime
             maestro[TILT0] = min(max(1500., position), 2000.)
 
-            tilt1_target = tilt1_target or maestro.get_position(TILT1)
-            tilt1_target -= speed * runtime
-            tilt1_speed -= speed
+            tilt1_target_diff -= speed * runtime
 
-        if tilt1_target is not None:
-            maestro.set_speed(TILT1, tilt1_speed)
-            maestro[TILT1] = tilt1_target
+        if tilt1_target_diff != 0.:
+            position = maestro.get_position(TILT1)
+            tilt1_target = position + tilt1_target_diff
+
+            speed = abs(tilt1_target_diff - position) / runtime
+            maestro.set_speed(TILT1, max(speed, 25))
+            maestro[TILT1] = max(tilt1_target, 750)
 
     def set_servo_speeds(speed: float) -> None:
         for c in SERVOS:
