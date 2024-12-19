@@ -111,3 +111,7 @@ class SetHeadSpeed:
     @property
     def tilt_speed_us_per_second(self) -> float:
         return self.tilt_dps * US_PER_DEG[2]
+
+    @property
+    def lean_speed_us_per_second(self) -> float:
+        return self.lean_dps * US_PER_DEG[1]
