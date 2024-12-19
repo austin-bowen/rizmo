@@ -99,10 +99,10 @@ async def main(args: Namespace) -> None:
             maestro.set_speed(TILT0, max(abs(speed), 25))
 
             position = maestro.get_position(TILT0)
-            position = position + speed * runtime
-            maestro[TILT0] = min(max(1500., position), 2000.)
+            target = position + speed * runtime
+            maestro[TILT0] = target = min(max(1500., target), 2000.)
 
-            tilt1_target_diff -= speed * runtime
+            tilt1_target_diff -= target - position
 
         if tilt1_target_diff != 0.:
             position = maestro.get_position(TILT1)
