@@ -2,5 +2,4 @@
 __pycache__/
 logs/
 venv/
-.openai_api_key
 secrets.py

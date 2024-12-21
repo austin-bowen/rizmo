@@ -14,6 +14,7 @@ from easymesh.node.node import MeshNode
 from openai import OpenAI
 from openai.types.chat.chat_completion_message_tool_call import Function
 
+from rizmo import secrets
 from rizmo.config import config
 from rizmo.llm_utils import Chat, with_datetime
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -90,8 +91,7 @@ async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender('say')
 
-    api_key = open('.openai_api_key', 'r').read().strip()
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=secrets.OPENAI_API_KEY)
 
     chat = Chat(
         client,
