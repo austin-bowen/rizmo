@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 import subprocess
 from argparse import Namespace
 from dataclasses import asdict, dataclass
@@ -36,6 +37,16 @@ ALT_NAMES = (
     'rizzmo',
     'rosma',
     'rosmo',
+)
+
+WAKE_PATTERN = re.compile(
+    # Start of sentence
+    r'(^|.*[.?!] )'
+    # Optional "hey", "hi", etc.
+    r'((hey|hi|hello|okay|ok),? )?'
+    # Name
+    rf'{NAME}',
+    flags=re.IGNORECASE,
 )
 
 MAIN_SYSTEM_PROMPT = '''
@@ -336,15 +347,7 @@ def preprocess(transcript: str) -> str:
 
 
 def talking_to_me(transcript: str) -> bool:
-    t = transcript.replace(',', '')
-
-    return transcript.startswith(NAME) or any_phrase_in(t, (
-        f'hey {NAME}',
-        f'hi {NAME}',
-        f'hello {NAME}',
-        f'okay {NAME}',
-        f'ok {NAME}',
-    ))
+    return WAKE_PATTERN.match(transcript) is not None
 
 
 def any_phrase_in(transcript: str, phrases: Iterable[str]) -> bool:
