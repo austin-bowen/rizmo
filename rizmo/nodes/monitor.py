@@ -14,7 +14,7 @@ from easymesh.asyncio import forever
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
-from rizmo.nodes.messages import Detection, Detections
+from rizmo.nodes.messages import Detection, Detections, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 Image = np.ndarray
@@ -162,13 +162,13 @@ async def main(args: Namespace, stdscr):
     image_ready_event = Event()
     RenderThread(show_image, image_ready_event, fps=30).start()
 
-    await node.listen('new_image', handle_new_image)
-    await node.listen('objects_detected', handle_obj_detected)
-    await node.listen('tracking', handle_tracking)
-    await node.listen('audio', handle_audio)
-    await node.listen('voice_detected', handle_voice_detected)
-    await node.listen('transcript', handle_transcript)
-    await node.listen('say', handle_say)
+    await node.listen(Topic.NEW_IMAGE, handle_new_image)
+    await node.listen(Topic.OBJECTS_DETECTED, handle_obj_detected)
+    await node.listen(Topic.TRACKING, handle_tracking)
+    await node.listen(Topic.AUDIO, handle_audio)
+    await node.listen(Topic.VOICE_DETECTED, handle_voice_detected)
+    await node.listen(Topic.TRANSCRIPT, handle_transcript)
+    await node.listen(Topic.SAY, handle_say)
 
     await forever()
 

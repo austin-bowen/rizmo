@@ -13,6 +13,7 @@ from rizmo.config import config
 from rizmo.motion_detector import DynamicThresholdPixelChangeMotionDetector
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
+from rizmo.nodes.messages import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 Image = np.ndarray
@@ -137,7 +138,7 @@ async def _read_camera(
         show_raw_image: bool = False,
         jpeg_quality: int = 80,
 ):
-    new_image_topic = node.get_topic_sender('new_image')
+    new_image_topic = node.get_topic_sender(Topic.NEW_IMAGE)
     await new_image_topic.wait_for_listener()
 
     camera_builder = lambda: Camera(

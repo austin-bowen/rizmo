@@ -13,6 +13,7 @@ from voicebox.audio import Audio
 
 from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 WEBCAM_MIC = 'USB CAMERA: Audio'
@@ -150,7 +151,7 @@ async def main(
         channels: int = 1,
 ):
     node = await build_mesh_node_from_args(args=args)
-    audio_topic = node.get_topic_sender('audio')
+    audio_topic = node.get_topic_sender(Topic.AUDIO)
 
     loop = asyncio.get_event_loop()
 

@@ -10,6 +10,7 @@ from voicebox.audio import Audio
 
 from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 
@@ -44,9 +45,9 @@ async def main(args: Namespace) -> None:
         wav_file.setframerate(args.sample_rate)
 
         if args.voice_only:
-            await node.listen('voice_detected', handle_voice_detected)
+            await node.listen(Topic.VOICE_DETECTED, handle_voice_detected)
         else:
-            await node.listen('audio', handle_audio)
+            await node.listen(Topic.AUDIO, handle_audio)
 
         await forever()
 

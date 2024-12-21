@@ -9,6 +9,7 @@ from easymesh.asyncio import forever
 from flask import Flask, render_template_string, send_file
 
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 app = Flask(__name__)
@@ -71,7 +72,7 @@ async def main(args: Namespace) -> None:
         timestamp, camera_index, image_bytes = data
         cache.image_bytes = image_bytes
 
-    await node.listen('new_image', handle_image)
+    await node.listen(Topic.NEW_IMAGE, handle_image)
 
     Thread(
         target=app.run,

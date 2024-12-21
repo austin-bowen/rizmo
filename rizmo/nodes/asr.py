@@ -19,6 +19,7 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from voicebox.audio import Audio
 
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 PRE_BUFFER_DURATION_S = 1.
@@ -117,7 +118,7 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
 
 async def main(args: Namespace):
     node = await build_mesh_node_from_args(args=args)
-    transcript_topic = node.get_topic_sender('transcript')
+    transcript_topic = node.get_topic_sender(Topic.TRANSCRIPT)
 
     loop = asyncio.get_event_loop()
 
@@ -159,7 +160,7 @@ async def main(args: Namespace):
             else:
                 print('[Too short]')
 
-    await node.listen('voice_detected', handle_voice_detected)
+    await node.listen(Topic.VOICE_DETECTED, handle_voice_detected)
 
     try:
         await forever()

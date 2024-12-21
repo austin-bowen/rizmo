@@ -15,13 +15,14 @@ from voicebox.audio import Audio as VoiceboxAudio
 from voicebox.effects import Filter
 
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
-    voice_detected_topic = node.get_topic_sender('voice_detected')
+    voice_detected_topic = node.get_topic_sender(Topic.VOICE_DETECTED)
 
     vad_model = AutoModel(
         model='fsmn-vad',
@@ -75,7 +76,7 @@ async def main(args: Namespace) -> None:
 
         await voice_detected_topic.send((audio, timestamp, voice_detected))
 
-    await node.listen('audio', handle_audio)
+    await node.listen(Topic.AUDIO, handle_audio)
     await forever()
 
 

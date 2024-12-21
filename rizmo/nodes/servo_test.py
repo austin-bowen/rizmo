@@ -4,7 +4,7 @@ from argparse import Namespace
 from easymesh import build_mesh_node_from_args
 
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import SetServoPosition
+from rizmo.nodes.messages import SetServoPosition, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 
@@ -41,7 +41,7 @@ async def main(args: Namespace) -> None:
 
     while True:
         servo_command = await asyncio.to_thread(get_servo_command)
-        await node.send('servo_command', servo_command)
+        await node.send(Topic.SERVO_COMMAND, servo_command)
 
 
 def parse_args() -> Namespace:

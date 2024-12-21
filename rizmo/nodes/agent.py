@@ -18,7 +18,7 @@ from rizmo import secrets
 from rizmo.config import config
 from rizmo.llm_utils import Chat, with_datetime
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import MotorSystemCommand
+from rizmo.nodes.messages import MotorSystemCommand, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
@@ -89,7 +89,7 @@ otherwise, respond with "no".
 
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
-    say_topic = node.get_topic_sender('say')
+    say_topic = node.get_topic_sender(Topic.SAY)
 
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
 
@@ -171,7 +171,7 @@ async def main(args: Namespace) -> None:
         finally:
             state.last_datetime = now
 
-    await node.listen('transcript', handle_transcript)
+    await node.listen(Topic.TRANSCRIPT, handle_transcript)
 
     try:
         await forever()
@@ -253,8 +253,8 @@ class ToolHandler:
             node: MeshNode,
             weather_provider: WeatherProvider,
     ):
-        self.say_topic = node.get_topic_sender('say')
-        self.motor_system_topic = node.get_topic_sender('motor_system')
+        self.say_topic = node.get_topic_sender(Topic.SAY)
+        self.motor_system_topic = node.get_topic_sender(Topic.MOTOR_SYSTEM)
         self.weather_provider = weather_provider
 
     async def handle(self, func_spec: Function) -> str:

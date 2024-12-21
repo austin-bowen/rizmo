@@ -10,7 +10,7 @@ from easymesh.asyncio import forever
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import Detection, Detections, SetHeadSpeed
+from rizmo.nodes.messages import Detection, Detections, SetHeadSpeed, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 AVG_LATENCY = 0.0367
@@ -20,8 +20,8 @@ AVG_LATENCY = 0.0367
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
-    tracking_topic = node.get_topic_sender('tracking')
-    maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
+    tracking_topic = node.get_topic_sender(Topic.TRACKING)
+    maestro_cmd_topic = node.get_topic_sender(Topic.MAESTRO_CMD)
 
     @dataclass
     class State:
@@ -142,7 +142,7 @@ async def main(args: Namespace) -> None:
         await maestro_cmd_topic.send(maestro_cmd)
         await tracking_topic.send(target)
 
-    await node.listen('objects_detected', handle_objects_detected)
+    await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
 
     await forever()
 

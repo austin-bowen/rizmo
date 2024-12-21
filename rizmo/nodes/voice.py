@@ -11,6 +11,7 @@ from voicebox.tts import AmazonPolly, ESpeakNG
 
 from rizmo.aws import get_polly_client
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 
@@ -29,7 +30,7 @@ async def main(args: Namespace) -> None:
             print(repr(message))
             voicebox.say(message)
 
-        await node.listen('say', handle_say)
+        await node.listen(Topic.SAY, handle_say)
         await forever()
 
 

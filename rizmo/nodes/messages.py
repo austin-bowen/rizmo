@@ -2,6 +2,19 @@ from dataclasses import dataclass
 from typing import Literal, Union
 
 
+class Topic:
+    AUDIO = 'audio'
+    MAESTRO_CMD = 'maestro_cmd'
+    MOTOR_SYSTEM = 'motor_system'
+    NEW_IMAGE = 'new_image'
+    OBJECTS_DETECTED = 'objects_detected'
+    SAY = 'say'
+    SERVO_COMMAND = 'servo_command'
+    TRACKING = 'tracking'
+    TRANSCRIPT = 'transcript'
+    VOICE_DETECTED = 'voice_detected'
+
+
 @dataclass(slots=True)
 class Box:
     x: int

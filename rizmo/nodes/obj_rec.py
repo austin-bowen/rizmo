@@ -14,7 +14,7 @@ from easymesh.asyncio import forever
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
 from .image_codec import JpegImageCodec
-from .messages import Box, Detection, Detections
+from .messages import Box, Detection, Detections, Topic
 
 Image = np.ndarray
 
@@ -140,7 +140,7 @@ class UltralyticsDetector(ObjectDetector):
 async def main(args: Namespace):
     node = await build_mesh_node_from_args(args=args)
 
-    obj_det_topic = node.get_topic_sender('objects_detected')
+    obj_det_topic = node.get_topic_sender(Topic.OBJECTS_DETECTED)
 
     # obj_detector = HuggingFaceDetector.from_pretrained(
     #     # 'facebook/detr-resnet-50', DetrForObjectDetection, DetrImageProcessor,
@@ -171,7 +171,7 @@ async def main(args: Namespace):
 
         await obj_det_topic.send(Detections(timestamp, image_size, objects))
 
-    await node.listen('new_image', handle_image)
+    await node.listen(Topic.NEW_IMAGE, handle_image)
 
     await forever()
 

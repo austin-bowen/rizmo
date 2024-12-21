@@ -14,7 +14,7 @@ from easymesh.asyncio import forever
 from maestro import Maestro
 
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import ChangeServoPosition, MotorSystemCommand, SetHeadSpeed, SetServoPosition
+from rizmo.nodes.messages import ChangeServoPosition, MotorSystemCommand, SetHeadSpeed, SetServoPosition, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 DEFAULT_TTY = '/dev/ttyACM0'
@@ -39,9 +39,9 @@ async def main(args: Namespace) -> None:
 
     async def set_motor_system_enabled(enable: bool) -> None:
         if enable:
-            await node.listen('maestro_cmd', handle_maestro_cmd)
+            await node.listen(Topic.MAESTRO_CMD, handle_maestro_cmd)
         else:
-            await node.stop_listening('maestro_cmd')
+            await node.stop_listening(Topic.MAESTRO_CMD)
 
     async def handle_maestro_cmd(topic, command: Union[SetServoPosition, ChangeServoPosition]) -> None:
         print('[Maestro] Received command:', command)
@@ -131,7 +131,7 @@ async def main(args: Namespace) -> None:
         center_servos()
 
         await set_motor_system_enabled(True)
-        await node.listen('motor_system', handle_motor_system)
+        await node.listen(Topic.MOTOR_SYSTEM, handle_motor_system)
 
         try:
             await forever()

@@ -8,14 +8,14 @@ from easymesh import build_mesh_node_from_args
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import Detection, SetServoPosition
+from rizmo.nodes.messages import Detection, SetServoPosition, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
-    maestro_cmd_topic = node.get_topic_sender('maestro_cmd')
+    maestro_cmd_topic = node.get_topic_sender(Topic.MAESTRO_CMD)
 
     @dataclass
     class State:
@@ -42,7 +42,7 @@ async def main(args: Namespace) -> None:
         state.target = target
         await explore.set(target is None)
 
-    await node.listen('tracking', handle_tracking)
+    await node.listen(Topic.TRACKING, handle_tracking)
 
     while True:
         print('target:', state.target)
