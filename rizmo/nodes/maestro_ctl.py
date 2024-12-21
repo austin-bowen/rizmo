@@ -102,15 +102,13 @@ async def main(args: Namespace) -> None:
             target = position + speed * runtime
             maestro[TILT0] = target = min(max(1500., target), 2000.)
 
-            tilt1_target_diff -= target - position
+            tilt1_target_diff += target - position
 
-        if tilt1_target_diff != 0.:
-            position = maestro.get_position(TILT1)
-            tilt1_target = position + tilt1_target_diff
-
-            speed = abs(tilt1_target_diff - position) / runtime
-            maestro.set_speed(TILT1, max(speed, 25))
-            maestro[TILT1] = max(tilt1_target, 750)
+        position = maestro.get_position(TILT1)
+        tilt1_target = position + tilt1_target_diff
+        speed = abs(tilt1_target_diff) / runtime
+        maestro.set_speed(TILT1, max(speed, 25))
+        maestro[TILT1] = max(tilt1_target, 750)
 
     def set_servo_speeds(speed: float) -> None:
         for c in SERVOS:

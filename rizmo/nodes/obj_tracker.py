@@ -95,8 +95,11 @@ async def main(args: Namespace) -> None:
             object_y -= .5 * box.height
         y_error = (2 * object_y / image_height) - 1
 
+        target_area = 0.33
         object_size = (box.width * box.height) / (image_width * image_height)
-        z_error = min(max(-1., 2 * object_size - 1), 1.)
+        target_dist = target_area ** -0.5
+        actual_dist = object_size ** -0.5
+        z_error = target_dist - actual_dist
 
         print(f'(x, y, z)_error: {x_error:.2f}, {y_error:.2f}, {z_error:.2f}')
 
@@ -123,7 +126,7 @@ async def main(args: Namespace) -> None:
         # PD control
         pan_dps = 100 * x_error + 15 * (x_error - state.prev_x_error) / dt
         tilt_dps = 75 * y_error
-        lean_dps = 10 * z_error
+        lean_dps = 50 * z_error
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency
@@ -133,12 +136,10 @@ async def main(args: Namespace) -> None:
         maestro_cmd = SetHeadSpeed(
             pan_dps=-pan_dps * gain_scalar,
             tilt_dps=-tilt_dps * gain_scalar,
-            lean_dps=-lean_dps * gain_scalar,
+            lean_dps=lean_dps * gain_scalar,
         )
 
-        if maestro_cmd.pan_dps != 0 or maestro_cmd.tilt_dps != 0:
-            await maestro_cmd_topic.send(maestro_cmd)
-
+        await maestro_cmd_topic.send(maestro_cmd)
         await tracking_topic.send(target)
 
     await node.listen('objects_detected', handle_objects_detected)
