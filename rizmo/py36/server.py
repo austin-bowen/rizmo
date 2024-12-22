@@ -5,20 +5,14 @@ Server for running code on the Jetson Nano that requires the native Python 3.6.
 import os
 import pickle
 import signal
-import sys
 import time
 from argparse import ArgumentParser, Namespace
 from socketserver import StreamRequestHandler, UnixStreamServer
 from threading import Thread
 from typing import Any
 
+from rizmo.py36.obj_detector import ObjectDetector, get_object_detector
 from rizmo.signal import graceful_shutdown_on_sigterm
-
-try:
-    from jetson.inference import detectNet
-except ImportError:
-    def detectNet(*args, **kwargs):
-        ...
 
 DEFAULT_SOCKET_PATH: str = '/tmp/rizmo.py36_server.sock'
 
@@ -29,11 +23,9 @@ MAX_MESSAGE_LEN: int = 2 ** 32 - 1
 
 
 def main(args: Namespace) -> None:
-    print('Loading model...')
-    model = detectNet(args.network, sys.argv, args.threshold)
-    print('Done.')
+    object_detector = get_object_detector(args.network, args.threshold)
 
-    rpc_handler = RpcHandler(model)
+    rpc_handler = RpcHandler(object_detector)
 
     def delete_socket_file():
         try:
@@ -48,23 +40,21 @@ def main(args: Namespace) -> None:
                 args.socket_path,
                 RequestHandler.builder(rpc_handler),
         ) as server:
-            rpc_handler.server = server
             server.serve_forever()
     finally:
         delete_socket_file()
 
 
 class RpcHandler:
-    def __init__(self, model: detectNet):
-        self.model = model
-        self.server = None
+    def __init__(self, object_detector: ObjectDetector):
+        self.object_detector = object_detector
 
     def __call__(self, function_name, args, kwargs) -> Any:
         function = getattr(self, function_name)
         return function(*args, **kwargs)
 
     def detect(self, image: bytes) -> Any:
-        return self.model.Detect(image)
+        return self.object_detector.get_objects(image)
 
     def ping(self) -> str:
         return 'pong'
