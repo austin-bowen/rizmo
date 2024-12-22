@@ -23,7 +23,7 @@ from rizmo.nodes.messages import Detections, MotorSystemCommand, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
-NAME = 'rizmo'
+NAME = 'Rizmo'
 ALT_NAMES = (
     'prisma',
     'prismo',
@@ -36,9 +36,15 @@ ALT_NAMES = (
     'risma',
     'rismo',
     'rizma',
+    'rizno',
     'rizzmo',
     'rosma',
     'rosmo',
+)
+
+ALT_NAME_PATTERN = re.compile(
+    rf'\b({"|".join(ALT_NAMES)})\b',
+    flags=re.IGNORECASE,
 )
 
 WAKE_PATTERN = re.compile(
@@ -175,19 +181,24 @@ class SystemPromptBuilder:
         self.objects = None
 
     def __call__(self) -> str:
-        p = self.system_prompt_template
-        p = self._add_datetime(p)
-        p = self._add_objects(p)
-        print('System prompt:', p)
-        return p
+        template_vars = self._get_template_vars()
+        prompt = self.system_prompt_template.format(**template_vars)
+        print('System prompt:', prompt)
+        return prompt
 
-    def _add_datetime(self, prompt: str) -> str:
+    def _get_template_vars(self) -> dict:
+        return {
+            **self._get_datetime(),
+            **self._get_objects(),
+        }
+
+    def _get_datetime(self) -> dict:
         now = datetime.now()
         date = now.strftime('%A, %B %d, %Y')
         time = now.strftime('%I:%M %p')
-        return prompt.format(date=date, time=time)
+        return dict(date=date, time=time)
 
-    def _add_objects(self, prompt: str) -> str:
+    def _get_objects(self) -> dict:
         objects = self.objects
 
         if objects is not None:
@@ -195,8 +206,10 @@ class SystemPromptBuilder:
             labels = sorted(obj_counts.keys())
             obj_strs = (f'{label} ({obj_counts[label]})' for label in labels)
             objects = ', '.join(obj_strs)
+        else:
+            objects = 'None'
 
-        return prompt.format(objects=objects)
+        return dict(objects=objects)
 
 
 class ToolHandler:
@@ -358,12 +371,7 @@ class ConvoDetector:
 
 
 def preprocess(transcript: str) -> str:
-    t = transcript.lower()
-
-    for alt_name in ALT_NAMES:
-        t = t.replace(alt_name, NAME)
-
-    return t
+    return ALT_NAME_PATTERN.sub(NAME, transcript)
 
 
 def talking_to_me(transcript: str) -> bool:
