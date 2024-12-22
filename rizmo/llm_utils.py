@@ -1,10 +1,11 @@
 import asyncio
 from collections.abc import Callable
-from datetime import datetime
 from typing import Any
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
+
+SystemPromptBuilder = Callable[[], str]
 
 
 class Chat:
@@ -53,13 +54,3 @@ class Chat:
         self.messages.append(message)
 
         return message
-
-
-SystemPromptBuilder = Callable[[], str]
-
-
-def with_datetime(prompt: str) -> str:
-    now = datetime.now()
-    date = now.strftime('%A, %B %d, %Y')
-    time = now.strftime('%I:%M %p')
-    return prompt.format(date=date, time=time)

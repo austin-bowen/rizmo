@@ -3,9 +3,10 @@ import json
 import re
 import subprocess
 from argparse import Namespace
+from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Iterable
+from typing import Iterable, Optional
 
 import psutil
 from easymesh import build_mesh_node_from_args
@@ -16,9 +17,9 @@ from openai.types.chat.chat_completion_message_tool_call import Function
 
 from rizmo import secrets
 from rizmo.config import config
-from rizmo.llm_utils import Chat, with_datetime
+from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import MotorSystemCommand, Topic
+from rizmo.nodes.messages import Detections, MotorSystemCommand, Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
@@ -72,19 +73,8 @@ Here are some phrases you should listen for and how to respond to them:
 Context:
 - Current date: {date}
 - Current time: {time}
+- Objects seen (count): {objects}.
 '''.strip()
-
-CONVO_DETECTOR_SYSTEM_PROMPT = '''
-You are a robot named Rizmo. You will receive transcripts of audio, and you must
-determine if the transcripts are part of a conversation with you, or not.
-
-The transcripts are not perfect, and might contain false positives, especially
-for short phrases, which may appear as phrases like "Thank you", or "Shh",
-or ".", which are probably not part of a conversation with you.
-
-If you think the transcript is part of a conversation with you, respond with "yes";
-otherwise, respond with "no".
-'''
 
 
 async def main(args: Namespace) -> None:
@@ -93,21 +83,14 @@ async def main(args: Namespace) -> None:
 
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
 
+    system_prompt_builder = SystemPromptBuilder(MAIN_SYSTEM_PROMPT)
+
     chat = Chat(
         client,
         model='gpt-4o-mini',
-        system_prompt_builder=lambda: with_datetime(MAIN_SYSTEM_PROMPT),
+        system_prompt_builder=system_prompt_builder,
         store=False,
         tools=ToolHandler.TOOLS,
-    )
-
-    convo_detector = ConvoDetector(
-        Chat(
-            client,
-            model='gpt-4o-mini',
-            system_prompt_builder=lambda: CONVO_DETECTOR_SYSTEM_PROMPT,
-            store=False,
-        ),
     )
 
     @dataclass
@@ -171,12 +154,49 @@ async def main(args: Namespace) -> None:
         finally:
             state.last_datetime = now
 
+    async def handle_objects_detected(topic, objects: Detections) -> None:
+        system_prompt_builder.objects = objects
+
     await node.listen(Topic.TRANSCRIPT, handle_transcript)
+    await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
 
     try:
         await forever()
     finally:
         client.close()
+
+
+class SystemPromptBuilder:
+    objects: Optional[Detections]
+
+    def __init__(self, system_prompt_template: str):
+        self.system_prompt_template = system_prompt_template
+
+        self.objects = None
+
+    def __call__(self) -> str:
+        p = self.system_prompt_template
+        p = self._add_datetime(p)
+        p = self._add_objects(p)
+        print('System prompt:', p)
+        return p
+
+    def _add_datetime(self, prompt: str) -> str:
+        now = datetime.now()
+        date = now.strftime('%A, %B %d, %Y')
+        time = now.strftime('%I:%M %p')
+        return prompt.format(date=date, time=time)
+
+    def _add_objects(self, prompt: str) -> str:
+        objects = self.objects
+
+        if objects is not None:
+            obj_counts = Counter(obj.label for obj in objects.objects)
+            labels = sorted(obj_counts.keys())
+            obj_strs = (f'{label} ({obj_counts[label]})' for label in labels)
+            objects = ', '.join(obj_strs)
+
+        return prompt.format(objects=objects)
 
 
 class ToolHandler:
