@@ -352,24 +352,6 @@ class ToolHandler:
         )
 
 
-class ConvoDetector:
-    def __init__(self, chat: Chat):
-        self.chat = chat
-
-    async def is_conversation(self, transcript: str) -> bool:
-        self.chat.add_user_message(transcript)
-        response = await self.chat.get_response()
-        response = response.content
-
-        if response == 'yes':
-            return True
-        elif response == 'no':
-            return False
-        else:
-            print(f'ERROR: Unexpected response from convo detector: {response!r}')
-            return False
-
-
 def preprocess(transcript: str) -> str:
     return ALT_NAME_PATTERN.sub(NAME, transcript)
 
