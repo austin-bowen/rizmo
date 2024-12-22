@@ -8,9 +8,10 @@ import numpy as np
 
 try:
     from jetson.inference import detectNet
+    from jetson.utils import cudaFromNumpy
 except ImportError:
-    def detectNet(*args, **kwargs):
-        ...
+    detectNet = None
+    cudaFromNumpy = None
 
 Image = np.ndarray
 """Image in BGR format."""
@@ -28,6 +29,7 @@ class DetectNetObjectDetector(ObjectDetector):
 
     def get_objects(self, image: Image):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cudaFromNumpy(image)
         return self.model.Detect(image)
 
 
