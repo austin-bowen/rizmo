@@ -25,6 +25,8 @@ DEFAULT_SOCKET_PATH: str = '/tmp/rizmo.py36_server.sock'
 PICKLE_PROTOCOL: int = 4
 """The highest protocol version supported by Python 3.6."""
 
+MAX_MESSAGE_LEN: int = 2 ** 32 - 1
+
 
 def main(args: Namespace) -> None:
     print('Loading model...')
@@ -121,6 +123,12 @@ def read_message(rfile) -> bytes:
 
 
 def write_message(wfile, message: bytes) -> None:
+    if len(message) > MAX_MESSAGE_LEN:
+        raise ValueError(
+            f'Message is too large to send. Size is {len(message)} bytes; '
+            f'max size is {MAX_MESSAGE_LEN} bytes.'
+        )
+
     message_len = len(message).to_bytes(4, byteorder='big', signed=False)
     wfile.write(message_len)
     wfile.write(message)
