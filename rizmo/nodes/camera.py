@@ -10,9 +10,9 @@ from easymesh.utils import require
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.config import config
+from rizmo.image_codec import JpegImageCodec
 from rizmo.motion_detector import DynamicThresholdPixelChangeMotionDetector
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.image_codec import JpegImageCodec
 from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 

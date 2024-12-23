@@ -12,10 +12,10 @@ import numpy as np
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
+from rizmo.image_codec import JpegImageCodec
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.image_codec import JpegImageCodec
-from rizmo.nodes.topics import Topic
 from rizmo.nodes.messages_py36 import Detection, Detections
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 Image = np.ndarray
