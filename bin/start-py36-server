@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+deactivate
+. venv36/bin/activate
+python -m rizmo.py36.server

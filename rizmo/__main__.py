@@ -50,6 +50,9 @@ def main(args: Namespace):
                 '-m', 'easymesh.coordinator',
                 '--authkey', config.mesh_authkey,
             )
+
+            p.popen('./bin/start-py36-server')
+
             sleep(1)
 
         for node in nodes_to_start:
