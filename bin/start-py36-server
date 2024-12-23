@@ -2,4 +2,4 @@
 
 deactivate
 . venv36/bin/activate
-python -m rizmo.py36.server
+exec python -m rizmo.py36.server
