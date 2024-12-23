@@ -19,7 +19,8 @@ from rizmo import secrets
 from rizmo.config import config
 from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import Detections, MotorSystemCommand, Topic
+from rizmo.nodes.messages import MotorSystemCommand, Topic
+from rizmo.nodes.messages_py36 import Detections
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 

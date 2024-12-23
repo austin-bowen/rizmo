@@ -15,36 +15,6 @@ class Topic:
     VOICE_DETECTED = 'voice_detected'
 
 
-@dataclass(slots=True)
-class Box:
-    x: int
-    y: int
-    width: int
-    height: int
-
-    @property
-    def area(self) -> int:
-        return self.width * self.height
-
-
-@dataclass(slots=True)
-class Detection:
-    label: str
-    confidence: float
-    box: Box
-
-
-@dataclass(slots=True)
-class Detections:
-    timestamp: float
-    """Timestamp of when the image was taken."""
-
-    image_size: tuple[int, int]
-    """Width and height of the image."""
-
-    objects: list[Detection]
-
-
 @dataclass
 class MotorSystemCommand:
     enabled: bool
