@@ -40,6 +40,7 @@ TODO
       ```
       . venv36/bin/activate
       pip install -U pip
+      pip install -r requirements.py36.txt
       python -c "import jetson_inference"
       ```
 

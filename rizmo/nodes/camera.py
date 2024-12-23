@@ -13,7 +13,7 @@ from rizmo.config import config
 from rizmo.motion_detector import DynamicThresholdPixelChangeMotionDetector
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
-from rizmo.nodes.messages import Topic
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 Image = np.ndarray

@@ -13,8 +13,8 @@ from easymesh.asyncio import forever
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.signal import graceful_shutdown_on_sigterm
-from .image_codec import JpegImageCodec
-from .messages import Topic
+from rizmo.nodes.image_codec import JpegImageCodec
+from rizmo.nodes.topics import Topic
 from rizmo.nodes.messages_py36 import Box, Detection, Detections
 
 Image = np.ndarray

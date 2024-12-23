@@ -10,7 +10,7 @@ from voicebox.audio import Audio
 
 from rizmo.config import config
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import Topic
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 

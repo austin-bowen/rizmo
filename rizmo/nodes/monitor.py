@@ -14,7 +14,7 @@ from easymesh.asyncio import forever
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.image_codec import JpegImageCodec
-from rizmo.nodes.messages import Topic
+from rizmo.nodes.topics import Topic
 from rizmo.nodes.messages_py36 import Detection, Detections
 from rizmo.signal import graceful_shutdown_on_sigterm
 

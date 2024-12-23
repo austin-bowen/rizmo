@@ -14,7 +14,8 @@ from easymesh.asyncio import forever
 from maestro import Maestro
 
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import ChangeServoPosition, MotorSystemCommand, SetHeadSpeed, SetServoPosition, Topic
+from rizmo.nodes.messages import ChangeServoPosition, MotorSystemCommand, SetHeadSpeed, SetServoPosition
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 DEFAULT_TTY = '/dev/ttyACM0'

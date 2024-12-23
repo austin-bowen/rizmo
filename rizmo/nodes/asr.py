@@ -19,7 +19,7 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from voicebox.audio import Audio
 
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.messages import Topic
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 PRE_BUFFER_DURATION_S = 1.
