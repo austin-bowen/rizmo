@@ -7,6 +7,8 @@ from typing import Any
 
 from typing_extensions import Callable
 
+from rizmo.nodes.messages_py36 import Detection
+from rizmo.py36.obj_detector import Image
 from rizmo.py36.server import DEFAULT_SOCKET_PATH, PICKLE_PROTOCOL, read_message, write_message
 
 
@@ -48,6 +50,9 @@ class Client:
         if self._conn is not None:
             self._conn.close()
             self._conn = None
+
+    def detect(self, image: Image) -> list[Detection]:
+        return self.rpc('detect', image)
 
     def ping(self) -> str:
         return self.rpc('ping')
