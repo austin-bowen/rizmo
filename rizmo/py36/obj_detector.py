@@ -44,7 +44,10 @@ class DetectNetObjectDetector(ObjectDetector):
         image = cudaFromNumpy(image)
         detectnet_detections = self.model.Detect(image)
 
-        return [detectnet_to_rizmo_detection(d) for d in detectnet_detections]
+        return [
+            detectnet_to_rizmo_detection(self.model, d)
+            for d in detectnet_detections
+        ]
 
 
 def detectnet_to_rizmo_detection(model: detectNet, det: detectNet.Detection) -> Detection:
