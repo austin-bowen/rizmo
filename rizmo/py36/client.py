@@ -70,7 +70,7 @@ class Py36Client:
     async def rpc(self, function, *args, **kwargs) -> Any:
         try:
             await self._send_rpc_request((function, args, kwargs))
-            return self._read_rpc_response()
+            return await self._receive_rpc_response()
         except ConnectionError:
             await self.close()
             raise
@@ -80,7 +80,7 @@ class Py36Client:
         request_data = pickle.dumps(rpc_request, protocol=PICKLE_PROTOCOL)
         await write_message(conn.writer, request_data)
 
-    async def _read_rpc_response(self) -> Any:
+    async def _receive_rpc_response(self) -> Any:
         conn = await self._get_conn()
         response_data = await read_message(conn.reader)
         return pickle.loads(response_data)
