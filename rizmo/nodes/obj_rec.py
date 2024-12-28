@@ -11,10 +11,12 @@ from PIL import Image as PILImage
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
 
+from rizmo.config import IS_RIZMO
 from rizmo.image_codec import JpegImageCodec
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages_py36 import Box, Detection, Detections
 from rizmo.nodes.topics import Topic
+from rizmo.py36.client import Py36Client
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 Image = np.ndarray
@@ -138,30 +140,43 @@ class UltralyticsDetector(ObjectDetector):
         )
 
 
+class JetsonDetectNetDetector(ObjectDetector):
+    def __init__(self, py36_client: Py36Client):
+        self.py36_client = py36_client
+
+    def get_objects(self, image: Image) -> list[Detection]:
+        return self.py36_client.detect(image)
+
+
 async def main(args: Namespace):
     node = await build_mesh_node_from_args(args=args)
 
     obj_det_topic = node.get_topic_sender(Topic.OBJECTS_DETECTED)
 
-    # obj_detector = HuggingFaceDetector.from_pretrained(
-    #     # 'facebook/detr-resnet-50', DetrForObjectDetection, DetrImageProcessor,
-    #     # 'facebook/detr-resnet-101', DetrForObjectDetection, DetrImageProcessor,
-    #     'hustvl/yolos-tiny', YolosForObjectDetection, YolosImageProcessor,
-    #     # 'hustvl/yolos-small', YolosForObjectDetection, YolosImageProcessor,
-    #     # allow_labels={'person', 'cat'},
-    # )
+    if IS_RIZMO:
+        obj_detector = JetsonDetectNetDetector(
+            py36_client=Py36Client.build(),
+        )
+    else:
+        # obj_detector = HuggingFaceDetector.from_pretrained(
+        #     # 'facebook/detr-resnet-50', DetrForObjectDetection, DetrImageProcessor,
+        #     # 'facebook/detr-resnet-101', DetrForObjectDetection, DetrImageProcessor,
+        #     'hustvl/yolos-tiny', YolosForObjectDetection, YolosImageProcessor,
+        #     # 'hustvl/yolos-small', YolosForObjectDetection, YolosImageProcessor,
+        #     # allow_labels={'person', 'cat'},
+        # )
 
-    obj_detector = UltralyticsDetector.from_pretrained(
-        'yolo11n.pt',
-        # 'yolo11x.pt',
-        conf=.5,
-    )
+        obj_detector = UltralyticsDetector.from_pretrained(
+            'yolo11n.pt',
+            # 'yolo11x.pt',
+            conf=.5,
+        )
 
     codec = JpegImageCodec()
 
     def get_objects(image_bytes: bytes) -> tuple[tuple[int, int], list[Detection]]:
         image = codec.decode(image_bytes)
-        image_size = (image.shape[1], image.shape[0])
+        image_size = image.shape[1], image.shape[0]
         return image_size, obj_detector.get_objects(image)
 
     @obj_det_topic.depends_on_listener()

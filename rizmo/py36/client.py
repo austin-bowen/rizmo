@@ -12,7 +12,7 @@ from rizmo.py36.obj_detector import Image
 from rizmo.py36.server import DEFAULT_SOCKET_PATH, PICKLE_PROTOCOL, read_message, write_message
 
 
-class Client:
+class Py36Client:
     def __init__(
             self,
             conn_builder: Callable[[], 'Connection'],
@@ -31,7 +31,7 @@ class Client:
     def build(
             cls,
             socket_path: str = DEFAULT_SOCKET_PATH,
-    ) -> 'Client':
+    ) -> 'Py36Client':
         def conn_builder():
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             sock.connect(socket_path)
@@ -99,7 +99,7 @@ class Connection:
 
 
 def main() -> None:
-    client = Client.build()
+    client = Py36Client.build()
 
     print('Use variable `client` to interact with the server.')
     code.interact(local=locals())
