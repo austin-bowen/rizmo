@@ -141,11 +141,19 @@ class UltralyticsDetector(ObjectDetector):
 
 
 class JetsonDetectNetDetector(ObjectDetector):
-    def __init__(self, py36_client: Py36Client):
+    def __init__(
+            self,
+            loop: asyncio.AbstractEventLoop,
+            py36_client: Py36Client,
+    ):
+        self.loop = loop
         self.py36_client = py36_client
 
     def get_objects(self, image: Image) -> list[Detection]:
-        return self.py36_client.detect(image)
+        return asyncio.run_coroutine_threadsafe(
+            self.py36_client.detect(image),
+            self.loop,
+        ).result()
 
 
 async def main(args: Namespace):
@@ -155,6 +163,7 @@ async def main(args: Namespace):
 
     if IS_RIZMO:
         obj_detector = JetsonDetectNetDetector(
+            loop=asyncio.get_event_loop(),
             py36_client=Py36Client.build(),
         )
     else:

@@ -1,92 +1,112 @@
 """Client for the Python 3.6 server running on the Jetson Nano."""
 
+import asyncio
 import code
 import pickle
-import socket
+from collections.abc import Awaitable
+from dataclasses import dataclass
 from typing import Any
 
+from easymesh.asyncio import Reader, Writer
 from typing_extensions import Callable
 
 from rizmo.nodes.messages_py36 import Detection
 from rizmo.py36.obj_detector import Image
-from rizmo.py36.server import DEFAULT_SOCKET_PATH, PICKLE_PROTOCOL, read_message, write_message
+from rizmo.py36.server import DEFAULT_SOCKET_PATH, MAX_MESSAGE_LEN, PICKLE_PROTOCOL
 
 
 class Py36Client:
     def __init__(
             self,
-            conn_builder: Callable[[], 'Connection'],
+            conn_builder: Callable[[], Awaitable['Connection']],
     ) -> None:
         self.conn_builder = conn_builder
 
         self._conn = None
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.close()
 
     @classmethod
     def build(
             cls,
             socket_path: str = DEFAULT_SOCKET_PATH,
     ) -> 'Py36Client':
-        def conn_builder():
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.connect(socket_path)
-            return Connection(sock)
+        async def conn_builder():
+            reader, writer = await asyncio.open_unix_connection(socket_path)
+            return Connection(reader, writer)
 
         return cls(conn_builder)
 
-    @property
-    def conn(self) -> 'Connection':
+    async def _get_conn(self) -> 'Connection':
         if self._conn is None:
-            self._conn = self.conn_builder()
+            self._conn = await self.conn_builder()
 
         return self._conn
 
-    def close(self) -> None:
+    async def close(self) -> None:
         if self._conn is not None:
-            self._conn.close()
+            await self._conn.close()
             self._conn = None
 
-    def detect(self, image: Image) -> list[Detection]:
-        return self.rpc('detect', image)
+    async def detect(self, image: Image) -> list[Detection]:
+        return await self.rpc('detect', image)
 
-    def ping(self) -> str:
-        return self.rpc('ping')
+    async def ping(self) -> str:
+        return await self.rpc('ping')
 
-    def stop_server(self) -> None:
-        return self.rpc('stop_server')
+    async def stop_server(self) -> None:
+        return await self.rpc('stop_server')
 
-    def rpc(self, function, *args, **kwargs) -> Any:
+    async def rpc(self, function, *args, **kwargs) -> Any:
         try:
-            self._send_rpc_request((function, args, kwargs))
+            await self._send_rpc_request((function, args, kwargs))
             return self._read_rpc_response()
-        except BrokenPipeError:
-            self.close()
+        except ConnectionError:
+            await self.close()
             raise
 
-    def _send_rpc_request(self, rpc_request):
+    async def _send_rpc_request(self, rpc_request):
+        conn = await self._get_conn()
         request_data = pickle.dumps(rpc_request, protocol=PICKLE_PROTOCOL)
-        write_message(self.conn.wfile, request_data)
+        await write_message(conn.writer, request_data)
 
-    def _read_rpc_response(self) -> Any:
-        response_data = read_message(self.conn.rfile)
+    async def _read_rpc_response(self) -> Any:
+        conn = await self._get_conn()
+        response_data = await read_message(conn.reader)
         return pickle.loads(response_data)
 
 
+async def read_message(reader: Reader) -> bytes:
+    message_len = int.from_bytes(
+        await reader.readexactly(4),
+        byteorder='big',
+        signed=False,
+    )
+
+    return await reader.readexactly(message_len)
+
+
+async def write_message(writer: Writer, message: bytes) -> None:
+    if len(message) > MAX_MESSAGE_LEN:
+        raise ValueError(
+            f'Message is too large to send. Size is {len(message)} bytes; '
+            f'max size is {MAX_MESSAGE_LEN} bytes.'
+        )
+
+    message_len = len(message).to_bytes(4, byteorder='big', signed=False)
+    writer.write(message_len)
+    writer.write(message)
+    await writer.drain()
+
+
+@dataclass
 class Connection:
-    def __init__(
-            self,
-            sock: socket.socket,
-            rbufsize: int = -1,
-            wbufsize: int = 0,
-    ) -> None:
-        self.sock = sock
-        self.rfile = sock.makefile('rb', buffering=rbufsize)
-        self.wfile = sock.makefile('wb', buffering=wbufsize)
+    reader: Reader
+    writer: Writer
 
     def __enter__(self):
         return self
@@ -94,11 +114,12 @@ class Connection:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-    def close(self) -> None:
-        self.sock.close()
+    async def close(self) -> None:
+        self.writer.close()
+        await self.writer.wait_closed()
 
 
-def main() -> None:
+async def main() -> None:
     client = Py36Client.build()
 
     print('Use variable `client` to interact with the server.')
@@ -106,4 +127,4 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
