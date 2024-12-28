@@ -33,7 +33,7 @@ def get_object_detector(network: str, threshold: float) -> 'ObjectDetector':
 
 class ObjectDetector(ABC):
     @abstractmethod
-    def get_objects(self, image) -> List[Detection]:
+    def get_objects(self, image: Image) -> List[Detection]:
         ...
 
 

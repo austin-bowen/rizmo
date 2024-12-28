@@ -7,9 +7,12 @@ import pickle
 import signal
 import time
 from argparse import ArgumentParser, Namespace
+from io import BytesIO
 from socketserver import StreamRequestHandler, UnixStreamServer
 from threading import Thread
 from typing import Any
+
+import numpy as np
 
 from rizmo.py36.obj_detector import ObjectDetector, get_object_detector
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -53,7 +56,8 @@ class RpcHandler:
         function = getattr(self, function_name)
         return function(*args, **kwargs)
 
-    def detect(self, image: bytes) -> Any:
+    def detect(self, image_bytes: BytesIO) -> Any:
+        image = np.load(image_bytes)
         return self.object_detector.get_objects(image)
 
     def ping(self) -> str:

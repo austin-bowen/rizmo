@@ -5,8 +5,10 @@ import code
 import pickle
 from collections.abc import Awaitable
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Any
 
+import numpy as np
 from easymesh.asyncio import Reader, Writer
 from typing_extensions import Callable
 
@@ -53,7 +55,11 @@ class Py36Client:
             self._conn = None
 
     async def detect(self, image: Image) -> list[Detection]:
-        return await self.rpc('detect', image)
+        with BytesIO() as image_bytes:
+            np.save(image_bytes, image)
+            image_bytes.seek(0)
+
+            return await self.rpc('detect', image_bytes)
 
     async def ping(self) -> str:
         return await self.rpc('ping')
