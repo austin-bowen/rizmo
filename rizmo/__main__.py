@@ -14,6 +14,7 @@ class Node:
     name: str
     args: list[str] = field(default_factory=list)
     count: int = 1
+    needs_py36_server: bool = False
 
 
 host_nodes = {
@@ -51,7 +52,8 @@ def main(args: Namespace):
                 '--authkey', config.mesh_authkey,
             )
 
-            p.popen('./bin/start-py36-server')
+            if any(node.needs_py36_server for node in nodes_to_start):
+                p.popen('./bin/start-py36-server')
 
             sleep(1)
 
