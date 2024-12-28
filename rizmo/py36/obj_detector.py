@@ -2,7 +2,7 @@
 
 import sys
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, List
 
 import cv2
 import numpy as np
@@ -16,6 +16,8 @@ try:
 except ImportError:
     detectNet = None
     cudaFromNumpy = None
+
+DetectNetDetection = Any
 
 Image = np.ndarray
 """Image in BGR format."""
@@ -50,7 +52,7 @@ class DetectNetObjectDetector(ObjectDetector):
         ]
 
 
-def detectnet_to_rizmo_detection(model: detectNet, det: detectNet.Detection) -> Detection:
+def detectnet_to_rizmo_detection(model: detectNet, det: DetectNetDetection) -> Detection:
     return Detection(
         label=model.GetClassDesc(det.ClassID),
         confidence=det.Confidence,
