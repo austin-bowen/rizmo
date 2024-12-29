@@ -71,3 +71,12 @@ git config credential.helper store
 # When trying to push, enter username, and paste personal access token
 # generated from here: https://github.com/settings/tokens
 ```
+
+Create file `rizmo/secrets.py` with the following contents:
+
+```python
+AWS_ACCESS_KEY_ID: str = ...
+AWS_SECRET_ACCESS_KEY: str = ...
+
+OPENAI_API_KEY: str = ...
+```
