@@ -65,6 +65,7 @@ def main(args: Namespace):
             # Have to use shell mode to redirect output to a file
             with p.options(shell=True):
                 for _ in range(node.count):
+                    # TODO redirect stderr to log as well
                     p.start_python(
                         '-u', '-m', f'rizmo.nodes.{node.name}',
                         *node.args,
