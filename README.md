@@ -80,3 +80,28 @@ AWS_SECRET_ACCESS_KEY: str = ...
 
 OPENAI_API_KEY: str = ...
 ```
+
+## Upgrading Python on Jetson Nano
+
+```bash
+# Install latest Python version
+pyenv update
+pyenv install 3.12
+
+# Create new venv
+mv venv venv.old
+python -m venv --symlinks venv
+. venv/bin/activate
+python -V
+# <verify it is using latest version>
+
+# Install requirements
+pip install -U pip
+pip install -r requirements.txt
+# <verify everything is working>
+
+# Cleanup
+rm -r venv.old
+pyenv versions
+pyenv uninstall <old-version>
+```
