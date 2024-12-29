@@ -262,6 +262,7 @@ def parse_args() -> Namespace:
 
     parser.add_argument(
         '--fps-limit', '-l',
+        default=15.,
         type=float,
         help='FPS limit. Default: %(default)s',
     )

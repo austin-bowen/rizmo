@@ -15,7 +15,7 @@ from rizmo.nodes.topics import Topic
 from rizmo.nodes.messages_py36 import Detection, Detections
 from rizmo.signal import graceful_shutdown_on_sigterm
 
-AVG_LATENCY = 0.0367
+AVG_LATENCY = 0.085
 """Gains were tuned with this average latency."""
 
 
@@ -30,8 +30,10 @@ async def main(args: Namespace) -> None:
         label_priorities: dict[str, int] = field(default_factory=lambda: {
             'cat': 0,
             'dog': 0,
-            'person': 1,
+            'face': 1,
+            'person': 2,
         })
+
         max_priority = float('inf')
 
         last_target: Detection = None
@@ -97,7 +99,7 @@ async def main(args: Namespace) -> None:
             object_y -= .5 * box.height
         y_error = (2 * object_y / image_height) - 1
 
-        target_area = 0.33
+        target_area = 0.15
         object_size = (box.width * box.height) / (image_width * image_height)
         target_dist = target_area ** -0.5
         actual_dist = object_size ** -0.5
@@ -126,9 +128,9 @@ async def main(args: Namespace) -> None:
             )
 
         # PD control
-        pan_dps = 100 * x_error + 15 * (x_error - state.prev_x_error) / dt
-        tilt_dps = 75 * y_error
-        lean_dps = 50 * z_error
+        pan_dps = 75 * x_error + 10 * (x_error - state.prev_x_error) / dt
+        tilt_dps = 60 * y_error
+        lean_dps = 25 * z_error
 
         # This decreases gain as latency increases to prevent overshooting
         gain_scalar = AVG_LATENCY / latency

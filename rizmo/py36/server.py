@@ -8,7 +8,7 @@ import signal
 import time
 from argparse import ArgumentParser, Namespace
 from io import BytesIO
-from socketserver import StreamRequestHandler, UnixStreamServer
+from socketserver import StreamRequestHandler, ThreadingMixIn, UnixStreamServer
 from threading import Thread
 from typing import Any
 
@@ -39,13 +39,17 @@ def main(args: Namespace) -> None:
     delete_socket_file()
     try:
         print(f'Starting server at {args.socket_path!r}...')
-        with UnixStreamServer(
+        with Py36Server(
                 args.socket_path,
                 RequestHandler.builder(rpc_handler),
         ) as server:
             server.serve_forever()
     finally:
         delete_socket_file()
+
+
+class Py36Server(ThreadingMixIn, UnixStreamServer):
+    daemon_threads = True
 
 
 class RpcHandler:
@@ -140,7 +144,8 @@ def parse_args() -> Namespace:
 
     parser.add_argument(
         '--network',
-        default='ssd-mobilenet-v2',
+        # default='ssd-mobilenet-v2',
+        default='facedetect',
         help='Pre-trained model to load. Default: %(default)s',
     )
 

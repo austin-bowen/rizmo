@@ -145,15 +145,27 @@ class JetsonDetectNetDetector(ObjectDetector):
             self,
             loop: asyncio.AbstractEventLoop,
             py36_client: Py36Client,
+            downsample: int = 2,
     ):
         self.loop = loop
         self.py36_client = py36_client
+        self.downsample = downsample
 
     def get_objects(self, image: Image) -> list[Detection]:
-        return asyncio.run_coroutine_threadsafe(
+        image = image[::self.downsample, ::self.downsample]
+
+        objects = asyncio.run_coroutine_threadsafe(
             self.py36_client.detect(image),
             self.loop,
         ).result()
+
+        for obj in objects:
+            obj.box.x *= self.downsample
+            obj.box.y *= self.downsample
+            obj.box.width *= self.downsample
+            obj.box.height *= self.downsample
+
+        return objects
 
 
 async def main(args: Namespace):

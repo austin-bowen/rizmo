@@ -78,7 +78,7 @@ async def main(args: Namespace) -> None:
             maestro[TILT1] = min(max(0., maestro.get_position(TILT1) + command.tilt1_us), 4090.)
 
     def set_head_speed(cmd: SetHeadSpeed) -> None:
-        runtime = 0.1
+        runtime = 0.2
 
         if cmd.pan_dps is not None:
             cmd.pan_dps = min(max(-SPEED_LIMIT_DPS, cmd.pan_dps), SPEED_LIMIT_DPS)

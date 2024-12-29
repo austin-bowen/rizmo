@@ -25,7 +25,7 @@ Image = np.ndarray
 
 def get_object_detector(network: str, threshold: float) -> 'ObjectDetector':
     print('Loading model...')
-    model = detectNet(network, sys.argv, threshold)
+    model = detectNet(network, [], threshold)
     print('Done.')
 
     return DetectNetObjectDetector(model)
@@ -44,7 +44,7 @@ class DetectNetObjectDetector(ObjectDetector):
     def get_objects(self, image: Image) -> List[Detection]:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cudaFromNumpy(image)
-        detectnet_detections = self.model.Detect(image)
+        detectnet_detections = self.model.Detect(image, overlay='none')
 
         return [
             detectnet_to_rizmo_detection(self.model, d)
