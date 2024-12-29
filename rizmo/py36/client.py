@@ -51,8 +51,8 @@ class Py36Client:
 
     async def close(self) -> None:
         if self._conn is not None:
-            await self._conn.close()
-            self._conn = None
+            conn, self._conn = self._conn, None
+            await conn.close()
 
     async def detect(self, image: Image) -> list[Detection]:
         with BytesIO() as image_bytes:
@@ -71,9 +71,12 @@ class Py36Client:
         try:
             await self._send_rpc_request((function, args, kwargs))
             return await self._receive_rpc_response()
-        except ConnectionError:
-            await self.close()
-            raise
+        except ConnectionError as e:
+            try:
+                await self.close()
+            except ConnectionError:
+                pass
+            raise e
 
     async def _send_rpc_request(self, rpc_request):
         conn = await self._get_conn()
