@@ -57,9 +57,9 @@ def detectnet_to_rizmo_detection(model: detectNet, det: DetectNetDetection) -> D
         label=model.GetClassDesc(det.ClassID),
         confidence=det.Confidence,
         box=Box(
-            x=det.Left,
-            y=det.Top,
-            width=det.Width,
-            height=det.Height,
+            x=round(det.Left),
+            y=round(det.Top),
+            width=round(det.Width),
+            height=round(det.Height),
         ),
     )
