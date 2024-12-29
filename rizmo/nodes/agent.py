@@ -132,6 +132,8 @@ async def main(args: Namespace) -> None:
             if any_phrase_in(transcript, (
                     'pause conversation',
                     'pause convo',
+                    'pause the conversation',
+                    'pause the convo',
             )):
                 print('[Conversation paused]')
                 state.in_conversation = False
