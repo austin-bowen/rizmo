@@ -142,6 +142,8 @@ def parse_args() -> Namespace:
         help='Path to the Unix socket. Default: %(default)s',
     )
 
+    # See list of available networks here:
+    # https://github.com/dusty-nv/jetson-inference/tree/master?tab=readme-ov-file#object-detection
     parser.add_argument(
         '--network',
         # default='ssd-mobilenet-v2',
