@@ -15,7 +15,7 @@ from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.agent.reminders import ReminderSystem
 from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
-from rizmo.nodes.agent.tools import ToolHandler
+from rizmo.nodes.agent.tools import RizmoToolHandler
 from rizmo.nodes.messages_py36 import Detections
 from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -50,26 +50,26 @@ async def main(args: Namespace) -> None:
 
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
     system_prompt_builder = SystemPromptBuilder()
-    chat = Chat(
-        client,
-        model='gpt-4o-mini',
-        system_prompt_builder=system_prompt_builder,
-        store=False,
-        tools=ToolHandler.TOOLS,
-    )
 
     weather_provider = WeatherProvider.build(config.weather_location)
-
     reminder_system = ReminderSystem(config.reminders_file_path)
 
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender(Topic.SAY)
 
-    tool_handler = ToolHandler(
+    tool_handler = RizmoToolHandler(
         say_topic=say_topic,
         motor_system_topic=node.get_topic_sender(Topic.MOTOR_SYSTEM),
         weather_provider=weather_provider,
         reminder_system=reminder_system,
+    )
+
+    chat = Chat(
+        client,
+        model='gpt-4o-mini',
+        system_prompt_builder=system_prompt_builder,
+        tool_handler=tool_handler,
+        store=False,
     )
 
     async def handle_transcript(topic, transcript: str) -> None:
@@ -105,21 +105,10 @@ async def main(args: Namespace) -> None:
 
             chat.add_user_message(transcript)
             response = await chat.get_response()
-            while True:
-                print('Rizmo:', response)
+            response = response.content.strip()
 
-                if response.content:
-                    break
-
-                for tool_call in response.tool_calls:
-                    result = await tool_handler.handle(tool_call.function)
-                    print(f'Tool call: {tool_call.function.name} -> {result}')
-                    chat.add_tool_message(tool_call.id, result)
-
-                response = await chat.get_response()
-
-            if response.content.strip() != '<NO REPLY>':
-                await say_topic.send(response.content)
+            if response != '<NO REPLY>':
+                await say_topic.send(response)
         finally:
             state.last_datetime = now
 

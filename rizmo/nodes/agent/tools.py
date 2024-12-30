@@ -1,38 +1,18 @@
 import asyncio
-import json
 import subprocess
 from dataclasses import asdict
 from typing import Literal
 
 import psutil
-from openai.types.chat.chat_completion_message_tool_call import Function
 
+from rizmo.llm_utils import ToolHandler
 from rizmo.nodes.agent.reminders import ReminderSystem
 from rizmo.nodes.messages import MotorSystemCommand
 from rizmo.weather import WeatherProvider
 
 
-class ToolHandler:
-    TOOLS = (
-        # Template
-        # dict(
-        #     type='function',
-        #     function=dict(
-        #         name='name',
-        #         description='Description of function.',
-        #         parameters=dict(
-        #             type='object',
-        #             properties=dict(
-        #                 arg=dict(
-        #                     type='string',
-        #                     description='Description of arg.',
-        #                 ),
-        #             ),
-        #             required=['arg'],
-        #             additionalProperties=False,
-        #         ),
-        #     ),
-        # ),
+class RizmoToolHandler(ToolHandler):
+    tools = (
         dict(
             type='function',
             description='Gets system CPU, memory, and disk usage, and CPU temperature in Celsius.',
@@ -122,17 +102,6 @@ class ToolHandler:
         self.motor_system_topic = motor_system_topic
         self.weather_provider = weather_provider
         self.reminder_system = reminder_system
-
-    async def handle(self, func_spec: Function) -> str:
-        func = getattr(self, func_spec.name)
-        kwargs = json.loads(func_spec.arguments)
-
-        try:
-            result = await func(**kwargs)
-        except Exception as e:
-            result = dict(error=repr(e))
-
-        return json.dumps(result)
 
     async def get_system_status(self) -> dict:
         cpu_usage_percent = psutil.cpu_percent(interval=0.5)
