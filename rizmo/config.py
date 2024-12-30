@@ -1,5 +1,6 @@
 import socket
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from easymesh.coordinator.constants import DEFAULT_COORDINATOR_PORT
 from easymesh.types import Endpoint
@@ -23,6 +24,7 @@ class Config:
     mic_block_size: int = 4096
 
     weather_location: str = 'Anderson, SC'
+    reminders_file_path: Path = Path('var/reminders.pkl')
 
     aws_region: str = 'us-east-1'
 

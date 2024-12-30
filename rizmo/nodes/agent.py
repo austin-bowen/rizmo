@@ -1,17 +1,18 @@
 import asyncio
 import json
+import pickle
 import re
 import subprocess
 from argparse import Namespace
 from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Iterable, Optional
 
 import psutil
 from easymesh import build_mesh_node_from_args
 from easymesh.asyncio import forever
-from easymesh.node.node import MeshNode
 from openai import OpenAI
 from openai.types.chat.chat_completion_message_tool_call import Function
 
@@ -20,8 +21,8 @@ from rizmo.config import config
 from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import MotorSystemCommand
-from rizmo.nodes.topics import Topic
 from rizmo.nodes.messages_py36 import Detections
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
@@ -86,13 +87,15 @@ Context:
 
 
 async def main(args: Namespace) -> None:
-    node = await build_mesh_node_from_args(args=args)
-    say_topic = node.get_topic_sender(Topic.SAY)
+    @dataclass
+    class State:
+        in_conversation: bool = False
+        last_datetime: datetime = datetime.now()
+
+    state = State()
 
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
-
     system_prompt_builder = SystemPromptBuilder(MAIN_SYSTEM_PROMPT)
-
     chat = Chat(
         client,
         model='gpt-4o-mini',
@@ -101,16 +104,18 @@ async def main(args: Namespace) -> None:
         tools=ToolHandler.TOOLS,
     )
 
-    @dataclass
-    class State:
-        in_conversation: bool = False
-        last_datetime: datetime = datetime.now()
+    weather_provider = WeatherProvider.build(config.weather_location)
 
-    state = State()
+    reminder_system = ReminderSystem(config.reminders_file_path)
+
+    node = await build_mesh_node_from_args(args=args)
+    say_topic = node.get_topic_sender(Topic.SAY)
 
     tool_handler = ToolHandler(
-        node,
-        weather_provider=WeatherProvider.build(config.weather_location),
+        say_topic=say_topic,
+        motor_system_topic=node.get_topic_sender(Topic.MOTOR_SYSTEM),
+        weather_provider=weather_provider,
+        reminder_system=reminder_system,
     )
 
     async def handle_transcript(topic, transcript: str) -> None:
@@ -283,21 +288,52 @@ class ToolHandler:
                 name='shutdown',
             ),
         ),
+        dict(
+            type='function',
+            function=dict(
+                name='reminders',
+                description='Manages the reminders system and returns the current list of reminders.',
+                parameters=dict(
+                    type='object',
+                    properties=dict(
+                        action=dict(
+                            type='string',
+                            description='The action to perform.',
+                            enum=['list', 'add', 'remove', 'clear'],
+                        ),
+                        reminder=dict(
+                            type='string',
+                            description='The reminder to add/remove. Ignored if action is "list" or "clear"',
+                        ),
+                    ),
+                    required=['action', 'reminder'],
+                    additionalProperties=False,
+                ),
+            ),
+        ),
     )
 
     def __init__(
             self,
-            node: MeshNode,
+            say_topic,
+            motor_system_topic,
             weather_provider: WeatherProvider,
+            reminder_system: 'ReminderSystem',
     ):
-        self.say_topic = node.get_topic_sender(Topic.SAY)
-        self.motor_system_topic = node.get_topic_sender(Topic.MOTOR_SYSTEM)
+        self.say_topic = say_topic
+        self.motor_system_topic = motor_system_topic
         self.weather_provider = weather_provider
+        self.reminder_system = reminder_system
 
     async def handle(self, func_spec: Function) -> str:
         func = getattr(self, func_spec.name)
         kwargs = json.loads(func_spec.arguments)
-        result = await func(**kwargs)
+
+        try:
+            result = await func(**kwargs)
+        except Exception as e:
+            result = dict(error=repr(e))
+
         return json.dumps(result)
 
     async def get_system_status(self) -> dict:
@@ -341,6 +377,20 @@ class ToolHandler:
             'sudo', '--non-interactive', 'shutdown', '-h', 'now'
         )
 
+    async def reminders(self, action: str, reminder: str) -> list[str]:
+        if action == 'list':
+            pass
+        elif action == 'add':
+            self.reminder_system.add(reminder)
+        elif action == 'remove':
+            self.reminder_system.remove(reminder)
+        elif action == 'clear':
+            self.reminder_system.clear()
+        else:
+            raise ValueError(f'Invalid action: {action}')
+
+        return self.reminder_system.list()
+
     async def _run_cmd(self, *args) -> dict:
         result = subprocess.run(
             args,
@@ -354,6 +404,39 @@ class ToolHandler:
             stdout=result.stdout.decode(),
             stderr=result.stderr.decode(),
         )
+
+
+class ReminderSystem:
+    def __init__(self, file_path: Path):
+        self.file_path = file_path
+
+        try:
+            with open(self.file_path, 'rb') as f:
+                self.reminders = pickle.load(f)
+        except FileNotFoundError as e:
+            print(f'ERROR: {e!r}')
+            print(f'creating new reminders file at "{file_path}".')
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            self.reminders = []
+
+    def list(self) -> list[str]:
+        return self.reminders
+
+    def add(self, reminder: str) -> None:
+        self.reminders.append(reminder)
+        self.save()
+
+    def remove(self, reminder: str) -> None:
+        self.reminders.remove(reminder)
+        self.save()
+
+    def clear(self) -> None:
+        self.reminders.clear()
+        self.save()
+
+    def save(self) -> None:
+        with open(self.file_path, 'wb') as f:
+            pickle.dump(self.reminders, f)
 
 
 def preprocess(transcript: str) -> str:
