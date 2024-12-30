@@ -290,7 +290,7 @@ class ToolHandler:
             type='function',
             function=dict(
                 name='reminders',
-                description='Manages the reminders system and returns the current list of reminders.',
+                description='Manages the reminders system and returns the list of reminders after the action is performed.',
                 parameters=dict(
                     type='object',
                     properties=dict(
