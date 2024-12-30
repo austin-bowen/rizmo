@@ -1,4 +1,5 @@
 import asyncio
+from collections import deque
 from collections.abc import Callable
 from typing import Any
 
@@ -21,7 +22,7 @@ class Chat:
         self.system_prompt_builder = system_prompt_builder
         self.kwargs = kwargs
 
-        self.messages = []
+        self.messages = deque()
 
     def add_user_message(self, content: str) -> None:
         self.messages.append(dict(role='user', content=content))
@@ -37,20 +38,23 @@ class Chat:
         ))
 
     async def get_response(self) -> ChatCompletionMessage:
-        system_prompt = self.system_prompt_builder()
-
-        messages = [dict(role='system', content=system_prompt)]
-        messages += self.messages
-
-        response = await asyncio.to_thread(
-            self.client.chat.completions.create,
-            messages=messages,
-            model=self.model,
-            **self.kwargs,
+        system_message = dict(
+            role='system',
+            content=self.system_prompt_builder(),
         )
 
-        message = response.choices[0].message
+        self.messages.appendleft(system_message)
+        try:
+            response = await asyncio.to_thread(
+                self.client.chat.completions.create,
+                messages=self.messages,
+                model=self.model,
+                **self.kwargs,
+            )
+        finally:
+            self.messages.popleft()
 
+        message = response.choices[0].message
         self.messages.append(message)
 
         return message
