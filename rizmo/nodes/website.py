@@ -76,7 +76,10 @@ async def main(args: Namespace) -> None:
 
     Thread(
         target=app.run,
-        kwargs=dict(host='0.0.0.0'),
+        kwargs=dict(
+            host=args.host,
+            port=args.port,
+        ),
         daemon=True,
     ).start()
 
@@ -85,6 +88,20 @@ async def main(args: Namespace) -> None:
 
 def parse_args() -> Namespace:
     parser = get_rizmo_node_arg_parser(__file__)
+
+    parser.add_argument(
+        '--host',
+        default='0.0.0.0',
+        help='Host to bind to. Default: %(default)s',
+    )
+
+    parser.add_argument(
+        '--port',
+        default=8000,
+        type=int,
+        help='Port to bind to. Default: %(default)s',
+    )
+
     return parser.parse_args()
 
 
