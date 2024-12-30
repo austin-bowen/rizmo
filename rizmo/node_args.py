@@ -9,8 +9,11 @@ from rizmo.config import config
 def get_rizmo_node_arg_parser(node_file: str) -> ArgumentParser:
     node_file = Path(node_file)
     name = node_file.name
+    
+    # ".../<node>/__main__.py" -> "<node>"
     if name == '__main__.py':
         name = node_file.parent.name
+    # ".../<node>.py" -> "<node>"
     else:
         name = name.removesuffix('.py')
 
