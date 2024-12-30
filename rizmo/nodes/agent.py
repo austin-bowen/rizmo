@@ -27,31 +27,15 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 from rizmo.weather import WeatherProvider
 
 NAME = 'Rizmo'
-ALT_NAMES = (
-    'prisma',
-    'prismo',
-    'prizma',
-    'prizmo',
-    'resma',
-    'resmo',
-    'rezma',
-    'rezmo',
-    'risma',
-    'rismo',
-    'rizma',
-    'rizno',
-    'rizzmo',
-    'rosma',
-    'rosmo',
-)
 
 ALT_NAME_PATTERN = re.compile(
-    rf'\b({"|".join(ALT_NAMES)})\b',
+    rf'\b(p?r[eio][sz]+[mn][ao])\b',
     flags=re.IGNORECASE,
 )
+"""Matches names like "Rizmo", "Rizma", "Prizmo", etc."""
 
 WAKE_PATTERN = re.compile(
-    # Start of sentence
+    # Start of line or sentence
     r'(^|.*[.?!] )'
     # Optional "hey", "hi", etc.
     r'((hey|hi|hello|okay|ok),? )?'
