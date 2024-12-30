@@ -138,8 +138,8 @@ async def _read_camera(
         show_raw_image: bool = False,
         jpeg_quality: int = 80,
 ):
-    new_image_topic = node.get_topic_sender(Topic.NEW_IMAGE)
-    await new_image_topic.wait_for_listener()
+    new_image_compressed_topic = node.get_topic_sender(Topic.NEW_IMAGE_COMPRESSED)
+    new_image_raw_topic = node.get_topic_sender(Topic.NEW_IMAGE_RAW)
 
     camera_builder = lambda: Camera(
         camera_index,
@@ -207,8 +207,11 @@ async def _read_camera(
                     cache.fps_limit = max_fps
 
         if cache.fps_limit is None or (timestamp - cache.t_last_send) >= 1 / cache.fps_limit:
-            image_bytes = codec.encode(image)
-            await new_image_topic.send((timestamp, camera_index, image_bytes))
+            if await new_image_compressed_topic.has_listeners():
+                image_bytes = codec.encode(image)
+                await new_image_compressed_topic.send((timestamp, camera_index, image_bytes))
+            if await new_image_raw_topic.has_listeners():
+                await new_image_raw_topic.send((timestamp, camera_index, image))
 
             cache.t_last_send = timestamp
             print('.', end='', flush=True)
@@ -216,11 +219,6 @@ async def _read_camera(
         if show_raw_image:
             cv2.imshow(f'Camera {camera_index}: Raw Image', image)
             cv2.waitKey(1)
-
-        if not await new_image_topic.has_listeners():
-            await camera.close()
-            await new_image_topic.wait_for_listener(.1)
-            camera = camera_builder()
 
 
 def parse_args() -> Namespace:

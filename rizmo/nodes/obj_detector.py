@@ -195,20 +195,28 @@ async def main(args: Namespace):
 
     codec = JpegImageCodec()
 
-    def get_objects(image_bytes: bytes) -> tuple[tuple[int, int], list[Detection]]:
+    @obj_det_topic.depends_on_listener()
+    async def handle_image_raw(topic, data):
+        timestamp, camera_index, image = data
+        image_size = image.shape[1], image.shape[0]
+        objects = await asyncio.to_thread(obj_detector.get_objects, image)
+        await obj_det_topic.send(Detections(timestamp, image_size, objects))
+
+    @obj_det_topic.depends_on_listener()
+    async def handle_image_compressed(topic, data):
+        timestamp, camera_index, image_bytes = data
+        image_size, objects = await asyncio.to_thread(get_objects_from_compressed, image_bytes)
+        await obj_det_topic.send(Detections(timestamp, image_size, objects))
+
+    def get_objects_from_compressed(image_bytes: bytes) -> tuple[tuple[int, int], list[Detection]]:
         image = codec.decode(image_bytes)
         image_size = image.shape[1], image.shape[0]
         return image_size, obj_detector.get_objects(image)
 
-    @obj_det_topic.depends_on_listener()
-    async def handle_image(topic, data):
-        timestamp, camera_index, image_bytes = data
-
-        image_size, objects = await asyncio.to_thread(get_objects, image_bytes)
-
-        await obj_det_topic.send(Detections(timestamp, image_size, objects))
-
-    await node.listen(Topic.NEW_IMAGE, handle_image)
+    if IS_RIZMO:
+        await node.listen(Topic.NEW_IMAGE_RAW, handle_image_raw)
+    else:
+        await node.listen(Topic.NEW_IMAGE_COMPRESSED, handle_image_compressed)
 
     await forever()
 

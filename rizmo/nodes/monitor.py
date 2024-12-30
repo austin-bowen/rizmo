@@ -163,7 +163,7 @@ async def main(args: Namespace, stdscr):
     image_ready_event = Event()
     RenderThread(show_image, image_ready_event, fps=30).start()
 
-    await node.listen(Topic.NEW_IMAGE, handle_new_image)
+    await node.listen(Topic.NEW_IMAGE_COMPRESSED, handle_new_image)
     await node.listen(Topic.OBJECTS_DETECTED, handle_obj_detected)
     await node.listen(Topic.TRACKING, handle_tracking)
     await node.listen(Topic.AUDIO, handle_audio)

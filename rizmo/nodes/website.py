@@ -72,7 +72,7 @@ async def main(args: Namespace) -> None:
         timestamp, camera_index, image_bytes = data
         cache.image_bytes = image_bytes
 
-    await node.listen(Topic.NEW_IMAGE, handle_image)
+    await node.listen(Topic.NEW_IMAGE_COMPRESSED, handle_image)
 
     Thread(
         target=app.run,
