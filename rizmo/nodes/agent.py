@@ -1,6 +1,5 @@
 import asyncio
 import json
-import pickle
 import re
 import subprocess
 from argparse import Namespace
@@ -18,6 +17,7 @@ from openai.types.chat.chat_completion_message_tool_call import Function
 
 from rizmo import secrets
 from rizmo.config import config
+from rizmo.json import JsonFile
 from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import MotorSystemCommand
@@ -406,11 +406,10 @@ class ToolHandler:
 
 class ReminderSystem:
     def __init__(self, file_path: Path):
-        self.file_path = file_path
+        self._json_file = JsonFile(file_path)
 
         try:
-            with open(self.file_path, 'rb') as f:
-                self.reminders = pickle.load(f)
+            self.reminders = self._json_file.read()
         except FileNotFoundError as e:
             print(f'ERROR: {e!r}')
             print(f'creating new reminders file at "{file_path}".')
@@ -433,8 +432,7 @@ class ReminderSystem:
         self.save()
 
     def save(self) -> None:
-        with open(self.file_path, 'wb') as f:
-            pickle.dump(self.reminders, f)
+        self._json_file.write(self.reminders)
 
 
 def preprocess(transcript: str) -> str:
