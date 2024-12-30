@@ -7,7 +7,12 @@ from rizmo.config import config
 
 
 def get_rizmo_node_arg_parser(node_file: str) -> ArgumentParser:
-    name = Path(node_file).name.removesuffix('.py')
+    node_file = Path(node_file)
+    name = node_file.name
+    if name == '__main__.py':
+        name = node_file.parent.name
+    else:
+        name = name.removesuffix('.py')
 
     return get_node_arg_parser(
         default_node_name=name,
