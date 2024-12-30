@@ -191,9 +191,7 @@ class SystemPromptBuilder:
 
     def __call__(self) -> str:
         template_vars = self._get_template_vars()
-        prompt = self.system_prompt_template.format(**template_vars)
-        print('System prompt:', prompt)
-        return prompt
+        return self.system_prompt_template.format(**template_vars)
 
     def _get_template_vars(self) -> dict:
         return {
