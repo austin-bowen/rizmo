@@ -138,8 +138,8 @@ async def _read_camera(
         show_raw_image: bool = False,
         jpeg_quality: int = 80,
 ):
-    new_image_compressed_topic = node.get_topic_sender(Topic.NEW_IMAGE_COMPRESSED)
     new_image_raw_topic = node.get_topic_sender(Topic.NEW_IMAGE_RAW)
+    new_image_compressed_topic = node.get_topic_sender(Topic.NEW_IMAGE_COMPRESSED)
 
     camera_builder = lambda: Camera(
         camera_index,
@@ -207,11 +207,12 @@ async def _read_camera(
                     cache.fps_limit = max_fps
 
         if cache.fps_limit is None or (timestamp - cache.t_last_send) >= 1 / cache.fps_limit:
+            if await new_image_raw_topic.has_listeners():
+                await new_image_raw_topic.send((timestamp, camera_index, image))
+
             if await new_image_compressed_topic.has_listeners():
                 image_bytes = codec.encode(image)
                 await new_image_compressed_topic.send((timestamp, camera_index, image_bytes))
-            if await new_image_raw_topic.has_listeners():
-                await new_image_raw_topic.send((timestamp, camera_index, image))
 
             cache.t_last_send = timestamp
             print('.', end='', flush=True)
