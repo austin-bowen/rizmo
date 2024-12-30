@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Literal, Optional
 
 import psutil
 from easymesh import build_mesh_node_from_args
@@ -75,7 +75,7 @@ Keep your responses short. You do not need to reply to all messages;
 if a message does not need a reply, simply say "<NO REPLY>".
 
 Here are some phrases you should listen for and how to respond to them:
-- "rest in a deep and dreamless slumber": call the "shutdown" function.
+- "rest in a deep and dreamless slumber": Shut down the system by calling the "system_power" function with "action" set to "shutdown".
 - "stop/cease all motor functions": call the "motor_system" function with the "enabled" argument set to "false".
 - "bring yourself back online": call the "motor_system" function with the "enabled" argument set to "true".
 
@@ -277,13 +277,20 @@ class ToolHandler:
         dict(
             type='function',
             function=dict(
-                name='reboot',
-            ),
-        ),
-        dict(
-            type='function',
-            function=dict(
-                name='shutdown',
+                name='system_power',
+                description='Shutdown or reboot the system',
+                parameters=dict(
+                    type='object',
+                    properties=dict(
+                        action=dict(
+                            type='string',
+                            description='The action to perform.',
+                            enum=['shutdown', 'reboot'],
+                        ),
+                    ),
+                    required=['action'],
+                    additionalProperties=False,
+                ),
             ),
         ),
         dict(
@@ -359,20 +366,28 @@ class ToolHandler:
     async def motor_system(self, enabled: bool) -> None:
         await self.motor_system_topic.send(MotorSystemCommand(enabled=enabled))
 
-    async def reboot(self) -> dict:
-        await self.say_topic.send('Be right back, rebooting.')
-        await asyncio.sleep(3)
+    async def system_power(self, action: Literal['shutdown', 'reboot']) -> dict:
+        if action == 'shutdown':
+            return await self._shutdown()
+        elif action == 'reboot':
+            return await self._reboot()
+        else:
+            raise ValueError(f'Invalid action: {action}')
 
-        return await self._run_cmd(
-            'sudo', '--non-interactive', 'reboot'
-        )
-
-    async def shutdown(self) -> dict:
+    async def _shutdown(self) -> dict:
         await self.say_topic.send('Shutting down.')
         await asyncio.sleep(3)
 
         return await self._run_cmd(
             'sudo', '--non-interactive', 'shutdown', '-h', 'now'
+        )
+
+    async def _reboot(self) -> dict:
+        await self.say_topic.send('Be right back, rebooting.')
+        await asyncio.sleep(3)
+
+        return await self._run_cmd(
+            'sudo', '--non-interactive', 'reboot'
         )
 
     async def reminders(self, action: str, reminder: str) -> list[str]:
