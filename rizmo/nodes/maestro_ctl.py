@@ -32,8 +32,6 @@ SPEED_LIMIT_DPS = 90.
 
 
 async def main(args: Namespace) -> None:
-    node = await build_mesh_node_from_args(args=args)
-
     async def handle_motor_system(topic, command: MotorSystemCommand) -> None:
         print('[Maestro] Received command:', command)
         await set_motor_system_enabled(command.enabled)
@@ -120,7 +118,7 @@ async def main(args: Namespace) -> None:
             maestro[c] = CENTER
 
     print(f'Connecting to Maestro on {args.tty!r}...')
-    with Maestro.connect('mini12', tty=args.tty, safe_close=False) as maestro:
+    with await get_maestro(args.tty) as maestro:
         print('Connected!')
 
         # Setup servos
@@ -131,14 +129,24 @@ async def main(args: Namespace) -> None:
         set_servo_speeds(DEFAULT_SPEED_USPS)
         center_servos()
 
-        await set_motor_system_enabled(True)
-        await node.listen(Topic.MOTOR_SYSTEM, handle_motor_system)
-
         try:
+            node = await build_mesh_node_from_args(args=args)
+            await set_motor_system_enabled(True)
+            await node.listen(Topic.MOTOR_SYSTEM, handle_motor_system)
+
             await forever()
         finally:
             set_servo_speeds(250)
             center_servos()
+
+
+async def get_maestro(tty: str, retry_period: float = 5.) -> Maestro:
+    while True:
+        try:
+            return Maestro.connect('mini12', tty=tty, safe_close=False)
+        except Exception as e:
+            print(f'Failed to connect to Maestro on {tty!r}: {e!r}')
+            await asyncio.sleep(retry_period)
 
 
 def parse_args() -> Namespace:
