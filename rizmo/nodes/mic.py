@@ -95,8 +95,6 @@ class Microphone(Thread):
             if status:
                 print(f"Warning: {status}", flush=True)
 
-            # indata = indata.astype(np.float16)
-
             self.block_handler(indata, frames, timestamp, status)
 
         with sd.InputStream(
@@ -116,30 +114,33 @@ class Gate:
             threshold: float,
             attack: float,
             signal_transform: Callable[[np.ndarray, int], np.ndarray],
+            debug: bool = False,
     ):
         self.threshold = threshold
         self.attack = attack
         self.signal_transform = signal_transform
+        self.debug = debug
 
         self._gate_closed_time = 0.
 
     def __call__(self, signal: np.ndarray, sample_rate: int) -> np.ndarray:
         input_power = np.abs(signal).max()
 
-        # alpha = 0.1 * signal.shape[0] / sample_rate
-        # self.threshold = alpha * input_power * 1. + (1 - alpha) * self.threshold
-
         transformed_signal = self.signal_transform(signal, sample_rate)
 
         if input_power >= self.threshold:
-            print(f'Gate open; threshold={self.threshold}')
+            if self.debug:
+                print(f'Gate open; threshold={self.threshold}')
+
             self._gate_closed_time = 0.
         else:
             samples = signal.shape[0]
             self._gate_closed_time += samples / sample_rate
 
             gain = 1. / (2 ** (self._gate_closed_time * self.attack))
-            print(f'Gate closed; threshold={self.threshold}; gain={gain}')
+
+            if self.debug:
+                print(f'Gate closed; threshold={self.threshold}; gain={gain}')
 
             transformed_signal *= gain
 
