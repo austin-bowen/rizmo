@@ -23,6 +23,7 @@ host_nodes = {
         Node('camera'),
         Node('maestro_ctl'),
         Node('mic'),
+        Node('obj_attention'),
         Node('obj_detector', needs_py36_server=True),
         Node('obj_tracker'),
         Node('voice'),
