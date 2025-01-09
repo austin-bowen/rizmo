@@ -128,8 +128,8 @@ async def main(args: Namespace) -> None:
             )
 
         # PD control
-        pan_dps = 75 * x_error + 10 * (x_error - state.prev_x_error) / dt
-        tilt_dps = 60 * y_error
+        pan_dps = 50 * x_error + 10 * (x_error - state.prev_x_error) / dt
+        tilt_dps = 50 * y_error
         lean_dps = 25 * z_error
 
         # This decreases gain as latency increases to prevent overshooting
