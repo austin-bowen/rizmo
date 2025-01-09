@@ -64,11 +64,10 @@ async def main(args: Namespace) -> None:
     async def handle_transcript(topic, transcript: str) -> None:
         now = datetime.now()
         try:
+            transcript = preprocess(transcript)
             dt = now - state.last_datetime
             print(f'{now} ({dt}):')
             print('Person:', transcript)
-
-            transcript = preprocess(transcript)
 
             if talking_to_me(transcript):
                 state.in_conversation = True
