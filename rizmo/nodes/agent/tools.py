@@ -4,7 +4,7 @@ from dataclasses import asdict
 from typing import Literal
 
 import psutil
-from easymesh.node.node import MeshNode
+from easymesh.node.node import MeshNode, TopicSender
 
 from rizmo.config import config
 from rizmo.llm_utils import Tool, ToolHandler
@@ -15,21 +15,22 @@ from rizmo.weather import WeatherProvider
 
 
 def get_tool_handler(node: MeshNode) -> ToolHandler:
+    say_topic = node.get_topic_sender(Topic.SAY)
     weather_provider = WeatherProvider.build(config.weather_location)
-
     reminder_system = ReminderSystem(config.reminders_file_path)
 
     return ToolHandler([
-        GetSystemStatusTool(),
-        GetWeatherTool(weather_provider),
+        GetSystemStatusTool(say_topic),
+        GetWeatherTool(weather_provider, say_topic),
         MotorSystemTool(node.get_topic_sender(Topic.MOTOR_SYSTEM)),
-        SystemPowerTool(),
+        SystemPowerTool(say_topic),
         RemindersTool(reminder_system),
     ])
 
 
 class GetSystemStatusTool(Tool):
-    def __init__(self, psutil_=psutil):
+    def __init__(self, say_topic: TopicSender, psutil_=psutil):
+        self.say_topic = say_topic
         self.psutil = psutil_
 
     @property
@@ -43,10 +44,11 @@ class GetSystemStatusTool(Tool):
         )
 
     async def call(self) -> dict:
+        await self.say_topic.send('Checking...')
         return await asyncio.to_thread(self._get_system_status)
 
     def _get_system_status(self) -> dict:
-        cpu_usage_percent = self.psutil.cpu_percent(interval=0.5)
+        cpu_usage_percent = self.psutil.cpu_percent(interval=1.)
         memory_usage = self.psutil.virtual_memory()
         disk_usage = self.psutil.disk_usage('/')
 
@@ -65,8 +67,9 @@ class GetSystemStatusTool(Tool):
 
 
 class GetWeatherTool(Tool):
-    def __init__(self, weather_provider: WeatherProvider):
+    def __init__(self, weather_provider: WeatherProvider, say_topic: TopicSender):
         self.weather_provider = weather_provider
+        self.say_topic = say_topic
 
     @property
     def schema(self) -> dict:
@@ -81,6 +84,7 @@ class GetWeatherTool(Tool):
         )
 
     async def call(self) -> dict:
+        await self.say_topic.send('Checking...')
         weather = await self.weather_provider.get_weather()
         return asdict(weather)
 
@@ -115,7 +119,8 @@ class MotorSystemTool(Tool):
 
 
 class SystemPowerTool(Tool):
-    def __init__(self, subprocess_=subprocess):
+    def __init__(self, say_topic: TopicSender, subprocess_=subprocess):
+        self.say_topic = say_topic
         self.subprocess = subprocess_
 
     @property
@@ -149,10 +154,12 @@ class SystemPowerTool(Tool):
             raise ValueError(f'Invalid action: {action}')
 
     async def _shutdown(self) -> dict:
+        await self.say_topic.send('Shutting down...')
         await asyncio.sleep(3)
         return await self._run_cmd('sudo', '--non-interactive', 'shutdown', '-h', 'now')
 
     async def _reboot(self) -> dict:
+        await self.say_topic.send('Rebooting...')
         await asyncio.sleep(3)
         return await self._run_cmd('sudo', '--non-interactive', 'reboot')
 
