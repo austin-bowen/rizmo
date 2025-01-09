@@ -26,6 +26,7 @@ async def main(args: Namespace) -> None:
     state = State()
 
     async def _explore():
+        delay = 1.
         while True:
             print('Exploring...')
             await maestro_cmd_topic.send(SetServoPosition(
@@ -35,9 +36,11 @@ async def main(args: Namespace) -> None:
                 speed_dps=15,
             ))
 
-            await asyncio.sleep(10)
+            await asyncio.sleep(delay)
+            delay *= 2
+            delay = min(delay, 60)
 
-    explore = DelayedCallback(5, _explore)
+    explore = DelayedCallback(1, _explore)
     await explore.schedule()
 
     async def handle_tracking(topic, target: Optional[Detection]) -> None:
