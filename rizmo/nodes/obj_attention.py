@@ -31,7 +31,7 @@ async def main(args: Namespace) -> None:
             await maestro_cmd_topic.send(SetServoPosition(
                 pan_deg=random.uniform(-120, 120),
                 tilt0_deg=0,
-                tilt1_deg=random.uniform(-45, 45),
+                tilt1_deg=random.uniform(0, 45),
                 speed_dps=15,
             ))
 
