@@ -85,6 +85,7 @@ class ToolHandler:
     def __init__(self, tools: Iterable['Tool']):
         self.tools = {tool.name: tool for tool in tools}
 
+    @property
     def tools_schema(self) -> list[dict]:
         return [tool.schema for tool in self.tools.values()]
 
