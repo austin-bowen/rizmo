@@ -42,6 +42,7 @@ async def main(args: Namespace) -> None:
     class State:
         in_conversation: bool = False
         last_datetime: datetime = datetime.now()
+        last_reply_datetime: datetime = datetime.now()
 
     state = State()
 
@@ -63,42 +64,46 @@ async def main(args: Namespace) -> None:
 
     async def handle_transcript(topic, transcript: str) -> None:
         now = datetime.now()
-        try:
-            transcript = preprocess(transcript)
-            dt = now - state.last_datetime
-            print(f'{now} ({dt}):')
-            print('Person:', transcript)
+        transcript = preprocess(transcript)
+        print(f'{now}:')
+        print('Person:', transcript)
 
-            if talking_to_me(transcript):
-                state.in_conversation = True
-
-            if not state.in_conversation:
-                print('[Not talking to me]')
-                return
-
-            if any_phrase_in(transcript, (
-                    'pause conversation',
-                    'pause convo',
-                    'pause the conversation',
-                    'pause the convo',
-            )):
-                print('[Conversation paused]')
+        if talking_to_me(transcript):
+            state.in_conversation = True
+        else:
+            seconds_since_last_reply = (now - state.last_reply_datetime).total_seconds()
+            if seconds_since_last_reply >= args.pause_convo_after:
                 state.in_conversation = False
-                await say_topic.send('Okay.')
 
-                chat.add_user_message(transcript)
-                chat.add_assistant_message('Okay.')
+        if not state.in_conversation:
+            print('[Not talking to me]')
+            return
 
-                return
+        if any_phrase_in(transcript, (
+                'pause conversation',
+                'pause convo',
+                'pause the conversation',
+                'pause the convo',
+        )):
+            print('[Conversation paused]')
+            state.in_conversation = False
+            await say('Okay.')
 
             chat.add_user_message(transcript)
-            response = await chat.get_response()
-            response = response.content.strip()
+            chat.add_assistant_message('Okay.')
 
-            if response != '<NO REPLY>':
-                await say_topic.send(response)
-        finally:
-            state.last_datetime = now
+            return
+
+        chat.add_user_message(transcript)
+        response = await chat.get_response()
+        response = response.content.strip()
+
+        if response != '<NO REPLY>':
+            await say(response)
+
+    async def say(text: str) -> None:
+        await say_topic.send(text)
+        state.last_reply_datetime = datetime.now()
 
     async def handle_objects_detected(topic, objects: Detections) -> None:
         system_prompt_builder.objects = objects
@@ -127,6 +132,14 @@ def any_phrase_in(transcript: str, phrases: Iterable[str]) -> bool:
 
 def parse_args() -> Namespace:
     parser = get_rizmo_node_arg_parser(__file__)
+
+    parser.add_argument(
+        '--pause-convo-after',
+        type=int,
+        default=60,
+        help='Pause conversation after this many seconds without a reply. Default: %(default)s',
+    )
+
     return parser.parse_args()
 
 
