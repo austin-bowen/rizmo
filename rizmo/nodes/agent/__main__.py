@@ -41,7 +41,6 @@ async def main(args: Namespace) -> None:
     @dataclass
     class State:
         in_conversation: bool = False
-        last_datetime: datetime = datetime.now()
         last_reply_datetime: datetime = datetime.now()
 
     state = State()
