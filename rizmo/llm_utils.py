@@ -1,8 +1,8 @@
 import asyncio
 import json
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import deque
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 from openai import OpenAI
@@ -69,7 +69,7 @@ class Chat:
                 self.client.chat.completions.create,
                 messages=self.messages,
                 model=self.model,
-                tools=self.tool_handler.tools if self.tool_handler else None,
+                tools=self.tool_handler.tools_schema if self.tool_handler else None,
                 **self.kwargs,
             )
         finally:
@@ -81,10 +81,35 @@ class Chat:
         return message
 
 
-class ToolHandler(ABC):
-    tools = (
+class ToolHandler:
+    def __init__(self, tools: Iterable['Tool']):
+        self.tools = {tool.name: tool for tool in tools}
+
+    def tools_schema(self) -> list[dict]:
+        return [tool.schema for tool in self.tools.values()]
+
+    async def handle(self, func_spec: Function) -> str:
+        tool = self.tools[func_spec.name]
+        kwargs = json.loads(func_spec.arguments)
+
+        try:
+            result = await tool.call(**kwargs)
+        except Exception as e:
+            result = dict(error=repr(e))
+
+        return json.dumps(result)
+
+
+class Tool(ABC):
+    @property
+    def name(self) -> str:
+        return self.schema['function']['name']
+
+    @property
+    @abstractmethod
+    def schema(self) -> dict:
         # Template
-        # dict(
+        # return dict(
         #     type='function',
         #     function=dict(
         #         name='name',
@@ -101,16 +126,9 @@ class ToolHandler(ABC):
         #             additionalProperties=False,
         #         ),
         #     ),
-        # ),
-    )
+        # )
+        ...
 
-    async def handle(self, func_spec: Function) -> str:
-        func = getattr(self, func_spec.name)
-        kwargs = json.loads(func_spec.arguments)
-
-        try:
-            result = await func(**kwargs)
-        except Exception as e:
-            result = dict(error=repr(e))
-
-        return json.dumps(result)
+    @abstractmethod
+    async def call(self, **kwargs) -> Any:
+        ...

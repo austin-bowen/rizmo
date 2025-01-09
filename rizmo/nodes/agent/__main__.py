@@ -10,16 +10,13 @@ from easymesh.asyncio import forever
 from openai import OpenAI
 
 from rizmo import secrets
-from rizmo.config import config
 from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.agent.reminders import ReminderSystem
 from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
-from rizmo.nodes.agent.tools import RizmoToolHandler
+from rizmo.nodes.agent.tools import get_tool_handler
 from rizmo.nodes.messages_py36 import Detections
 from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
-from rizmo.weather import WeatherProvider
 
 NAME = 'Rizmo'
 
@@ -51,18 +48,10 @@ async def main(args: Namespace) -> None:
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
     system_prompt_builder = SystemPromptBuilder()
 
-    weather_provider = WeatherProvider.build(config.weather_location)
-    reminder_system = ReminderSystem(config.reminders_file_path)
-
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender(Topic.SAY)
 
-    tool_handler = RizmoToolHandler(
-        say_topic=say_topic,
-        motor_system_topic=node.get_topic_sender(Topic.MOTOR_SYSTEM),
-        weather_provider=weather_provider,
-        reminder_system=reminder_system,
-    )
+    tool_handler = get_tool_handler(node)
 
     chat = Chat(
         client,

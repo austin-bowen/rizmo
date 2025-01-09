@@ -4,23 +4,73 @@ from dataclasses import asdict
 from typing import Literal
 
 import psutil
+from easymesh.node.node import MeshNode
 
-from rizmo.llm_utils import ToolHandler
+from rizmo.config import config
+from rizmo.llm_utils import Tool, ToolHandler
 from rizmo.nodes.agent.reminders import ReminderSystem
 from rizmo.nodes.messages import MotorSystemCommand
+from rizmo.nodes.topics import Topic
 from rizmo.weather import WeatherProvider
 
 
-class RizmoToolHandler(ToolHandler):
-    tools = (
-        dict(
+def get_tool_handler(node: MeshNode) -> ToolHandler:
+    weather_provider = WeatherProvider.build(config.weather_location)
+
+    reminder_system = ReminderSystem(config.reminders_file_path)
+
+    return ToolHandler([
+        GetSystemStatusTool(),
+        GetWeatherTool(weather_provider),
+        MotorSystemTool(node.get_topic_sender(Topic.MOTOR_SYSTEM)),
+        SystemPowerTool(),
+        RemindersTool(reminder_system),
+    ])
+
+
+class GetSystemStatusTool(Tool):
+    def __init__(self, psutil_=psutil):
+        self.psutil = psutil_
+
+    @property
+    def schema(self) -> dict:
+        return dict(
             type='function',
-            description='Gets system CPU, memory, and disk usage, and CPU temperature in Celsius.',
             function=dict(
                 name='get_system_status',
+                description='Gets system CPU, memory, and disk usage, and CPU temperature in Celsius.',
             ),
-        ),
-        dict(
+        )
+
+    async def call(self) -> dict:
+        return await asyncio.to_thread(self._get_system_status)
+
+    def _get_system_status(self) -> dict:
+        cpu_usage_percent = self.psutil.cpu_percent(interval=0.5)
+        memory_usage = self.psutil.virtual_memory()
+        disk_usage = self.psutil.disk_usage('/')
+
+        temps = psutil.sensors_temperatures()
+        cpu_temp_c = (
+            temps['thermal-fan-est'][0].current
+            if 'thermal-fan-est' in temps else 'unknown'
+        )
+
+        return dict(
+            cpu_usage_percent=cpu_usage_percent,
+            memory_usage_percent=memory_usage.percent,
+            disk_usage_percent=disk_usage.percent,
+            cpu_temp_c=cpu_temp_c,
+        )
+
+
+class GetWeatherTool(Tool):
+    def __init__(self, weather_provider: WeatherProvider):
+        self.weather_provider = weather_provider
+
+    @property
+    def schema(self) -> dict:
+        return dict(
             type='function',
             function=dict(
                 name='get_weather',
@@ -28,8 +78,20 @@ class RizmoToolHandler(ToolHandler):
                 'Gets the weather for today, tomorrow, and the week, '
                 'as well as the current moon phase.',
             ),
-        ),
-        dict(
+        )
+
+    async def call(self) -> dict:
+        weather = await self.weather_provider.get_weather()
+        return asdict(weather)
+
+
+class MotorSystemTool(Tool):
+    def __init__(self, motor_system_topic):
+        self.motor_system_topic = motor_system_topic
+
+    @property
+    def schema(self) -> dict:
+        return dict(
             type='function',
             function=dict(
                 name='motor_system',
@@ -46,8 +108,19 @@ class RizmoToolHandler(ToolHandler):
                     additionalProperties=False,
                 ),
             ),
-        ),
-        dict(
+        )
+
+    async def call(self, enabled: bool) -> None:
+        await self.motor_system_topic.send(MotorSystemCommand(enabled=enabled))
+
+
+class SystemPowerTool(Tool):
+    def __init__(self, subprocess_=subprocess):
+        self.subprocess = subprocess_
+
+    @property
+    def schema(self) -> dict:
+        return dict(
             type='function',
             function=dict(
                 name='system_power',
@@ -65,8 +138,49 @@ class RizmoToolHandler(ToolHandler):
                     additionalProperties=False,
                 ),
             ),
-        ),
-        dict(
+        )
+
+    async def call(self, action: Literal['shutdown', 'reboot']) -> dict:
+        if action == 'shutdown':
+            return await self._shutdown()
+        elif action == 'reboot':
+            return await self._reboot()
+        else:
+            raise ValueError(f'Invalid action: {action}')
+
+    async def _shutdown(self) -> dict:
+        await asyncio.sleep(3)
+        return await self._run_cmd('sudo', '--non-interactive', 'shutdown', '-h', 'now')
+
+    async def _reboot(self) -> dict:
+        await asyncio.sleep(3)
+        return await self._run_cmd('sudo', '--non-interactive', 'reboot')
+
+    async def _run_cmd(self, *args: str) -> dict:
+        return await asyncio.to_thread(self._run_cmd_sync, args)
+
+    def _run_cmd_sync(self, args: tuple[str, ...]) -> dict:
+        result = self.subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        return dict(
+            command=' '.join(args),
+            exit_code=result.returncode,
+            stdout=result.stdout.decode(),
+            stderr=result.stderr.decode(),
+        )
+
+
+class RemindersTool(Tool):
+    def __init__(self, reminder_system: ReminderSystem):
+        self.reminder_system = reminder_system
+
+    @property
+    def schema(self) -> dict:
+        return dict(
             type='function',
             function=dict(
                 name='reminders',
@@ -88,71 +202,9 @@ class RizmoToolHandler(ToolHandler):
                     additionalProperties=False,
                 ),
             ),
-        ),
-    )
-
-    def __init__(
-            self,
-            say_topic,
-            motor_system_topic,
-            weather_provider: WeatherProvider,
-            reminder_system: 'ReminderSystem',
-    ):
-        self.say_topic = say_topic
-        self.motor_system_topic = motor_system_topic
-        self.weather_provider = weather_provider
-        self.reminder_system = reminder_system
-
-    async def get_system_status(self) -> dict:
-        cpu_usage_percent = psutil.cpu_percent(interval=0.5)
-        memory_usage = psutil.virtual_memory()
-        disk_usage = psutil.disk_usage('/')
-
-        temps = psutil.sensors_temperatures()
-        cpu_temp_c = (
-            temps['thermal-fan-est'][0].current
-            if 'thermal-fan-est' in temps else 'unknown'
         )
 
-        return dict(
-            cpu_usage_percent=cpu_usage_percent,
-            memory_usage_percent=memory_usage.percent,
-            disk_usage_percent=disk_usage.percent,
-            cpu_temp_c=cpu_temp_c,
-        )
-
-    async def get_weather(self) -> dict:
-        weather = await self.weather_provider.get_weather()
-        return asdict(weather)
-
-    async def motor_system(self, enabled: bool) -> None:
-        await self.motor_system_topic.send(MotorSystemCommand(enabled=enabled))
-
-    async def system_power(self, action: Literal['shutdown', 'reboot']) -> dict:
-        if action == 'shutdown':
-            return await self._shutdown()
-        elif action == 'reboot':
-            return await self._reboot()
-        else:
-            raise ValueError(f'Invalid action: {action}')
-
-    async def _shutdown(self) -> dict:
-        await self.say_topic.send('Shutting down.')
-        await asyncio.sleep(3)
-
-        return await self._run_cmd(
-            'sudo', '--non-interactive', 'shutdown', '-h', 'now'
-        )
-
-    async def _reboot(self) -> dict:
-        await self.say_topic.send('Be right back, rebooting.')
-        await asyncio.sleep(3)
-
-        return await self._run_cmd(
-            'sudo', '--non-interactive', 'reboot'
-        )
-
-    async def reminders(self, action: str, reminder: str) -> list[str]:
+    async def call(self, action: str, reminder: str) -> list[str]:
         if action == 'list':
             pass
         elif action == 'add':
@@ -165,17 +217,3 @@ class RizmoToolHandler(ToolHandler):
             raise ValueError(f'Invalid action: {action}')
 
         return self.reminder_system.list()
-
-    async def _run_cmd(self, *args) -> dict:
-        result = subprocess.run(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        return dict(
-            command=' '.join(args),
-            exit_code=result.returncode,
-            stdout=result.stdout.decode(),
-            stderr=result.stderr.decode(),
-        )
