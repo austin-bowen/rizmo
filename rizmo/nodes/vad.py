@@ -1,4 +1,6 @@
 """
+Voice Activity Detection (VAD) node.
+
 Setup:
 - `pip install funasr modelscope torchaudio`
 """

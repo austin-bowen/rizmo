@@ -1,4 +1,6 @@
 """
+Automatic Speech Recognition (ASR) node.
+
 Followed instructions here:
 - https://huggingface.co/learn/audio-course/en/chapter5/asr_models
 - https://huggingface.co/openai/whisper-large-v3-turbo
@@ -8,6 +10,7 @@ import asyncio
 from argparse import Namespace
 from collections import deque
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from queue import Queue
 from threading import Thread
 
@@ -132,18 +135,34 @@ async def main(args: Namespace):
 
     asr = build_asr_thread(handle_transcript)
 
-    most_recent_audios = MaxDurationAudioBuffer(max_duration=PRE_BUFFER_DURATION_S)
-    audio_buffer = []
+    @dataclass
+    class State:
+        most_recent_audios: list[Audio] = field(
+            default_factory=lambda: MaxDurationAudioBuffer(max_duration=PRE_BUFFER_DURATION_S),
+        )
+        audio_buffer: list[Audio] = field(default_factory=list)
+        self_speaking: bool = False
+
+    state = State()
 
     async def handle_voice_detected(topic, data):
         audio, _, voice_detected = data
 
-        most_recent_audios.append(audio)
+        state.most_recent_audios.append(audio)
+        audio_buffer = state.audio_buffer
+
+        # Do not transcribe while speaking
+        if state.self_speaking:
+            if audio_buffer:
+                print('[Speaking; ASR disabled]')
+                audio_buffer.clear()
+
+            return
 
         if voice_detected:
             if not audio_buffer:
                 print('Transcribing... ')
-                audio_buffer.extend(most_recent_audios)
+                audio_buffer.extend(state.most_recent_audios)
             else:
                 audio_buffer.append(audio)
             return
@@ -160,7 +179,11 @@ async def main(args: Namespace):
             else:
                 print('[Too short]')
 
+    async def handle_speaking(topic, speaking: bool) -> None:
+        state.self_speaking = speaking
+
     await node.listen(Topic.VOICE_DETECTED, handle_voice_detected)
+    await node.listen(Topic.SPEAKING, handle_speaking)
 
     try:
         await forever()
