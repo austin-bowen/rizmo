@@ -5,8 +5,9 @@ from argparse import Namespace
 import easymesh
 from easymesh.asyncio import forever
 from voicebox import ParallelVoicebox, Voicebox, reliable_tts
+from voicebox.audio import Audio
 from voicebox.effects import Flanger, Tail
-from voicebox.sinks import SoundDevice
+from voicebox.sinks import Sink, SoundDevice
 from voicebox.tts import AmazonPolly, ESpeakNG
 
 from rizmo.aws import get_polly_client
@@ -17,8 +18,25 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 async def main(args: Namespace) -> None:
     node = await easymesh.build_mesh_node_from_args(args=args)
+    loop = asyncio.get_event_loop()
 
-    with build_voicebox(args.tts) as voicebox:
+    def handle_speech_start() -> None:
+        send_message('speech.start')
+
+    def handle_speech_end() -> None:
+        send_message('speech.end')
+
+    def send_message(message: str) -> None:
+        asyncio.run_coroutine_threadsafe(
+            node.send(message),
+            loop,
+        ).result()
+
+    with build_voicebox(
+            args.tts,
+            handle_speech_start,
+            handle_speech_end,
+    ) as voicebox:
         voicebox.say(random.choice([
             'Hello, world!',
             'I am awake.',
@@ -34,7 +52,11 @@ async def main(args: Namespace) -> None:
         await forever()
 
 
-def build_voicebox(tts: str) -> Voicebox:
+def build_voicebox(
+        tts: str,
+        handle_speech_start,
+        handle_speech_end,
+) -> Voicebox:
     ttss = []
     if tts == 'kevin':
         ttss.append(AmazonPolly(
@@ -49,14 +71,34 @@ def build_voicebox(tts: str) -> Voicebox:
 
     ttss.append(ESpeakNG())
 
+    sink = SinkWithCallbacks(
+        SoundDevice(latency=0.2),
+        handle_speech_start,
+        handle_speech_end,
+    )
+
     return ParallelVoicebox(
         tts=reliable_tts(ttss=ttss),
         effects=[
             Tail(0.5),
             Flanger(),
         ],
-        sink=SoundDevice(latency=0.2),
+        sink=sink,
     )
+
+
+class SinkWithCallbacks(Sink):
+    def __init__(self, sink: Sink, on_speech_start, on_speech_end) -> None:
+        self.sink = sink
+        self.on_speech_start = on_speech_start
+        self.on_speech_end = on_speech_end
+
+    def play(self, audio: Audio) -> None:
+        self.on_speech_start()
+        try:
+            self.sink.play(audio)
+        finally:
+            self.on_speech_end()
 
 
 def parse_args() -> Namespace:
