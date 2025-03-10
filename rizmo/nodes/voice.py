@@ -21,14 +21,14 @@ async def main(args: Namespace) -> None:
     loop = asyncio.get_event_loop()
 
     def handle_speech_start() -> None:
-        send_message('speech.start')
+        send_speaking_message(True)
 
     def handle_speech_end() -> None:
-        send_message('speech.end')
+        send_speaking_message(False)
 
-    def send_message(message: str) -> None:
+    def send_speaking_message(speaking: bool) -> None:
         asyncio.run_coroutine_threadsafe(
-            node.send(message),
+            node.send(Topic.SPEAKING, speaking),
             loop,
         ).result()
 

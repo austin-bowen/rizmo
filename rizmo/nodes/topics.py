@@ -7,6 +7,7 @@ class Topic:
     OBJECTS_DETECTED = 'objects_detected'
     SAY = 'say'
     SERVO_COMMAND = 'servo_command'
+    SPEAKING = 'speaking'
     TRACKING = 'tracking'
     TRANSCRIPT = 'transcript'
     VOICE_DETECTED = 'voice_detected'
