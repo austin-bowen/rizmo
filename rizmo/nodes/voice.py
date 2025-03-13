@@ -9,6 +9,7 @@ from voicebox.audio import Audio
 from voicebox.effects import Flanger, Tail
 from voicebox.sinks import Sink, SoundDevice
 from voicebox.tts import AmazonPolly, ESpeakNG
+from voicebox.voiceboxes.splitter import PunktSentenceSplitter
 
 from rizmo.aws import get_polly_client
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -77,6 +78,8 @@ def build_voicebox(
         handle_speech_end,
     )
 
+    PunktSentenceSplitter.download_resources()
+
     return ParallelVoicebox(
         tts=reliable_tts(ttss=ttss),
         effects=[
@@ -84,6 +87,7 @@ def build_voicebox(
             Flanger(),
         ],
         sink=sink,
+        text_splitter=PunktSentenceSplitter(),
     )
 
 
