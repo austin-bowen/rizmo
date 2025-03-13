@@ -17,6 +17,7 @@ torchaudio
 transformers
 ultralytics
 voicebox-tts[amazon-polly]
+wolframalpha
 
 # Node: agent
 openai

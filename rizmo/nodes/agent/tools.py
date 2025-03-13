@@ -4,8 +4,10 @@ from dataclasses import asdict
 from typing import Literal
 
 import psutil
+import wolframalpha
 from easymesh.node.node import MeshNode, TopicSender
 
+from rizmo import secrets
 from rizmo.config import config
 from rizmo.llm_utils import Tool, ToolHandler
 from rizmo.nodes.agent.reminders import ReminderSystem
@@ -18,6 +20,7 @@ def get_tool_handler(node: MeshNode) -> ToolHandler:
     say_topic = node.get_topic_sender(Topic.SAY)
     weather_provider = WeatherProvider.build(config.weather_location)
     reminder_system = ReminderSystem(config.reminders_file_path)
+    wa_client = wolframalpha.Client(secrets.WOLFRAM_ALPHA_APP_ID)
 
     return ToolHandler([
         GetSystemStatusTool(say_topic),
@@ -25,6 +28,7 @@ def get_tool_handler(node: MeshNode) -> ToolHandler:
         MotorSystemTool(node.get_topic_sender(Topic.MOTOR_SYSTEM)),
         SystemPowerTool(say_topic),
         RemindersTool(reminder_system),
+        WolframAlphaTool(wa_client),
     ])
 
 
@@ -224,3 +228,33 @@ class RemindersTool(Tool):
             raise ValueError(f'Invalid action: {action}')
 
         return self.reminder_system.list()
+
+
+class WolframAlphaTool(Tool):
+    def __init__(self, client: wolframalpha.Client):
+        self.client = client
+
+    @property
+    def schema(self) -> dict:
+        return dict(
+            type='function',
+            function=dict(
+                name='wolfram_alpha',
+                description='Calls WolframAlpha. Should be used to answer any math questions.',
+                parameters=dict(
+                    type='object',
+                    properties=dict(
+                        query=dict(
+                            type='string',
+                            description='The query to send to WolframAlpha.',
+                        ),
+                    ),
+                    required=['query'],
+                    additionalProperties=False,
+                ),
+            ),
+        )
+
+    async def call(self, query: str) -> str:
+        response = await self.client.aquery(query)
+        return next(response.results).text
