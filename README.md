@@ -1,3 +1,5 @@
+from rizmo.secrets import WOLFRAM_ALPHA_APP_ID
+
 # Rizmo
 
 Code for my robot, Rizmo.
@@ -79,6 +81,9 @@ AWS_ACCESS_KEY_ID: str = ...
 AWS_SECRET_ACCESS_KEY: str = ...
 
 OPENAI_API_KEY: str = ...
+
+# Get from: https://developer.wolframalpha.com/access
+WOLFRAM_ALPHA_APP_ID: str = ...
 ```
 
 ## Upgrading Python on Jetson Nano
