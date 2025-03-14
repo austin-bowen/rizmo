@@ -28,5 +28,7 @@ class Config:
 
     aws_region: str = 'us-east-1'
 
+    wifi_ssid: str = 'CB-1138'
+
 
 config = Config()

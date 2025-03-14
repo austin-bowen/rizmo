@@ -2,6 +2,7 @@ class Topic:
     AUDIO = 'audio'
     MAESTRO_CMD = 'maestro_cmd'
     MOTOR_SYSTEM = 'motor_system'
+    NETWORK_CONNECTED = 'network_connected'
     NEW_IMAGE_COMPRESSED = 'new_image_compressed'
     NEW_IMAGE_RAW = 'new_image_raw'
     OBJECTS_DETECTED = 'objects_detected'
