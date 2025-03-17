@@ -73,7 +73,7 @@ def build_voicebox(
     ttss.append(ESpeakNG())
 
     sink = SinkWithCallbacks(
-        SoundDevice(latency=0.2),
+        SoundDevice(latency=0.5),
         handle_speech_start,
         handle_speech_end,
     )
