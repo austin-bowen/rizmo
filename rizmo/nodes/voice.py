@@ -3,15 +3,13 @@ import random
 from argparse import Namespace
 
 import easymesh
-import nltk
 from easymesh.asyncio import forever
-from nltk.tokenize import PunktTokenizer
 from voicebox import ParallelVoicebox, Voicebox, reliable_tts
 from voicebox.audio import Audio
 from voicebox.effects import Flanger, Tail
 from voicebox.sinks import Sink, SoundDevice
 from voicebox.tts import AmazonPolly, ESpeakNG
-from voicebox.voiceboxes.splitter import NltkTokenizerSplitter
+from voicebox.voiceboxes.splitter import PunktSentenceSplitter
 
 from rizmo.aws import get_polly_client
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -105,42 +103,6 @@ class SinkWithCallbacks(Sink):
             self.sink.play(audio)
         finally:
             self.on_speech_end()
-
-
-# TODO Move this fix into voicebox
-class PunktSentenceSplitter(NltkTokenizerSplitter):
-    """
-    Uses the `Punkt <https://www.nltk.org/api/nltk.tokenize.punkt.html>`_
-    sentence tokenizer from `NLTK <https://www.nltk.org>`_ to split text into
-    sentences more intelligently than a simple pattern-based splitter. It can
-    handle instances of mid-sentence punctuation very well; e.g. "Mr. Jones went
-    to see Dr. Sherman" would be correctly "split" into only one sentence.
-
-    This requires that the Punkt NLTK resources be located on disk,
-    e.g. by downloading via one of these methods:
-
-        >>> PunktSentenceSplitter.download_resources()
-
-    or
-
-        >>> import nltk; nltk.download('punkt_tab')
-
-    or
-
-        $ python -m nltk.downloader punkt_tab
-
-    See here for all NLTK Data installation methods:
-    https://www.nltk.org/data.html
-    """
-
-    def __init__(self, language: str = 'english'):
-        tokenizer = PunktTokenizer(language)
-        super().__init__(tokenizer)
-
-    @staticmethod
-    def download_resources(**kwargs):
-        """Download the Punkt NLTK resources."""
-        nltk.download('punkt_tab', **kwargs)  # pragma: no cover
 
 
 def parse_args() -> Namespace:
