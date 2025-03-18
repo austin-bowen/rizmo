@@ -4,6 +4,7 @@ git+https://github.com/austin-bowen/pololu-maestro.git
 accelerate
 Flask
 funasr
+humanize
 opencv-python
 modelscope
 numpy

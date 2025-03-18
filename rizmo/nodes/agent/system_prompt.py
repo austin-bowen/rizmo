@@ -1,6 +1,8 @@
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
+
+import humanize
 
 from rizmo.nodes.messages_py36 import Detections
 
@@ -26,6 +28,7 @@ Here are some phrases you should listen for and how to respond to them:
 Context:
 - Current date: {date}
 - Current time: {time}
+- System uptime: {uptime}
 - Objects seen (count): {objects}.
 '''.strip()
 
@@ -45,6 +48,7 @@ class SystemPromptBuilder:
     def _get_template_vars(self) -> dict:
         return {
             **self._get_datetime(),
+            **self._get_uptime(),
             **self._get_objects(),
         }
 
@@ -53,6 +57,15 @@ class SystemPromptBuilder:
         date = now.strftime('%A, %B %d, %Y')
         time = now.strftime('%I:%M %p')
         return dict(date=date, time=time)
+
+    def _get_uptime(self) -> dict:
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.readline().split()[0])
+
+        uptime = timedelta(seconds=uptime_seconds)
+        uptime = humanize.precisedelta(uptime)
+
+        return dict(uptime=uptime)
 
     def _get_objects(self) -> dict:
         objects = self.objects
