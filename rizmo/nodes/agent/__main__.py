@@ -138,7 +138,7 @@ def parse_args() -> Namespace:
 
     parser.add_argument(
         '--model',
-        default='gpt-4o-mini',
+        default='gpt-4o',
         help='The OpenAI model to use. Default: %(default)s',
     )
 
