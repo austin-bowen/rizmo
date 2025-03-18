@@ -3,8 +3,10 @@ import json
 from abc import ABC, abstractmethod
 from collections import deque
 from collections.abc import Callable, Iterable
+from datetime import datetime
 from typing import Any
 
+import humanize
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
 from openai.types.chat.chat_completion_message_tool_call import Function
@@ -30,7 +32,7 @@ class Chat:
         self.messages = deque()
 
     def add_user_message(self, content: str) -> None:
-        self.messages.append(dict(role='user', content=content))
+        self.messages.append(dict(role='user', content=content, timestamp=datetime.now()))
 
     def add_assistant_message(self, content: str) -> None:
         self.messages.append(dict(role='assistant', content=content))
@@ -65,9 +67,11 @@ class Chat:
 
         self.messages.appendleft(system_message)
         try:
+            processed_messages = self._get_processed_messages()
+
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
-                messages=self.messages,
+                messages=processed_messages,
                 model=self.model,
                 tools=self.tool_handler.tools_schema if self.tool_handler else None,
                 **self.kwargs,
@@ -77,6 +81,34 @@ class Chat:
 
         message = response.choices[0].message
         self.messages.append(message)
+
+        return message
+
+    def _get_processed_messages(self) -> list[dict]:
+        messages = []
+        now = datetime.now()
+
+        for message in self.messages:
+            if isinstance(message, dict) and message['role'] == 'user':
+                message = self._process_user_message(message, now)
+
+            messages.append(message)
+
+        return messages
+
+    def _process_user_message(self, message: dict, now: datetime) -> dict:
+        message = dict(message)
+
+        timestamp = message.pop('timestamp')
+        timestamp = now - timestamp
+
+        if timestamp.total_seconds() < 1:
+            timestamp = 'Just now'
+        else:
+            timestamp = humanize.naturaldelta(timestamp) + ' ago'
+
+        content = message['content']
+        message['content'] = f'[{timestamp}] {content}'
 
         return message
 
