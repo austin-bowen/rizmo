@@ -4,6 +4,7 @@ from typing import Optional
 
 import humanize
 
+from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages_py36 import Detections
 
 SYSTEM_PROMPT = '''
@@ -18,7 +19,7 @@ to be part of the conversation.
 
 Whatever you say will be read out loud, so write as if you were speaking.
 Keep your responses short. You do not need to reply to all messages;
-if a message does not need a reply, simply say "<NO REPLY>".
+if you do not think a message needs a reply, simply say "<NO REPLY>".
 
 Here are some phrases you should listen for and how to respond to them:
 - "rest in a deep and dreamless slumber": Shut down the system by calling the "system_power" function with "action" set to "shutdown".
@@ -30,14 +31,23 @@ Context:
 - Current time: {time}
 - System uptime: {uptime}
 - Objects seen (count): {objects}.
+
+Memories: {memories}
+
+You can use the "memories" tool to store facts you think may be important to remember.
 '''.strip()
 
 
 class SystemPromptBuilder:
     objects: Optional[Detections]
 
-    def __init__(self, system_prompt_template: str = SYSTEM_PROMPT):
+    def __init__(
+            self,
+            memory_store: ValueStore,
+            system_prompt_template: str = SYSTEM_PROMPT,
+    ):
         self.system_prompt_template = system_prompt_template
+        self.memory_store = memory_store
 
         self.objects = None
 
@@ -50,6 +60,7 @@ class SystemPromptBuilder:
             **self._get_datetime(),
             **self._get_uptime(),
             **self._get_objects(),
+            **self._get_memories(),
         }
 
     def _get_datetime(self) -> dict:
@@ -79,3 +90,9 @@ class SystemPromptBuilder:
             objects = 'None'
 
         return dict(objects=objects)
+
+    def _get_memories(self) -> dict:
+        memories = self.memory_store.list()
+        memories = '\n'.join(f'- {memory}' for memory in memories)
+        memories = ('\n' + memories) if memories else 'None'
+        return dict(memories=memories)

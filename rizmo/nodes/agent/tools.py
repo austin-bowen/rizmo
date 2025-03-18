@@ -16,18 +16,22 @@ from rizmo.nodes.topics import Topic
 from rizmo.weather import WeatherProvider
 
 
-def get_tool_handler(node: MeshNode) -> ToolHandler:
+def get_tool_handler(
+        node: MeshNode,
+        memory_store: ValueStore,
+) -> ToolHandler:
     say_topic = node.get_topic_sender(Topic.SAY)
     weather_provider = WeatherProvider.build(config.weather_location)
-    reminder_system = ValueStore(config.reminders_file_path)
+    reminder_store = ValueStore(config.reminders_file_path)
     wa_client = wolframalpha.Client(secrets.WOLFRAM_ALPHA_APP_ID)
 
     return ToolHandler([
         GetSystemStatusTool(say_topic),
         GetWeatherTool(weather_provider, say_topic),
+        MemoryTool(memory_store),
         MotorSystemTool(node.get_topic_sender(Topic.MOTOR_SYSTEM)),
         SystemPowerTool(say_topic),
-        RemindersTool(reminder_system),
+        RemindersTool(reminder_store),
         WolframAlphaTool(wa_client),
     ])
 
@@ -91,6 +95,47 @@ class GetWeatherTool(Tool):
         await self.say_topic.send('Checking...')
         weather = await self.weather_provider.get_weather()
         return asdict(weather)
+
+
+class MemoryTool(Tool):
+    def __init__(self, memory_store: ValueStore):
+        self.memory_store = memory_store
+
+    @property
+    def schema(self) -> dict:
+        return dict(
+            type='function',
+            function=dict(
+                name='memories',
+                description='Manages memories.',
+                parameters=dict(
+                    type='object',
+                    properties=dict(
+                        action=dict(
+                            type='string',
+                            description='The action to perform.',
+                            enum=['add', 'remove'],
+                        ),
+                        memory=dict(
+                            type='string',
+                            description='The memory to add/remove.',
+                        ),
+                    ),
+                    required=['action', 'memory'],
+                    additionalProperties=False,
+                ),
+            ),
+        )
+
+    async def call(self, action: str, memory: str) -> str:
+        if action == 'add':
+            self.memory_store.add(memory)
+            return f'Added memory: "{memory}"'
+        elif action == 'remove':
+            self.memory_store.remove(memory)
+            return f'Removed memory: "{memory}"'
+        else:
+            raise ValueError(f'Invalid action: {action}')
 
 
 class MotorSystemTool(Tool):
@@ -186,8 +231,8 @@ class SystemPowerTool(Tool):
 
 
 class RemindersTool(Tool):
-    def __init__(self, reminder_system: ValueStore):
-        self.reminder_system = reminder_system
+    def __init__(self, reminder_store: ValueStore):
+        self.reminder_store = reminder_store
 
     @property
     def schema(self) -> dict:
@@ -219,15 +264,15 @@ class RemindersTool(Tool):
         if action == 'list':
             pass
         elif action == 'add':
-            self.reminder_system.add(reminder)
+            self.reminder_store.add(reminder)
         elif action == 'remove':
-            self.reminder_system.remove(reminder)
+            self.reminder_store.remove(reminder)
         elif action == 'clear':
-            self.reminder_system.clear()
+            self.reminder_store.clear()
         else:
             raise ValueError(f'Invalid action: {action}')
 
-        return self.reminder_system.list()
+        return self.reminder_store.list()
 
 
 class WolframAlphaTool(Tool):

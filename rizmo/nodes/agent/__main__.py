@@ -10,10 +10,12 @@ from easymesh.asyncio import forever
 from openai import OpenAI
 
 from rizmo import secrets
+from rizmo.config import config
 from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
 from rizmo.nodes.agent.tools import get_tool_handler
+from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages_py36 import Detections
 from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -21,7 +23,7 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 NAME = 'Rizmo'
 
 ALT_NAME_PATTERN = re.compile(
-    rf'\b(p?r[eio][sz]+[mn][ao])\b',
+    rf'\b((pe)?r[eio][sz]+[mn][ao])\b',
     flags=re.IGNORECASE,
 )
 """Matches names like "Rizmo", "Rizma", "Prizmo", etc."""
@@ -46,16 +48,18 @@ async def main(args: Namespace) -> None:
     state = State()
 
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
-    system_prompt_builder = SystemPromptBuilder()
+
+    memory_store = ValueStore(config.memory_file_path)
+    system_prompt_builder = SystemPromptBuilder(memory_store)
 
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender(Topic.SAY)
 
-    tool_handler = get_tool_handler(node)
+    tool_handler = get_tool_handler(node, memory_store)
 
     chat = Chat(
         client,
-        model='gpt-4o-mini',
+        model=args.model,
         system_prompt_builder=system_prompt_builder,
         tool_handler=tool_handler,
         store=False,
@@ -131,6 +135,12 @@ def any_phrase_in(transcript: str, phrases: Iterable[str]) -> bool:
 
 def parse_args() -> Namespace:
     parser = get_rizmo_node_arg_parser(__file__)
+
+    parser.add_argument(
+        '--model',
+        default='gpt-4o-mini',
+        help='The OpenAI model to use. Default: %(default)s',
+    )
 
     parser.add_argument(
         '--pause-convo-after',
