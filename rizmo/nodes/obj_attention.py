@@ -38,9 +38,8 @@ async def main(args: Namespace) -> None:
 
             await asyncio.sleep(delay)
             delay *= 2
-            delay = min(delay, 60)
 
-    explore = DelayedCallback(1, _explore)
+    explore = DelayedCallback(5, _explore)
     await explore.schedule()
 
     async def handle_tracking(topic, target: Optional[Detection]) -> None:
