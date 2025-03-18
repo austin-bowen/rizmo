@@ -10,7 +10,7 @@ from easymesh.node.node import MeshNode, TopicSender
 from rizmo import secrets
 from rizmo.config import config
 from rizmo.llm_utils import Tool, ToolHandler
-from rizmo.nodes.agent.reminders import ReminderSystem
+from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages import MotorSystemCommand
 from rizmo.nodes.topics import Topic
 from rizmo.weather import WeatherProvider
@@ -19,7 +19,7 @@ from rizmo.weather import WeatherProvider
 def get_tool_handler(node: MeshNode) -> ToolHandler:
     say_topic = node.get_topic_sender(Topic.SAY)
     weather_provider = WeatherProvider.build(config.weather_location)
-    reminder_system = ReminderSystem(config.reminders_file_path)
+    reminder_system = ValueStore(config.reminders_file_path)
     wa_client = wolframalpha.Client(secrets.WOLFRAM_ALPHA_APP_ID)
 
     return ToolHandler([
@@ -186,7 +186,7 @@ class SystemPowerTool(Tool):
 
 
 class RemindersTool(Tool):
-    def __init__(self, reminder_system: ReminderSystem):
+    def __init__(self, reminder_system: ValueStore):
         self.reminder_system = reminder_system
 
     @property
