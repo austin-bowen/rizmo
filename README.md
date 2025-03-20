@@ -1,5 +1,3 @@
-from rizmo.secrets import WOLFRAM_ALPHA_APP_ID
-
 # Rizmo
 
 Code for my robot, Rizmo.
