@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from easymesh import build_mesh_node_from_args
+from easymesh.asyncio import forever
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -44,11 +45,15 @@ async def main(args: Namespace) -> None:
     await explore.schedule()
 
     async def handle_tracking(topic, target: Optional[Detection]) -> None:
-        state.target = target
+        if target != state.target:
+            state.target = target
+            print(f'Target: {target}')
+
         await explore.set(target is None and not state.camera_is_covered)
 
     async def handle_camera_covered(topic, covered: bool) -> None:
         state.camera_is_covered = covered
+        print(f'Camera covered: {covered}')
 
         await explore.set(not covered)
 
@@ -62,10 +67,7 @@ async def main(args: Namespace) -> None:
 
     await node.listen(Topic.TRACKING, handle_tracking)
     await node.listen(Topic.CAMERA_COVERED, handle_camera_covered)
-
-    while True:
-        print('target:', state.target)
-        await asyncio.sleep(1)
+    await forever()
 
 
 def parse_args() -> Namespace:
