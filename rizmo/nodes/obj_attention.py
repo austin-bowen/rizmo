@@ -45,9 +45,11 @@ async def main(args: Namespace) -> None:
     await explore.schedule()
 
     async def handle_tracking(topic, target: Optional[Detection]) -> None:
-        if target != state.target:
-            state.target = target
-            print(f'Target: {target}')
+        new_label = target.label if target else None
+        old_label = state.target.label if state.target else None
+        state.target = target
+        if new_label != old_label:
+            print(f'Target: {new_label}')
 
         await explore.set(target is None and not state.camera_is_covered)
 
