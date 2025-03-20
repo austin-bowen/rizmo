@@ -1,5 +1,6 @@
 class Topic:
     AUDIO = 'audio'
+    CAMERA_COVERED = 'camera_covered'
     MAESTRO_CMD = 'maestro_cmd'
     MOTOR_SYSTEM = 'motor_system'
     NETWORK_CONNECTED = 'network_connected'

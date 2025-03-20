@@ -116,8 +116,9 @@ class CameraCoveredDetector:
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
-    new_image_raw_topic = node.get_topic_sender(Topic.NEW_IMAGE_RAW)
+    camera_covered_topic = node.get_topic_sender(Topic.CAMERA_COVERED)
     new_image_compressed_topic = node.get_topic_sender(Topic.NEW_IMAGE_COMPRESSED)
+    new_image_raw_topic = node.get_topic_sender(Topic.NEW_IMAGE_RAW)
 
     camera = Camera(
         args.camera_index,
@@ -147,6 +148,7 @@ async def main(args: Namespace) -> None:
         fps_limit: float = args.fps_limit
         t_last_send: float = 0.
         prev_motion: bool = None
+        prev_covered: bool = None
 
     state = State()
 
@@ -167,6 +169,10 @@ async def main(args: Namespace) -> None:
         timestamp = time.time()
 
         covered = covered_detector.is_covered(image)
+        if covered != state.prev_covered:
+            state.prev_covered = covered
+            await camera_covered_topic.send(covered)
+
         motion = not covered and motion_detector.is_motion(image)
 
         if motion != state.prev_motion:
