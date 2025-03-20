@@ -9,8 +9,8 @@ from easymesh import build_mesh_node_from_args
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import SetServoPosition
-from rizmo.nodes.topics import Topic
 from rizmo.nodes.messages_py36 import Detection
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 
