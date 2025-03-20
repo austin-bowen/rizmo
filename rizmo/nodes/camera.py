@@ -168,16 +168,16 @@ async def _read_camera(
 
     max_fps = fps_limit
 
-    class Cache:
+    class State:
         fps_limit: float = max_fps
         t_last_send: float = 0.
         prev_motion: bool = None
 
-    cache = Cache()
+    state = State()
 
     async def low_fps():
         print(f'\nSwitching to low FPS: {min_fps}')
-        cache.fps_limit = min_fps
+        state.fps_limit = min_fps
 
     delayed_low_fps = DelayedCallback(3, low_fps)
 
@@ -194,19 +194,19 @@ async def _read_camera(
         covered = covered_detector.is_covered(image)
         motion = not covered and motion_detector.is_motion(image)
 
-        if motion != cache.prev_motion:
-            cache.prev_motion = motion
+        if motion != state.prev_motion:
+            state.prev_motion = motion
 
             if not motion:
                 await delayed_low_fps.schedule()
             else:
                 await delayed_low_fps.cancel()
 
-                if cache.fps_limit != max_fps:
+                if state.fps_limit != max_fps:
                     print(f'\nSwitching to high FPS: {max_fps}')
-                    cache.fps_limit = max_fps
+                    state.fps_limit = max_fps
 
-        if cache.fps_limit is None or (timestamp - cache.t_last_send) >= 1 / cache.fps_limit:
+        if state.fps_limit is None or (timestamp - state.t_last_send) >= 1 / state.fps_limit:
             if await new_image_raw_topic.has_listeners():
                 await new_image_raw_topic.send((timestamp, camera_index, image))
 
@@ -214,7 +214,7 @@ async def _read_camera(
                 image_bytes = codec.encode(image)
                 await new_image_compressed_topic.send((timestamp, camera_index, image_bytes))
 
-            cache.t_last_send = timestamp
+            state.t_last_send = timestamp
             print('.', end='', flush=True)
 
         if show_raw_image:
