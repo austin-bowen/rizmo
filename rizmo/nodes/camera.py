@@ -19,100 +19,6 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 Image = np.ndarray
 
 
-class VideoCapture(cv2.VideoCapture):
-    def set(self, propId: int, value, verify: bool = False) -> bool:
-        success = super().set(propId, value)
-
-        if verify:
-            actual = self.get(propId)
-            require(
-                success and actual == value,
-                f'Failed to set property {propId} to {value!r}; '
-                f'current value is {actual!r}'
-            )
-
-        return success
-
-
-class Camera:
-    def __init__(
-            self,
-            device: int,
-            resolution: tuple[int, int] = None,
-            fps: float = None,
-            codec: str = None,
-            props: dict[int, Any] = None,
-    ):
-        self.device = device
-        self.resolution = resolution
-        self.fps = fps
-        self.codec = codec
-        self.props = props or {}
-
-        self._capture = None
-
-    async def get_image(self) -> Image:
-        capture = self._get_capture()
-
-        ret, frame = await asyncio.to_thread(capture.read)
-
-        if not ret:
-            await self.close()
-            raise CameraCaptureError('Failed to capture image')
-
-        return frame
-
-    def _get_capture(self) -> cv2.VideoCapture:
-        if self._capture is not None:
-            return self._capture
-
-        self._capture = VideoCapture(self.device)
-
-        if not self._capture.isOpened():
-            raise CameraCaptureError(f'Failed to open camera device {self.device}')
-
-        if self.codec is not None:
-            # noinspection PyUnresolvedReferences
-            fourcc = cv2.VideoWriter_fourcc(*self.codec)
-            self._capture.set(cv2.CAP_PROP_FOURCC, fourcc, verify=True)
-
-        if self.resolution is not None:
-            width, height = self.resolution
-            self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, width, verify=False)
-            self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height, verify=True)
-
-        if self.fps is not None:
-            self._capture.set(cv2.CAP_PROP_FPS, self.fps, verify=True)
-
-        for prop_id, value in self.props.items():
-            self._capture.set(prop_id, value, verify=True)
-
-        return self._capture
-
-    async def close(self) -> None:
-        if self._capture is not None:
-            capture = self._capture
-            self._capture = None
-
-            await asyncio.to_thread(capture.release)
-
-
-class CameraCaptureError(Exception):
-    pass
-
-
-class CameraCoveredDetector:
-    def __init__(self, threshold: float, subsample: int):
-        self.threshold = threshold
-        self.subsample = subsample
-
-    def is_covered(self, image: Image) -> bool:
-        image = image[::self.subsample, ::self.subsample]
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        mean = np.mean(image)
-        return mean < self.threshold
-
-
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
@@ -201,6 +107,100 @@ async def main(args: Namespace) -> None:
         if args.show_raw_image:
             cv2.imshow(f'Camera {args.camera_index}: Raw Image', image)
             cv2.waitKey(1)
+
+
+class Camera:
+    def __init__(
+            self,
+            device: int,
+            resolution: tuple[int, int] = None,
+            fps: float = None,
+            codec: str = None,
+            props: dict[int, Any] = None,
+    ):
+        self.device = device
+        self.resolution = resolution
+        self.fps = fps
+        self.codec = codec
+        self.props = props or {}
+
+        self._capture = None
+
+    async def get_image(self) -> Image:
+        capture = self._get_capture()
+
+        ret, frame = await asyncio.to_thread(capture.read)
+
+        if not ret:
+            await self.close()
+            raise CameraCaptureError('Failed to capture image')
+
+        return frame
+
+    def _get_capture(self) -> cv2.VideoCapture:
+        if self._capture is not None:
+            return self._capture
+
+        self._capture = VideoCapture(self.device)
+
+        if not self._capture.isOpened():
+            raise CameraCaptureError(f'Failed to open camera device {self.device}')
+
+        if self.codec is not None:
+            # noinspection PyUnresolvedReferences
+            fourcc = cv2.VideoWriter_fourcc(*self.codec)
+            self._capture.set(cv2.CAP_PROP_FOURCC, fourcc, verify=True)
+
+        if self.resolution is not None:
+            width, height = self.resolution
+            self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, width, verify=False)
+            self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height, verify=True)
+
+        if self.fps is not None:
+            self._capture.set(cv2.CAP_PROP_FPS, self.fps, verify=True)
+
+        for prop_id, value in self.props.items():
+            self._capture.set(prop_id, value, verify=True)
+
+        return self._capture
+
+    async def close(self) -> None:
+        if self._capture is not None:
+            capture = self._capture
+            self._capture = None
+
+            await asyncio.to_thread(capture.release)
+
+
+class VideoCapture(cv2.VideoCapture):
+    def set(self, propId: int, value, verify: bool = False) -> bool:
+        success = super().set(propId, value)
+
+        if verify:
+            actual = self.get(propId)
+            require(
+                success and actual == value,
+                f'Failed to set property {propId} to {value!r}; '
+                f'current value is {actual!r}'
+            )
+
+        return success
+
+
+class CameraCaptureError(Exception):
+    pass
+
+
+class CameraCoveredDetector:
+    def __init__(self, threshold: float, subsample: int):
+        self.threshold = threshold
+        self.subsample = subsample
+
+    def is_covered(self, image: Image) -> bool:
+        image = image[::self.subsample, ::self.subsample]
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        mean = np.mean(image)
+        return mean < self.threshold
 
 
 def parse_args() -> Namespace:
