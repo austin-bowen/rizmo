@@ -22,6 +22,7 @@ async def main(args: Namespace) -> None:
     @dataclass
     class State:
         target: Detection = None
+        camera_is_covered: bool = False
 
     state = State()
 
@@ -44,9 +45,23 @@ async def main(args: Namespace) -> None:
 
     async def handle_tracking(topic, target: Optional[Detection]) -> None:
         state.target = target
-        await explore.set(target is None)
+        await explore.set(target is None and not state.camera_is_covered)
+
+    async def handle_camera_covered(topic, covered: bool) -> None:
+        state.camera_is_covered = covered
+
+        await explore.set(not covered)
+
+        if covered:
+            await maestro_cmd_topic.send(SetServoPosition(
+                pan_deg=0,
+                tilt0_deg=0,
+                tilt1_deg=0,
+                speed_dps=30,
+            ))
 
     await node.listen(Topic.TRACKING, handle_tracking)
+    await node.listen(Topic.CAMERA_COVERED, handle_camera_covered)
 
     while True:
         print('target:', state.target)

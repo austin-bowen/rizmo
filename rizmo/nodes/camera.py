@@ -199,7 +199,7 @@ class CameraCoveredDetector:
     def is_covered(self, image: Image) -> bool:
         image = image[::self.subsample, ::self.subsample]
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        mean = np.mean(image)
+        mean = np.mean(image).item()
         return mean < self.threshold
 
 
