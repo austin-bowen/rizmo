@@ -1,7 +1,7 @@
 import asyncio
 import time
 from argparse import Namespace
-from typing import Any, Optional
+from typing import Any
 
 import cv2
 import numpy as np
@@ -116,42 +116,19 @@ class CameraCoveredDetector:
 async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
 
-    await _read_camera(
-        node,
-        args.camera_index,
-        args.resolution,
-        args.camera_fps,
-        fps_limit=args.fps_limit,
-        min_fps=args.min_fps,
-        show_raw_image=args.show_raw_image,
-        jpeg_quality=args.jpeg_quality,
-    )
-
-
-async def _read_camera(
-        node,
-        camera_index: int,
-        resolution: tuple[int, int],
-        camera_fps: float,
-        fps_limit: Optional[float] = None,
-        min_fps: float = 1.,
-        show_raw_image: bool = False,
-        jpeg_quality: int = 80,
-):
     new_image_raw_topic = node.get_topic_sender(Topic.NEW_IMAGE_RAW)
     new_image_compressed_topic = node.get_topic_sender(Topic.NEW_IMAGE_COMPRESSED)
 
-    camera_builder = lambda: Camera(
-        camera_index,
-        resolution,
-        fps=camera_fps,
+    camera = Camera(
+        args.camera_index,
+        args.resolution,
+        fps=args.camera_fps,
         codec='MJPG',
         props={
             cv2.CAP_PROP_AUTO_WB: 0,
             cv2.CAP_PROP_WB_TEMPERATURE: 2800,
         }
     )
-    camera = camera_builder()
 
     covered_detector = CameraCoveredDetector(
         threshold=8,
@@ -164,20 +141,18 @@ async def _read_camera(
         subsample=8,
     )
 
-    codec = JpegImageCodec(quality=jpeg_quality)
-
-    max_fps = fps_limit
+    codec = JpegImageCodec(quality=args.jpeg_quality)
 
     class State:
-        fps_limit: float = max_fps
+        fps_limit: float = args.fps_limit
         t_last_send: float = 0.
         prev_motion: bool = None
 
     state = State()
 
     async def low_fps():
-        print(f'\nSwitching to low FPS: {min_fps}')
-        state.fps_limit = min_fps
+        print(f'\nSwitching to low FPS: {args.min_fps}')
+        state.fps_limit = args.min_fps
 
     delayed_low_fps = DelayedCallback(3, low_fps)
 
@@ -185,7 +160,7 @@ async def _read_camera(
         try:
             image = await camera.get_image()
         except CameraCaptureError as e:
-            print(f'Error reading camera {camera_index}: {e}')
+            print(f'Error reading camera {args.camera_index}: {e}')
             await asyncio.sleep(1)
             continue
 
@@ -202,23 +177,23 @@ async def _read_camera(
             else:
                 await delayed_low_fps.cancel()
 
-                if state.fps_limit != max_fps:
-                    print(f'\nSwitching to high FPS: {max_fps}')
-                    state.fps_limit = max_fps
+                if state.fps_limit != args.fps_limit:
+                    print(f'\nSwitching to high FPS: {args.fps_limit}')
+                    state.fps_limit = args.fps_limit
 
         if state.fps_limit is None or (timestamp - state.t_last_send) >= 1 / state.fps_limit:
             if await new_image_raw_topic.has_listeners():
-                await new_image_raw_topic.send((timestamp, camera_index, image))
+                await new_image_raw_topic.send((timestamp, args.camera_index, image))
 
             if await new_image_compressed_topic.has_listeners():
                 image_bytes = codec.encode(image)
-                await new_image_compressed_topic.send((timestamp, camera_index, image_bytes))
+                await new_image_compressed_topic.send((timestamp, args.camera_index, image_bytes))
 
             state.t_last_send = timestamp
             print('.', end='', flush=True)
 
-        if show_raw_image:
-            cv2.imshow(f'Camera {camera_index}: Raw Image', image)
+        if args.show_raw_image:
+            cv2.imshow(f'Camera {args.camera_index}: Raw Image', image)
             cv2.waitKey(1)
 
 
