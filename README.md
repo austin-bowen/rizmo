@@ -4,7 +4,22 @@ Code for my robot, Rizmo.
 
 ## Hardware
 
-TODO
+- Head:
+  - [Wide-angle HD Webcam](https://a.co/d/b5ijvkz)
+  - [Yahboom 2-DOF Servo Pan-Tilt Kit](https://a.co/d/96kztxG)
+  - [180° Servo with Bracket](https://a.co/d/18uz2lH)
+  - [Pololu Mini Maestro 12-Channel USB Servo Controller](https://a.co/d/fFQc6nA)
+  - [DROK 12V to 5V 3A Buck Regulator](https://a.co/d/iQ9KW6e) for servo power
+- Computer:
+  - [NVIDIA Jetson Nano Developer Kit](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-nano/product-development/)
+  - [2x WiFi Antenna](https://a.co/d/2jopwcI)
+  - [EMEET USB Conference Speaker](https://a.co/d/13vGQa1)
+  - [DROK 8-32V to 3-27V 5A Buck Regulator](https://a.co/d/a1hP6Xy) for computer power
+- Power:
+  - [Zeee 7.4V 6200mAh 2S Lipo Battery](https://a.co/d/b4Y9Ils)
+  - [8.4V 3A Li-ion Battery Charger](https://a.co/d/hgPVS8a)
+  - [2S 18650 Lithium Battery Balance Charger Board](https://a.co/d/cqLRV7u)
+  - [Lithium Battery Capacity Indicator Module - Green](https://a.co/d/2DSxyPZ)
 
 ## Software Setup
 
