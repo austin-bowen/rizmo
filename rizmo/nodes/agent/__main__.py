@@ -15,7 +15,7 @@ from rizmo.config import config
 from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
-from rizmo.nodes.agent.tools import get_tool_handler
+from rizmo.nodes.agent.tools.tools import get_tool_handler
 from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages_py36 import Detections
 from rizmo.nodes.topics import Topic
