@@ -8,7 +8,7 @@ from voicebox import ParallelVoicebox, Voicebox, reliable_tts
 from voicebox.audio import Audio
 from voicebox.effects import Flanger, Tail
 from voicebox.sinks import Sink, SoundDevice
-from voicebox.tts import AmazonPolly, ESpeakNG
+from voicebox.tts import AmazonPolly, ESpeakNG, PrerecordedTTS, TTS
 from voicebox.voiceboxes.splitter import PunktSentenceSplitter
 
 from rizmo.aws import get_polly_client
@@ -54,41 +54,56 @@ async def main(args: Namespace) -> None:
 
 
 def build_voicebox(
-        tts: str,
+        tts_name: str,
         handle_speech_start,
         handle_speech_end,
 ) -> Voicebox:
+    PunktSentenceSplitter.download_resources()
+
+    return ParallelVoicebox(
+        tts=_build_tts(tts_name),
+        effects=[
+            Tail(0.5),
+            Flanger(),
+        ],
+        sink=SinkWithCallbacks(
+            SoundDevice(latency=0.5),
+            handle_speech_start,
+            handle_speech_end,
+        ),
+        text_splitter=PunktSentenceSplitter(),
+    )
+
+
+def _build_tts(tts_name: str) -> TTS:
     ttss = []
-    if tts == 'kevin':
+    if tts_name == 'kevin':
         ttss.append(AmazonPolly(
-            client=get_polly_client(),
+            client=get_polly_client(timeout=5),
             voice_id='Kevin',
             engine='neural',
             language_code='en-US',
             sample_rate=16_000,
         ))
-    elif tts != 'espeak':
-        raise ValueError(f'Unknown TTS engine: {tts!r}')
+    elif tts_name != 'espeak':
+        raise ValueError(f'Unknown TTS engine: {tts_name!r}')
 
     ttss.append(ESpeakNG())
 
-    sink = SinkWithCallbacks(
-        SoundDevice(latency=0.5),
-        handle_speech_start,
-        handle_speech_end,
-    )
+    tts = reliable_tts(ttss=ttss)
 
-    PunktSentenceSplitter.download_resources()
+    try:
+        tts = PrerecordedTTS.from_tts(
+            tts,
+            texts=[
+                'Network reconnected!',
+                'Network disconnected; attempting to reconnect...',
+            ],
+        )
+    except Exception as e:
+        print(f'Failed to pre-load TTS messages: {e!r}')
 
-    return ParallelVoicebox(
-        tts=reliable_tts(ttss=ttss),
-        effects=[
-            Tail(0.5),
-            Flanger(),
-        ],
-        sink=sink,
-        text_splitter=PunktSentenceSplitter(),
-    )
+    return tts
 
 
 class SinkWithCallbacks(Sink):

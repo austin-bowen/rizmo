@@ -46,8 +46,8 @@ async def main(args: Namespace) -> None:
 
             try:
                 await asyncio.wait_for(wait_wifi_connected(), timeout=30)
-            except asyncio.TimeoutError as e:
-                print(repr(e))
+            except asyncio.TimeoutError:
+                pass
 
         await asyncio.sleep(10)
 
