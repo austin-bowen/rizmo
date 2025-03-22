@@ -20,6 +20,9 @@ class Config:
     camera_index: int = 0
     camera_resolution: tuple[int, int] = (1280, 720)
 
+    speaker_device: str = 'M0'
+    speaker_mixer: str = 'PCM'
+    microphone_mixer: str = 'Mic'
     mic_sample_rate: int = 16000
     mic_block_size: int = 4096
 
