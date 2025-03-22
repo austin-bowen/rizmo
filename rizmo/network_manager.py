@@ -2,9 +2,24 @@ import asyncio
 import subprocess
 from asyncio import subprocess
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 
 class NetworkManager:
+    async def cycle_wifi_radio_powered(self, wait_time: float = 5.) -> None:
+        await self.set_wifi_radio_powered(False)
+        await asyncio.sleep(wait_time)
+        await self.set_wifi_radio_powered(True)
+
+    async def set_wifi_radio_powered(self, powered: bool) -> None:
+        await self._run_and_check_command([
+            "sudo",
+            "nmcli",
+            "radio",
+            "wifi",
+            "on" if powered else "off",
+        ])
+
     async def connect(self, name: str) -> None:
         await self._run_and_check_command([
             "nmcli",
@@ -13,19 +28,25 @@ class NetworkManager:
             name,
         ])
 
-    async def connection_is_active(self, name: str) -> bool:
-        return name in await self.get_active_connections()
+    async def device_is_connected(self, device: str) -> bool:
+        connections = await self.get_active_connections()
+        return any(conn.device == device for conn in connections)
 
-    async def get_active_connections(self):
+    async def get_active_connections(self) -> list['Connection']:
         result = await self._run_and_check_command([
             "nmcli",
             "--terse",
-            "--fields", "NAME",
+            "--fields", "DEVICE,NAME",
             "connection", "show",
             "--active",
         ])
 
-        return result.splitlines()
+        conns = []
+        for line in result.splitlines():
+            device, name = line.split(":", maxsplit=1)
+            conns.append(Connection(device, name))
+
+        return conns
 
     async def _run_and_check_command(self, args: Sequence[str]) -> str:
         process = await asyncio.create_subprocess_exec(
@@ -43,3 +64,9 @@ class NetworkManager:
             )
 
         return stdout.decode()
+
+
+@dataclass
+class Connection:
+    device: str
+    name: str
