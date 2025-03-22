@@ -93,6 +93,7 @@ def _build_tts(tts_name: str) -> TTS:
     tts = reliable_tts(ttss=ttss)
 
     try:
+        print('Pre-loading TTS messages...')
         tts = PrerecordedTTS.from_tts(
             tts,
             texts=[
