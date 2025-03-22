@@ -8,6 +8,7 @@ import wolframalpha
 from easymesh.node.node import MeshNode, TopicSender
 
 from rizmo import secrets
+from rizmo.conference_speaker import ConferenceSpeaker
 from rizmo.config import config
 from rizmo.llm_utils import Tool, ToolHandler
 from rizmo.nodes.agent.value_store import ValueStore
@@ -19,6 +20,7 @@ from rizmo.weather import WeatherProvider
 def get_tool_handler(
         node: MeshNode,
         memory_store: ValueStore,
+        speaker: ConferenceSpeaker,
 ) -> ToolHandler:
     say_topic = node.get_topic_sender(Topic.SAY)
     weather_provider = WeatherProvider.build(config.weather_location)
@@ -32,6 +34,7 @@ def get_tool_handler(
         MotorSystemTool(node.get_topic_sender(Topic.MOTOR_SYSTEM)),
         RemindersTool(reminder_store),
         SystemPowerTool(say_topic),
+        VolumeTool(speaker),
         WolframAlphaTool(wa_client),
     ])
 
@@ -273,6 +276,45 @@ class SystemPowerTool(Tool):
             stdout=result.stdout.decode(),
             stderr=result.stderr.decode(),
         )
+
+
+
+class VolumeTool(Tool):
+    def __init__(self, speaker: ConferenceSpeaker):
+        self.speaker = speaker
+
+    @property
+    def schema(self) -> dict:
+        return dict(
+            type='function',
+            function=dict(
+                name='volume',
+                description='Set speaker volume.',
+                parameters=dict(
+                    type='object',
+                    properties=dict(
+                        volume=dict(
+                            type='number',
+                            description='Desired speaker volume in range 0-10.',
+                        ),
+                    ),
+                    required=['volume'],
+                    additionalProperties=False,
+                ),
+            ),
+        )
+
+    async def call(self, volume: int) -> str:
+        volume *= 10
+        volume = min(max(0, volume), 100)
+        volume = int(volume)
+
+        try:
+            self.speaker.speaker.setvolume(volume)
+        except Exception as e:
+            return repr(e)
+        else:
+            return 'ok'
 
 
 class WolframAlphaTool(Tool):

@@ -4,6 +4,7 @@ from typing import Optional
 
 import humanize
 
+from rizmo.conference_speaker import ConferenceSpeaker
 from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages_py36 import Detections
 
@@ -30,6 +31,7 @@ Context:
 - Current date: {date}
 - Current time: {time}
 - System uptime: {uptime}
+- Speaker volume: {volume}/10
 - Objects seen (count): {objects}.
 
 Memories: {memories}
@@ -44,10 +46,12 @@ class SystemPromptBuilder:
     def __init__(
             self,
             memory_store: ValueStore,
+            speaker: ConferenceSpeaker,
             system_prompt_template: str = SYSTEM_PROMPT,
     ):
         self.system_prompt_template = system_prompt_template
         self.memory_store = memory_store
+        self.speaker = speaker
 
         self.objects = None
 
@@ -61,6 +65,7 @@ class SystemPromptBuilder:
             **self._get_uptime(),
             **self._get_objects(),
             **self._get_memories(),
+            **self._get_volume(),
         }
 
     def _get_datetime(self) -> dict:
@@ -96,3 +101,8 @@ class SystemPromptBuilder:
         memories = '\n'.join(f'- {memory}' for memory in memories)
         memories = ('\n' + memories) if memories else 'None'
         return dict(memories=memories)
+
+    def _get_volume(self) -> dict:
+        volume = self.speaker.speaker.getvolume()[0]
+        volume //= 10
+        return dict(volume=volume)

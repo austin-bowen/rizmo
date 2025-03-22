@@ -10,6 +10,7 @@ from easymesh.asyncio import forever
 from openai import OpenAI
 
 from rizmo import secrets
+from rizmo.conference_speaker import ConferenceSpeaker
 from rizmo.config import config
 from rizmo.llm_utils import Chat
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -50,12 +51,13 @@ async def main(args: Namespace) -> None:
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
 
     memory_store = ValueStore(config.memory_file_path)
-    system_prompt_builder = SystemPromptBuilder(memory_store)
+    speaker = ConferenceSpeaker.build()
+    system_prompt_builder = SystemPromptBuilder(memory_store, speaker)
 
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender(Topic.SAY)
 
-    tool_handler = get_tool_handler(node, memory_store)
+    tool_handler = get_tool_handler(node, memory_store, speaker)
 
     chat = Chat(
         client,
