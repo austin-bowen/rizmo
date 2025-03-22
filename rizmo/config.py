@@ -22,7 +22,7 @@ class Config:
 
     speaker_device: str = 'M0'
     speaker_mixer: str = 'PCM'
-    microphone_mixer: str = 'Mic'
+    microphone_mixer: str = 'Headset'
     mic_sample_rate: int = 16000
     mic_block_size: int = 4096
 
