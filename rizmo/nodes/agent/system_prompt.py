@@ -62,9 +62,9 @@ class SystemPromptBuilder:
     def _get_template_vars(self) -> dict:
         return {
             **self._get_datetime(),
-            **self._get_uptime(),
-            **self._get_objects(),
             **self._get_memories(),
+            **self._get_objects(),
+            **self._get_uptime(),
             **self._get_volume(),
         }
 
@@ -74,14 +74,11 @@ class SystemPromptBuilder:
         time = now.strftime('%I:%M %p')
         return dict(date=date, time=time)
 
-    def _get_uptime(self) -> dict:
-        with open('/proc/uptime', 'r') as f:
-            uptime_seconds = float(f.readline().split()[0])
-
-        uptime = timedelta(seconds=uptime_seconds)
-        uptime = humanize.precisedelta(uptime)
-
-        return dict(uptime=uptime)
+    def _get_memories(self) -> dict:
+        memories = self.memory_store.list()
+        memories = '\n'.join(f'- {memory}' for memory in memories)
+        memories = ('\n' + memories) if memories else 'None'
+        return dict(memories=memories)
 
     def _get_objects(self) -> dict:
         objects = self.objects
@@ -96,11 +93,14 @@ class SystemPromptBuilder:
 
         return dict(objects=objects)
 
-    def _get_memories(self) -> dict:
-        memories = self.memory_store.list()
-        memories = '\n'.join(f'- {memory}' for memory in memories)
-        memories = ('\n' + memories) if memories else 'None'
-        return dict(memories=memories)
+    def _get_uptime(self) -> dict:
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.readline().split()[0])
+
+        uptime = timedelta(seconds=uptime_seconds)
+        uptime = humanize.precisedelta(uptime)
+
+        return dict(uptime=uptime)
 
     def _get_volume(self) -> dict:
         volume = self.speaker.speaker.getvolume()[0]
