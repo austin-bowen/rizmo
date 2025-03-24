@@ -13,6 +13,7 @@ from rizmo import secrets
 from rizmo.conference_speaker import ConferenceSpeaker
 from rizmo.config import config
 from rizmo.llm_utils import Chat
+from rizmo.location import get_location_provider
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
 from rizmo.nodes.agent.tools.tools import get_tool_handler
@@ -50,9 +51,14 @@ async def main(args: Namespace) -> None:
 
     client = OpenAI(api_key=secrets.OPENAI_API_KEY)
 
+    location_provider = get_location_provider()
     memory_store = ValueStore(config.memory_file_path)
     speaker = ConferenceSpeaker.build()
-    system_prompt_builder = SystemPromptBuilder(memory_store, speaker)
+    system_prompt_builder = SystemPromptBuilder(
+        location_provider,
+        memory_store,
+        speaker,
+    )
 
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender(Topic.SAY)

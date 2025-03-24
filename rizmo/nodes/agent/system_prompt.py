@@ -5,6 +5,7 @@ from typing import Optional
 import humanize
 
 from rizmo.conference_speaker import ConferenceSpeaker
+from rizmo.location import LocationProvider
 from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages_py36 import Detections
 
@@ -30,6 +31,7 @@ Here are some phrases you should listen for and how to respond to them:
 Context:
 - Current date: {date}
 - Current time: {time}
+- Current location: {location}
 - System uptime: {uptime}
 - Speaker volume: {volume}
 - Objects seen (count): {objects}.
@@ -45,23 +47,26 @@ class SystemPromptBuilder:
 
     def __init__(
             self,
+            location_provider: LocationProvider,
             memory_store: ValueStore,
             speaker: ConferenceSpeaker,
             system_prompt_template: str = SYSTEM_PROMPT,
     ):
         self.system_prompt_template = system_prompt_template
+        self.location_provider = location_provider
         self.memory_store = memory_store
         self.speaker = speaker
 
         self.objects = None
 
-    def __call__(self) -> str:
-        template_vars = self._get_template_vars()
+    async def __call__(self) -> str:
+        template_vars = await self._get_template_vars()
         return self.system_prompt_template.format(**template_vars)
 
-    def _get_template_vars(self) -> dict:
+    async def _get_template_vars(self) -> dict:
         return {
             **self._get_datetime(),
+            **await self._get_location(),
             **self._get_memories(),
             **self._get_objects(),
             **self._get_uptime(),
@@ -73,6 +78,11 @@ class SystemPromptBuilder:
         date = now.strftime('%A, %B %d, %Y')
         time = now.strftime('%I:%M %p')
         return dict(date=date, time=time)
+
+    async def _get_location(self) -> dict:
+        loc = await self.location_provider.get_location()
+        loc = f'{loc.city}, {loc.state}' if loc else 'Unknown'
+        return dict(location=loc)
 
     def _get_memories(self) -> dict:
         memories = self.memory_store.list()

@@ -2,7 +2,7 @@ import asyncio
 import json
 from abc import ABC, abstractmethod
 from collections import deque
-from collections.abc import Callable, Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import datetime
 from typing import Any
 
@@ -11,7 +11,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
 from openai.types.chat.chat_completion_message_tool_call import Function
 
-SystemPromptBuilder = Callable[[], str]
+SystemPromptBuilder = Callable[[], Awaitable[str]]
 
 
 class Chat:
@@ -62,7 +62,7 @@ class Chat:
     async def _get_one_response(self) -> ChatCompletionMessage:
         system_message = dict(
             role='system',
-            content=self.system_prompt_builder(),
+            content=await self.system_prompt_builder(),
         )
 
         self.messages.appendleft(system_message)
