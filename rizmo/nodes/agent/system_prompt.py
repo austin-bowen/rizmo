@@ -31,7 +31,7 @@ Context:
 - Current date: {date}
 - Current time: {time}
 - System uptime: {uptime}
-- Speaker volume: {volume}/10
+- Speaker volume: {volume}
 - Objects seen (count): {objects}.
 
 Memories: {memories}
@@ -105,4 +105,5 @@ class SystemPromptBuilder:
     def _get_volume(self) -> dict:
         volume = self.speaker.speaker.getvolume()[0]
         volume //= 10
+        volume = f'{volume}/10'
         return dict(volume=volume)

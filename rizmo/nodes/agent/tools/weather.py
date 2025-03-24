@@ -20,10 +20,21 @@ class GetWeatherTool(Tool):
                 description=
                 'Gets the weather for today, tomorrow, and the week, '
                 'as well as the current moon phase.',
+                parameters=dict(
+                    type='object',
+                    properties=dict(
+                        location=dict(
+                            type='string',
+                            description='Weather location, e.g. "New York, NY".',
+                        ),
+                    ),
+                    required=['location'],
+                    additionalProperties=False,
+                ),
             ),
         )
 
-    async def call(self) -> dict:
+    async def call(self, location: str) -> dict:
         await self.say_topic.send('Checking...')
-        weather = await self.weather_provider.get_weather()
+        weather = await self.weather_provider.get_weather(location)
         return asdict(weather)

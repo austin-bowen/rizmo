@@ -24,7 +24,7 @@ def get_tool_handler(
         speaker: ConferenceSpeaker,
 ) -> ToolHandler:
     say_topic = node.get_topic_sender(Topic.SAY)
-    weather_provider = WeatherProvider.build(config.weather_location)
+    weather_provider = WeatherProvider.build()
     reminder_store = ValueStore(config.reminders_file_path)
     wa_client = wolframalpha.Client(secrets.WOLFRAM_ALPHA_APP_ID)
 

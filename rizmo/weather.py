@@ -4,19 +4,21 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import python_weather
-
-from rizmo.config import config
+from python_weather.constants import _Unit as Unit
 
 
 class WeatherProvider:
-    def __init__(self, client: python_weather.Client, location: str):
+    def __init__(self, client: python_weather.Client):
         self.client = client
-        self.location = location
 
     @classmethod
-    def build(cls, location: str) -> 'WeatherProvider':
-        client = python_weather.Client(unit=python_weather.IMPERIAL)
-        return cls(client, location)
+    def build(cls, unit: Unit = python_weather.IMPERIAL) -> 'WeatherProvider':
+        client = python_weather.Client(unit=unit)
+        return cls(client)
+
+    @property
+    def unit(self) -> Unit:
+        return self.client.unit
 
     async def __aenter__(self):
         return self
@@ -27,8 +29,9 @@ class WeatherProvider:
     async def close(self) -> None:
         await self.client.close()
 
-    async def get_weather(self) -> 'Weather':
-        weather = await self.client.get(self.location)
+    async def get_weather(self, location: str) -> 'Weather':
+        weather = await self.client.get(location)
+        unit = self.unit.temperature
 
         # Today's forecast
 
@@ -37,8 +40,8 @@ class WeatherProvider:
         low = forecast.lowest_temperature
 
         today = (
-            f'It is {weather.temperature} degrees and {weather.description}, '
-            f'with a forecasted high of {high}, and a low of {low}.'
+            f'It is {weather.temperature}{unit} and {weather.description}, '
+            f'with a forecasted high of {high}{unit}, and a low of {low}{unit}.'
         )
 
         # Tomorrow's forecast
@@ -49,8 +52,8 @@ class WeatherProvider:
         low = forecast.lowest_temperature
 
         tomorrow = (
-            f'Tomorrow, it will be {kind}, with a high of {high}, '
-            f'and a low of {low}.'
+            f'Tomorrow, it will be {kind}, with a high of {high}{unit}, '
+            f'and a low of {low}{unit}.'
         )
 
         # This week's forecast
@@ -67,13 +70,13 @@ class WeatherProvider:
         low = round(sum(lows) / len(lows))
 
         this_week = (
-            f'This week, it will be {kind}, with highs around {high}, '
-            f'and lows around {low}.'
+            f'This week, it will be {kind}, with highs around {high}{unit}, '
+            f'and lows around {low}{unit}.'
         )
 
         moon_phase = weather.daily_forecasts[0].moon_phase.value
 
-        return Weather(today, tomorrow, this_week, moon_phase)
+        return Weather(today, tomorrow, this_week, moon_phase, self.unit.temperature)
 
 
 @dataclass
@@ -82,6 +85,7 @@ class Weather:
     tomorrow: str
     this_week: str
     moon_phase: str
+    temp_unit: str
 
 
 def most_common(items: Iterable):
@@ -90,8 +94,12 @@ def most_common(items: Iterable):
 
 
 async def main():
-    async with WeatherProvider.build(config.weather_location) as weather_provider:
-        print(await weather_provider.get_weather())
+    import sys
+
+    location = sys.argv[1]
+
+    async with WeatherProvider.build() as weather_provider:
+        print(await weather_provider.get_weather(location))
 
 
 if __name__ == '__main__':
