@@ -40,8 +40,8 @@ class WeatherProvider:
         low = forecast.lowest_temperature
 
         today = (
-            f'It is {weather.temperature}{unit} and {weather.description}, '
-            f'with a forecasted high of {high}{unit}, and a low of {low}{unit}.'
+            f'It is {weather.temperature} and {weather.description}, '
+            f'with a forecasted high of {high}, and a low of {low}.'
         )
 
         # Tomorrow's forecast
@@ -52,8 +52,8 @@ class WeatherProvider:
         low = forecast.lowest_temperature
 
         tomorrow = (
-            f'Tomorrow, it will be {kind}, with a high of {high}{unit}, '
-            f'and a low of {low}{unit}.'
+            f'Tomorrow, it will be {kind}, with a high of {high}, '
+            f'and a low of {low}.'
         )
 
         # This week's forecast
@@ -70,8 +70,8 @@ class WeatherProvider:
         low = round(sum(lows) / len(lows))
 
         this_week = (
-            f'This week, it will be {kind}, with highs around {high}{unit}, '
-            f'and lows around {low}{unit}.'
+            f'This week, it will be {kind}, with highs around {high}, '
+            f'and lows around {low}.'
         )
 
         moon_phase = weather.daily_forecasts[0].moon_phase.value
