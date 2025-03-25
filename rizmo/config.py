@@ -33,5 +33,7 @@ class Config:
 
     wifi_device: str = 'wlan0'
 
+    home_assistant_api_url: str = 'http://potato.local:8123/api/'
+
 
 config = Config()
