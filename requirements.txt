@@ -4,6 +4,7 @@ git+https://github.com/austin-bowen/pololu-maestro.git
 accelerate
 Flask
 funasr
+HomeAssistant-API
 humanize
 opencv-python
 modelscope
