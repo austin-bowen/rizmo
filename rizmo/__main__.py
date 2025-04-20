@@ -49,8 +49,8 @@ def main(args: Namespace):
 
     with ProcessManager() as p:
         if IS_RIZMO:
-            p.start_python(
-                '-m', 'easymesh',
+            p.popen(
+                'easymesh',
                 '--authkey', config.mesh_authkey,
             )
 
