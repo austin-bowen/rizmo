@@ -188,10 +188,15 @@ async def main(
     if args.device is None:
         device = None
     else:
-        device = next(
-            i for i, d in enumerate(sd.query_devices())
-            if d['name'].startswith(args.device)
-        )
+        while not (device := next(
+                (
+                        i for i, d in enumerate(sd.query_devices())
+                        if d['name'].startswith(args.device)
+                ),
+                None
+        )):
+            print('No mic device found.')
+            await asyncio.sleep(5)
 
     mic = Microphone(
         mic_callback,
