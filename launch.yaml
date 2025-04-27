@@ -1,0 +1,54 @@
+coordinator:
+  client_host: rizmo.local
+  authkey: rizmo
+  log_heartbeats: false
+  on_host: rizmo
+
+nodes:
+  # rizmo
+  agent:
+    command: ./run-node agent
+    on_host: rizmo
+  camera:
+    command: ./run-node camera
+    on_host: rizmo
+  maestro_ctl:
+    command: ./run-node maestro_ctl
+    on_host: rizmo
+  mic:
+    command: ./run-node mic
+    on_host: rizmo
+  network_monitor:
+    command: ./run-node network_monitor
+    on_host: rizmo
+  obj_attention:
+    command: ./run-node obj_attention
+    on_host: rizmo
+  obj_detector:
+    command: ./run-node obj_detector
+    on_host: rizmo
+  obj_tracker:
+    command: ./run-node obj_tracker
+    on_host: rizmo
+  py36_server:
+    command: ./bin/start-py36-server
+    on_host: rizmo
+  voice:
+    command: ./run-node voice
+    on_host: rizmo
+  website:
+    command: ./run-node website
+    on_host: rizmo
+
+  # potato
+  asr:
+    command: ./run-node asr
+    on_host: potato
+  vad:
+    command: ./run-node vad
+    on_host: potato
+
+  # austin-laptop
+  monitor:
+    command: ./run-node monitor
+    on_host: austin-laptop
