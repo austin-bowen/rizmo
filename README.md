@@ -100,6 +100,13 @@ OPENAI_API_KEY: str = ...
 WOLFRAM_ALPHA_APP_ID: str = ...
 ```
 
+Make Rizmo start on system boot:
+
+```bash
+./bin/install-rizmo-service
+sudo systemctl start rizmo
+```
+
 ## Upgrading Python on Jetson Nano
 
 ```bash

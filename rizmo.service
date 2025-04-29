@@ -1,0 +1,16 @@
+[Unit]
+Description=Rizmo
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=/bin/sleep 10
+ExecStart=/home/austin/rizmo/run
+User=austin
+WorkingDirectory=/home/austin/rizmo
+Environment="PULSE_SERVER=unix:/run/user/1000/pulse/native"
+Environment=XAUTHORITY=/home/austin/.Xauthority
+
+[Install]
+WantedBy=multi-user.target
+
