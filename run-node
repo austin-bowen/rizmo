@@ -3,4 +3,5 @@
 node_name=$1
 shift
 
+. venv/bin/activate
 python -um rizmo.nodes.$node_name $@ | tee logs/$node_name.log
