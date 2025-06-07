@@ -1,12 +1,12 @@
 import asyncio
 import re
 from argparse import Namespace
+from asyncio import Queue
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable
+from typing import Iterable, Literal
 
 from easymesh import build_mesh_node_from_args
-from easymesh.asyncio import forever
 from openai import OpenAI
 
 from rizmo import secrets
@@ -46,6 +46,7 @@ async def main(args: Namespace) -> None:
     class State:
         in_conversation: bool = False
         last_reply_datetime: datetime = datetime.now()
+        messages: Queue = Queue()
 
     state = State()
 
@@ -73,47 +74,14 @@ async def main(args: Namespace) -> None:
         store=False,
     )
 
-    async def handle_transcript(topic, transcript: str) -> None:
-        now = datetime.now()
-        transcript = preprocess(transcript)
-        print(f'{now}:')
-        print('Person:', transcript)
-
-        if talking_to_me(transcript):
-            state.in_conversation = True
-        else:
-            seconds_since_last_reply = (now - state.last_reply_datetime).total_seconds()
-            if seconds_since_last_reply >= args.pause_convo_after:
-                state.in_conversation = False
-
-        if not state.in_conversation:
-            print('[Not talking to me]')
-            return
-
-        if any_phrase_in(transcript, (
-                'pause conversation',
-                'pause convo',
-                'pause the conversation',
-                'pause the convo',
-        )):
-            print('[Conversation paused]')
-            state.in_conversation = False
-            await say('Okay.')
-
-            chat.add_user_message(transcript)
-            chat.add_assistant_message('Okay.')
-
-            return
-
-        chat.add_user_message(transcript)
-        response = await chat.get_response()
-        response = response.content.strip()
-
-        if response != '<NO REPLY>':
-            await say(response)
+    async def handle_transcript(topic, transcript_: str) -> None:
+        transcript_ = preprocess(transcript_)
+        await state.messages.put(Message('user', transcript_))
 
     async def say(text: str) -> None:
         await say_topic.send(text)
+
+        state.in_conversation = True
         state.last_reply_datetime = datetime.now()
 
     async def handle_objects_detected(topic, objects: Detections) -> None:
@@ -122,10 +90,60 @@ async def main(args: Namespace) -> None:
     await node.listen(Topic.TRANSCRIPT, handle_transcript)
     await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
 
-    try:
-        await forever()
-    finally:
-        client.close()
+    while True:
+        message = await state.messages.get()
+        print(f'Message: {message!r}')
+
+        if message.type == 'user':
+            transcript = message.text
+
+            now = datetime.now()
+
+            if talking_to_me(transcript):
+                state.in_conversation = True
+            else:
+                seconds_since_last_reply = (now - state.last_reply_datetime).total_seconds()
+                if seconds_since_last_reply >= args.pause_convo_after:
+                    state.in_conversation = False
+
+            if not state.in_conversation:
+                print('[Not talking to me]')
+                continue
+
+            if any_phrase_in(transcript, (
+                    'pause conversation',
+                    'pause convo',
+                    'pause the conversation',
+                    'pause the convo',
+            )):
+                print('[Conversation paused]')
+                await say('Okay.')
+                state.in_conversation = False
+
+                chat.add_user_message(message.format())
+                chat.add_assistant_message('Okay.')
+
+                continue
+        elif message.type == 'system':
+            pass
+        else:
+            raise ValueError(f'Unknown message type: {message.type!r}')
+
+        chat.add_user_message(message.format())
+
+        async for response in chat.get_responses():
+            response = response.content.strip() if response.content else ''
+            if response and response != '<NO REPLY>':
+                await say(response)
+
+
+@dataclass
+class Message:
+    type: Literal['user', 'system']
+    text: str
+
+    def format(self) -> str:
+        return f'<{self.type}>{self.text}</{self.type}>'
 
 
 def preprocess(transcript: str) -> str:

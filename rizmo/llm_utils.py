@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from collections.abc import Awaitable, Callable, Iterable
 from datetime import datetime
-from typing import Any
+from typing import Any, AsyncIterable
 
 import humanize
 from openai import OpenAI
@@ -44,20 +44,19 @@ class Chat:
             tool_call_id=tool_call_id,
         ))
 
-    async def get_response(self) -> ChatCompletionMessage:
-        response = await self._get_one_response()
+    async def get_responses(self) -> AsyncIterable[ChatCompletionMessage]:
         while True:
+            response = await self._get_one_response()
             print('Assistant:', response)
+            yield response
 
-            if response.content:
-                return response
+            if not response.tool_calls:
+                return
 
             for tool_call in response.tool_calls:
                 result = await self.tool_handler.handle(tool_call.function)
                 print(f'Tool call: {tool_call.function.name} -> {result}')
                 self.add_tool_message(tool_call.id, result)
-
-            response = await self._get_one_response()
 
     async def _get_one_response(self) -> ChatCompletionMessage:
         system_message = dict(
