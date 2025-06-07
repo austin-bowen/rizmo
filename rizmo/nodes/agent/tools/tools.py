@@ -10,6 +10,7 @@ from rizmo.nodes.agent.tools.motor_system import MotorSystemTool
 from rizmo.nodes.agent.tools.reminders import RemindersTool
 from rizmo.nodes.agent.tools.system_power import SystemPowerTool
 from rizmo.nodes.agent.tools.system_status import GetSystemStatusTool
+from rizmo.nodes.agent.tools.timer import TimerTool
 from rizmo.nodes.agent.tools.volume import VolumeTool
 from rizmo.nodes.agent.tools.weather import GetWeatherTool
 from rizmo.nodes.agent.tools.wolfram_alpha import WolframAlphaTool
@@ -21,6 +22,7 @@ from rizmo.weather import WeatherProvider
 def get_tool_handler(
         node: MeshNode,
         memory_store: ValueStore,
+        timer_complete_callback,
         speaker: ConferenceSpeaker,
 ) -> ToolHandler:
     say_topic = node.get_topic_sender(Topic.SAY)
@@ -35,6 +37,7 @@ def get_tool_handler(
         MotorSystemTool(node.get_topic_sender(Topic.MOTOR_SYSTEM)),
         RemindersTool(reminder_store),
         SystemPowerTool(say_topic),
+        TimerTool(timer_complete_callback),
         VolumeTool(speaker),
         WolframAlphaTool(wa_client),
     ])

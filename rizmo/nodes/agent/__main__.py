@@ -16,6 +16,7 @@ from rizmo.llm_utils import Chat
 from rizmo.location import get_location_provider
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
+from rizmo.nodes.agent.tools.timer import Timer
 from rizmo.nodes.agent.tools.tools import get_tool_handler
 from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages_py36 import Detections
@@ -64,7 +65,15 @@ async def main(args: Namespace) -> None:
     node = await build_mesh_node_from_args(args=args)
     say_topic = node.get_topic_sender(Topic.SAY)
 
-    tool_handler = get_tool_handler(node, memory_store, speaker)
+    async def timer_complete_callback(timer: Timer) -> None:
+        await state.messages.put(Message('system', f'{timer} is complete.'))
+
+    tool_handler = get_tool_handler(
+        node,
+        memory_store,
+        timer_complete_callback,
+        speaker,
+    )
 
     chat = Chat(
         client,
@@ -164,7 +173,7 @@ def parse_args() -> Namespace:
 
     parser.add_argument(
         '--model',
-        default='gpt-4o',
+        default='gpt-4.1',
         help='The OpenAI model to use. Default: %(default)s',
     )
 
