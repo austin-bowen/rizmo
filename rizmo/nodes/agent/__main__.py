@@ -16,7 +16,7 @@ from rizmo.llm_utils import Chat
 from rizmo.location import get_location_provider
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
-from rizmo.nodes.agent.tools.timer import Timer
+from rizmo.nodes.agent.tools.timer import Timer, timedelta_to_hms_text
 from rizmo.nodes.agent.tools.tools import get_tool_handler
 from rizmo.nodes.agent.value_store import ValueStore
 from rizmo.nodes.messages_py36 import Detections
@@ -66,7 +66,14 @@ async def main(args: Namespace) -> None:
     say_topic = node.get_topic_sender(Topic.SAY)
 
     async def timer_complete_callback(timer: Timer) -> None:
-        await state.messages.put(Message('system', f'{timer} is complete.'))
+        message_ = f'{timer} is done'
+
+        overdone_ = timer.time_overdone
+        if overdone_ is not None and overdone_.total_seconds() >= 60:
+            overdue = timedelta_to_hms_text(overdone_, plural=True)
+            message_ += f' (overdue by {overdue})'
+
+        await state.messages.put(Message('system', message_))
 
     tool_handler = get_tool_handler(
         node,

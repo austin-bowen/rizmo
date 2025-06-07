@@ -21,7 +21,7 @@ class TimerTool(Tool):
             type='function',
             function=dict(
                 name='timers',
-                description='Manages timers.',
+                description='Manages timers. When a timer is done, it will keep alerting until stopped.',
                 parameters=dict(
                     type='object',
                     properties=dict(
@@ -31,12 +31,13 @@ class TimerTool(Tool):
                                         '`start` starts a new timer; '
                                         '`stop` stops a specific timer; '
                                         '`stop_all` stops all timers; '
+                                        '`stop_done` stops all timers that are done; '
                                         '`list` returns a list of all active timers.',
-                            enum=['start', 'stop', 'stop_all', 'list'],
+                            enum=['start', 'stop', 'stop_all', 'stop_done', 'list'],
                         ),
                         duration=dict(
                             type='object',
-                            description='Duration of the timer.',
+                            description='Duration of the timer. Only for `start` and `stop` actions.',
                             properties=dict(
                                 hours=dict(
                                     type='integer',
@@ -54,7 +55,7 @@ class TimerTool(Tool):
                         ),
                         name=dict(
                             type='string',
-                            description='Optional name for the timer.',
+                            description='Optional name for the timer. Only for `start` and `stop` actions.',
                         ),
                     ),
                     required=['action'],
@@ -90,8 +91,12 @@ class TimerTool(Tool):
 
     async def _run_timer(self, timer: 'Timer') -> None:
         await asyncio.sleep(timer.duration.total_seconds())
-        del self.timers[timer]
-        await self.timer_complete_callback(timer)
+
+        sleep_time = 60
+        while True:
+            await self.timer_complete_callback(timer)
+            await asyncio.sleep(sleep_time)
+            sleep_time *= 2
 
     async def _stop_timer(self, timer: 'Timer') -> None:
         task = self.timers.pop(timer, None)
@@ -103,6 +108,15 @@ class TimerTool(Tool):
         self.timers.clear()
         for task in tasks:
             task.cancel()
+
+    async def _stop_done_timers(self) -> None:
+        done_timers = [
+            t for t in self.timers.keys()
+            if t.is_done
+        ]
+
+        for timer in done_timers:
+            await self._stop_timer(timer)
 
     async def _list_timers(self) -> list[str]:
         timers = []
@@ -130,9 +144,22 @@ class Timer:
         return self.start_time + self.duration
 
     @property
+    def time_to_done(self) -> timedelta:
+        return self.end_time - datetime.now()
+
+    @property
     def remaining(self) -> Optional[timedelta]:
-        remaining = self.end_time - datetime.now()
+        remaining = self.time_to_done
         return remaining if remaining.total_seconds() > 0 else None
+
+    @property
+    def time_overdone(self) -> timedelta:
+        overdone = -self.time_to_done
+        return overdone if overdone.total_seconds() > 0 else None
+
+    @property
+    def is_done(self) -> bool:
+        return self.remaining is None
 
     @classmethod
     def from_duration_dict(cls, duration: dict, name: Optional[str]) -> 'Timer':
