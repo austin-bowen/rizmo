@@ -31,13 +31,12 @@ class TimerTool(Tool):
                                         '`start` starts a new timer; '
                                         '`stop` stops a specific timer; '
                                         '`stop_all` stops all timers; '
-                                        '`stop_done` stops all timers that are done; '
                                         '`list` returns a list of all active timers.',
-                            enum=['start', 'stop', 'stop_all', 'stop_done', 'list'],
+                            enum=['start', 'stop', 'stop_all', 'list'],
                         ),
                         duration=dict(
                             type='object',
-                            description='Duration of the timer. Only for `start` and `stop` actions.',
+                            description='Duration of the timer. Only used by `start` and `stop` actions.',
                             properties=dict(
                                 hours=dict(
                                     type='integer',
@@ -55,7 +54,7 @@ class TimerTool(Tool):
                         ),
                         name=dict(
                             type='string',
-                            description='Optional name for the timer. Only for `start` and `stop` actions.',
+                            description='Optional name for the timer. Only used by `start` and `stop` actions.',
                         ),
                     ),
                     required=['action'],
@@ -72,7 +71,13 @@ class TimerTool(Tool):
             return f'Started {timer}'
 
         elif action == 'stop':
-            timer = Timer.from_duration_dict(duration, name)
+            timers = await self._find_timers(duration, name)
+            if not timers:
+                return 'Error: No matching timer found.'
+            elif len(timers) > 1:
+                return 'Error: Multiple matching timers found. Please specify a unique timer.'
+
+            timer = timers[0]
             await self._stop_timer(timer)
             return f'Stopped {timer}'
 
@@ -98,6 +103,18 @@ class TimerTool(Tool):
             await asyncio.sleep(sleep_time)
             sleep_time *= 2
 
+    async def _find_timers(self, duration: Optional[dict], name: Optional[str]) -> list['Timer']:
+        if duration:
+            timer = Timer.from_duration_dict(duration, name)
+            return [
+                t for t in self.timers.keys()
+                if t.duration == timer.duration and t.name == timer.name
+            ]
+        elif name:
+            return [t for t in self.timers.keys() if t.name == name]
+        else:
+            raise ValueError('At least one of `duration` or `name` must be provided')
+
     async def _stop_timer(self, timer: 'Timer') -> None:
         task = self.timers.pop(timer, None)
         if task:
@@ -109,26 +126,18 @@ class TimerTool(Tool):
         for task in tasks:
             task.cancel()
 
-    async def _stop_done_timers(self) -> None:
-        done_timers = [
-            t for t in self.timers.keys()
-            if t.is_done
-        ]
-
-        for timer in done_timers:
-            await self._stop_timer(timer)
-
     async def _list_timers(self) -> list[str]:
         timers = []
 
         for timer in self.timers.keys():
             remaining = timer.remaining
-            remaining = (
-                timedelta_to_hms_text(remaining, plural=True)
-                if remaining else 'no time'
-            )
+            if remaining:
+                remaining = timedelta_to_hms_text(remaining, plural=True)
+                remaining = f'{remaining} remaining'
+            else:
+                remaining = 'done'
 
-            timers.append(f'{timer}: {remaining} remaining')
+            timers.append(f'{timer}: {remaining}')
 
         return timers
 
