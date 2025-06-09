@@ -1,5 +1,4 @@
 import asyncio
-import random
 from argparse import Namespace
 
 import easymesh
@@ -38,13 +37,6 @@ async def main(args: Namespace) -> None:
             handle_speech_start,
             handle_speech_end,
     ) as voicebox:
-        voicebox.say(random.choice([
-            'Hello, world!',
-            'I am awake.',
-            'I am online.',
-            "It's good to be back!",
-        ]))
-
         async def handle_say(topic, message: str) -> None:
             print(repr(message))
             voicebox.say(message)

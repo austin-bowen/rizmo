@@ -88,6 +88,7 @@ async def main(args: Namespace) -> None:
         system_prompt_builder=system_prompt_builder,
         tool_handler=tool_handler,
         store=False,
+        temperature=args.temperature,
     )
 
     async def handle_transcript(topic, transcript_: str) -> None:
@@ -105,8 +106,14 @@ async def main(args: Namespace) -> None:
 
     await node.listen(Topic.TRANSCRIPT, handle_transcript)
     await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
+    await say_topic.wait_for_listener()
 
     while True:
+        async for response in chat.get_responses():
+            response = response.content.strip() if response.content else ''
+            if response and response != '<NO REPLY>':
+                await say(response)
+
         message = await state.messages.get()
         print(f'Message: {message!r}')
 
@@ -147,11 +154,6 @@ async def main(args: Namespace) -> None:
 
         chat.add_user_message(message.format())
 
-        async for response in chat.get_responses():
-            response = response.content.strip() if response.content else ''
-            if response and response != '<NO REPLY>':
-                await say(response)
-
 
 @dataclass
 class Message:
@@ -189,6 +191,12 @@ def parse_args() -> Namespace:
         type=int,
         default=60,
         help='Pause conversation after this many seconds without a reply. Default: %(default)s',
+    )
+
+    parser.add_argument(
+        '--temperature',
+        type=float,
+        help='The temperature to use for the model.',
     )
 
     return parser.parse_args()

@@ -26,13 +26,13 @@ class RemindersTool(Tool):
                             description='The reminder to add/remove. Ignored if action is "list" or "clear"',
                         ),
                     ),
-                    required=['action', 'reminder'],
+                    required=['action'],
                     additionalProperties=False,
                 ),
             ),
         )
 
-    async def call(self, action: str, reminder: str) -> list[str]:
+    async def call(self, action: str, reminder: str = None) -> list[str]:
         if action == 'list':
             pass
         elif action == 'add':
