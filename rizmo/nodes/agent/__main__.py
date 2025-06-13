@@ -95,12 +95,6 @@ async def main(args: Namespace) -> None:
         transcript_ = preprocess(transcript_)
         await state.messages.put(Message('user', transcript_))
 
-    async def say(text: str) -> None:
-        await say_topic.send(text)
-
-        state.in_conversation = True
-        state.last_reply_datetime = datetime.now()
-
     async def handle_objects_detected(topic, objects: Detections) -> None:
         system_prompt_builder.objects = objects
 
@@ -108,12 +102,20 @@ async def main(args: Namespace) -> None:
     await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
     await say_topic.wait_for_listener()
 
-    while True:
+    async def say(text: str) -> None:
+        await say_topic.send(text)
+        state.last_reply_datetime = datetime.now()
+
+    async def say_response() -> None:
         async for response in chat.get_responses():
             response = response.content.strip() if response.content else ''
             if response and response != '<NO REPLY>':
                 await say(response)
+                state.in_conversation = True
 
+    await say_response()
+
+    while True:
         message = await state.messages.get()
         print(f'Message: {message!r}')
 
@@ -153,6 +155,7 @@ async def main(args: Namespace) -> None:
             raise ValueError(f'Unknown message type: {message.type!r}')
 
         chat.add_user_message(message.format())
+        await say_response()
 
 
 @dataclass
