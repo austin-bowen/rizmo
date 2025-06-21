@@ -4,7 +4,7 @@ from argparse import Namespace
 from asyncio import Queue
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, Literal
+from typing import Iterable, Literal, Optional
 
 from easymesh import build_mesh_node_from_args
 from openai import OpenAI
@@ -40,6 +40,16 @@ WAKE_PATTERN = re.compile(
     rf'{NAME}',
     flags=re.IGNORECASE,
 )
+
+RESPONSE_REPLACEMENT_PATTERNS = [
+    (
+        re.compile(rf'\b{re.escape(old)}\b', flags=re.IGNORECASE),
+        new,
+    ) for old, new in [
+        ('fr', 'for real'),
+        ('sus', 'suss'),
+    ]
+]
 
 
 async def main(args: Namespace) -> None:
@@ -108,7 +118,8 @@ async def main(args: Namespace) -> None:
 
     async def say_response() -> None:
         async for response in chat.get_responses():
-            response = response.content.strip() if response.content else ''
+            print('Rizmo:', response)
+            response = postprocess_response(response.content)
             if response and response != '<NO REPLY>':
                 await say(response)
                 state.in_conversation = True
@@ -169,6 +180,15 @@ class Message:
 
 def preprocess(transcript: str) -> str:
     return ALT_NAME_PATTERN.sub(NAME, transcript)
+
+
+def postprocess_response(response: Optional[str]) -> str:
+    response = response.strip() if response else ''
+
+    for old_pattern, new in RESPONSE_REPLACEMENT_PATTERNS:
+        response = old_pattern.sub(new, response)
+
+    return response
 
 
 def talking_to_me(transcript: str) -> bool:

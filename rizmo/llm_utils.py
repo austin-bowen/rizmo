@@ -47,7 +47,6 @@ class Chat:
     async def get_responses(self) -> AsyncIterable[ChatCompletionMessage]:
         while True:
             response = await self._get_one_response()
-            print('Assistant:', response)
             yield response
 
             if not response.tool_calls:
