@@ -1,0 +1,7 @@
+git+https://github.com/austin-bowen/easymesh.git
+
+boto3
+boto3-stubs[polly]
+numpy
+opencv-python
+torch

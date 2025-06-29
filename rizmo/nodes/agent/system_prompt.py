@@ -7,6 +7,7 @@ import humanize
 from rizmo.conference_speaker import ConferenceSpeaker
 from rizmo.location import LocationProvider
 from rizmo.nodes.agent.value_store import ValueStore
+from rizmo.nodes.messages import FaceRecognitions
 from rizmo.nodes.messages_py36 import Detections
 
 SYSTEM_PROMPT = '''
@@ -44,6 +45,12 @@ Here are some phrases you should listen for and how to respond to them:
 
 If you don't see anybody, and you have something to say, wait until you see someone before saying it; otherwise, nobody will hear you.
 
+# Tool Instructions
+- `faces`:
+  - Use this tool if someone asks you to take a picture of them, or if they ask you to remember their face.
+  - Always ask for their name before taking a picture.
+  - Do NOT add faces without permission! Only if the user asks you to.
+
 # Context:
 - Current date: {date}
 - Current time: {time}
@@ -51,7 +58,7 @@ If you don't see anybody, and you have something to say, wait until you see some
 - System uptime: {uptime}
 - Speaker volume: {volume}
 - Objects seen (count): {objects}
-- Person seen: {person}
+- People seen: {people}
 
 # Memories:
 {memories}
@@ -79,7 +86,8 @@ class SystemPromptBuilder:
         self.memory_store = memory_store
         self.speaker = speaker
 
-        self.objects = None
+        self.objects: Detections | None = None
+        self.faces: FaceRecognitions | None = None
 
     async def __call__(self) -> str:
         template_vars = await self._get_template_vars()
@@ -91,7 +99,7 @@ class SystemPromptBuilder:
             **await self._get_location(),
             **self._get_memories(),
             **self._get_objects(),
-            **self._get_person(),
+            **self._get_people(),
             **self._get_uptime(),
             **self._get_volume(),
         }
@@ -126,11 +134,21 @@ class SystemPromptBuilder:
 
         return dict(objects=objects)
 
-    def _get_person(self) -> dict:
+    def _get_people(self) -> dict:
         objects = self.objects.objects if self.objects else []
-        objects = (obj.label for obj in objects)
-        person = 'yes' if 'face' in objects else 'no'
-        return dict(person=person)
+        face_is_seen = any(obj.label == 'face' for obj in objects)
+
+        faces = self.faces.faces if self.faces else []
+
+        if face_is_seen and faces:
+            faces = sorted(faces, key=lambda f: f.box.area, reverse=True)
+            names = [face.name or '<unrecognized person>' for face in faces]
+            names[0] += ' (current focus)'
+            people = ', '.join(names)
+        else:
+            people = 'None'
+
+        return dict(people=people)
 
     def _get_uptime(self) -> dict:
         with open('/proc/uptime', 'r') as f:

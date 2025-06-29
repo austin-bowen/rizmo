@@ -1,0 +1,5 @@
+funasr
+modelscope
+pydub
+torchaudio
+voicebox-tts

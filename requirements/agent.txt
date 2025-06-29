@@ -1,0 +1,6 @@
+HomeAssistant-API
+humanize
+openai
+psutil
+python-weather
+wolframalpha

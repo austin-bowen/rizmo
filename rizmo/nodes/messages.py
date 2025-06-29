@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from typing import Literal, Union
 
+import numpy as np
+
+from rizmo.nodes.messages_py36 import Box
+
 
 @dataclass
 class MotorSystemCommand:
@@ -85,3 +89,39 @@ class SetHeadSpeed:
     @property
     def lean_speed_us_per_second(self) -> float:
         return self.lean_dps * US_PER_DEG[1]
+
+
+@dataclass
+class FaceDetections:
+    timestamp: float
+    """Timestamp of when the image was taken."""
+
+    image_size: tuple[int, int]
+    """Width and height of the image."""
+
+    faces: list['FaceDetection']
+
+
+@dataclass
+class FaceDetection:
+    image: np.ndarray
+    confidence: float
+    box: Box
+
+
+@dataclass
+class FaceRecognitions:
+    timestamp: float
+    """Timestamp of when the image was taken."""
+
+    image_size: tuple[int, int]
+    """Width and height of the image."""
+
+    faces: list['FaceRecognition']
+
+
+@dataclass
+class FaceRecognition:
+    name: str | None
+    confidence: float
+    box: Box

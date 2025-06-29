@@ -1,0 +1,11 @@
+-r requirements/common.txt
+-r requirements/agent.txt
+-r requirements/camera.txt
+-r requirements/maestro_ctl.txt
+-r requirements/mic.txt
+-r requirements/network_monitor.txt
+-r requirements/obj_attention.txt
+-r requirements/obj_detector.txt
+-r requirements/obj_tracker.txt
+-r requirements/voice.txt
+-r requirements/website.txt

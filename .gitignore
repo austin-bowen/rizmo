@@ -1,7 +1,7 @@
 .idea/
 __pycache__/
-insightface/
 logs/
+tmp/
 var/
 venv*/
 secrets.py

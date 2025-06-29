@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Download InsightFace models
+
+set -ex
+
+# w600k_r50.onnx
+wget https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip
+unzip buffalo_l.zip -d out
+mv out/w600k_r50.onnx .
+rm -r buffalo_l.zip out
+
+# w600k_mbf.onnx
+wget https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_sc.zip
+unzip buffalo_sc.zip -d out
+mv out/w600k_mbf.onnx .
+rm -r buffalo_sc.zip out
+
+ls

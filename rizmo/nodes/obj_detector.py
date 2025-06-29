@@ -14,6 +14,7 @@ from easymesh.asyncio import forever
 from rizmo.config import IS_RIZMO
 from rizmo.image_codec import JpegImageCodec
 from rizmo.node_args import get_rizmo_node_arg_parser
+from rizmo.nodes.messages import FaceDetection, FaceDetections
 from rizmo.nodes.messages_py36 import Box, Detection, Detections
 from rizmo.nodes.topics import Topic
 from rizmo.py36.client import Py36Client
@@ -172,6 +173,7 @@ async def main(args: Namespace):
     node = await build_mesh_node_from_args(args=args)
 
     obj_det_topic = node.get_topic_sender(Topic.OBJECTS_DETECTED)
+    faces_detected_topic = node.get_topic_sender(Topic.FACES_DETECTED)
 
     if IS_RIZMO:
         obj_detector = JetsonDetectNetDetector(
@@ -200,18 +202,62 @@ async def main(args: Namespace):
         timestamp, camera_index, image = data
         image_size = image.shape[1], image.shape[0]
         objects = await asyncio.to_thread(obj_detector.get_objects, image)
-        await obj_det_topic.send(Detections(timestamp, image_size, objects))
+        detections = Detections(timestamp, image_size, objects)
+        await obj_det_topic.send(detections)
+        await send_faces(timestamp, image, image_size, detections)
 
     @obj_det_topic.depends_on_listener()
     async def handle_image_compressed(topic, data):
         timestamp, camera_index, image_bytes = data
-        image_size, objects = await asyncio.to_thread(get_objects_from_compressed, image_bytes)
-        await obj_det_topic.send(Detections(timestamp, image_size, objects))
+        image, image_size, objects = await asyncio.to_thread(get_objects_from_compressed, image_bytes)
+        detections = Detections(timestamp, image_size, objects)
+        await obj_det_topic.send(detections)
+        await send_faces(timestamp, image, image_size, detections)
 
-    def get_objects_from_compressed(image_bytes: bytes) -> tuple[tuple[int, int], list[Detection]]:
+    def get_objects_from_compressed(image_bytes: bytes) -> tuple[np.ndarray, tuple[int, int], list[Detection]]:
         image = codec.decode(image_bytes)
         image_size = image.shape[1], image.shape[0]
-        return image_size, obj_detector.get_objects(image)
+        return image, image_size, obj_detector.get_objects(image)
+
+    async def send_faces(
+            timestamp: float,
+            image: np.ndarray,
+            image_size: tuple[int, int],
+            detections: Detections,
+    ) -> None:
+        faces = [obj for obj in detections.objects if obj.label == 'face']
+
+        if not faces or not await faces_detected_topic.has_listeners():
+            return
+
+        face_imgs = (extract_image_fragment(image, face.box) for face in faces)
+
+        faces = [
+            FaceDetection(
+                face_img,
+                confidence=face.confidence,
+                box=face.box,
+            ) for face, face_img in zip(faces, face_imgs)
+        ]
+
+        faces = FaceDetections(timestamp, image_size, faces)
+        await faces_detected_topic.send(faces)
+
+    def extract_image_fragment(
+            image: np.ndarray,
+            box: Box,
+            # The face recognition model will resize images to 112x112
+            max_size: int = 112,
+    ) -> np.ndarray:
+        image = image[box.y:box.y + box.height, box.x:box.x + box.width, :]
+
+        h, w, _ = image.shape
+        if h <= max_size and w <= max_size:
+            return image
+
+        scale = max_size / max(h, w)
+        new_h, new_w = int(h * scale), int(w * scale)
+        return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
     if IS_RIZMO:
         await node.listen(Topic.NEW_IMAGE_RAW, handle_image_raw)

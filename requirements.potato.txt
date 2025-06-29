@@ -1,0 +1,4 @@
+-r requirements/common.txt
+-r requirements/asr.txt
+-r requirements/face_rec.txt
+-r requirements/vad.txt

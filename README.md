@@ -32,12 +32,23 @@ Code for my robot, Rizmo.
 2. Setup SSH:
     1. Copy `~/.ssh/id_rsa.pub` of dev machine to `~/.ssh/authorized_keys` on Jetson Nano.
     2. Set permissions: `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`
-3. Install and setup `pyenv` ([instructions](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation)).
+3. Install gcc-9 and g++-9 (required by latest `numpy` versions):
+   ```bash
+   sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+   sudo apt install gcc-9 g++-9 -y
+   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 70
+   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
+   sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 70
+   sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
+   gcc --version  # Verify version is 9.x
+   g++ --version  # Verify version is 9.x
+   ```
+4. Install and setup `pyenv` ([instructions](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation)).
     - To update: `pyenv update`
-4. Install Python 3.12 (with [optimizations](https://github.com/pyenv/pyenv/blob/master/plugins/python-build/README.md#building-for-maximum-performance)):\
+5. Install Python 3.12 (with [optimizations](https://github.com/pyenv/pyenv/blob/master/plugins/python-build/README.md#building-for-maximum-performance)):\
    `env PYTHON_CONFIGURE_OPTS='--enable-optimizations --with-lto' PYTHON_CFLAGS='-march=native -mtune=native' pyenv install --verbose 3.12`
-5. Set default Python version: `pyenv global 3.12`
-6. Set the default audio IO device:
+6. Set default Python version: `pyenv global 3.12`
+7. Set the default audio IO device:
    1. List devices:
       ```
       pactl list short sinks
@@ -48,7 +59,7 @@ Code for my robot, Rizmo.
       set-default-sink <sink-name>
       set-default-source <source-name>
       ```
-7. Install the [`jetson_inference`](https://github.com/dusty-nv/jetson-inference/tree/master) library:
+8. Install the [`jetson_inference`](https://github.com/dusty-nv/jetson-inference/tree/master) library:
    1. [Follow these instructions](https://github.com/dusty-nv/jetson-inference/blob/master/docs/building-repo-2.md) to install it from source to the system's Python 3.6 site packages.
    2. Create a Python 3.6 venv: \
       `python3.6 -m venv --system-site-packages --symlinks venv36`
@@ -68,7 +79,7 @@ cd rizmo
 python -m venv --symlinks venv
 . venv/bin/activate
 pip install -U pip
-pip install -r requirements.txt
+pip install -r requirements.<rizmo|potato>.txt
 
 # For sounddevice lib
 sudo apt install libportaudio2

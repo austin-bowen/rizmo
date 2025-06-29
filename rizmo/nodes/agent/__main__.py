@@ -19,6 +19,7 @@ from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
 from rizmo.nodes.agent.tools.timer import Timer, timedelta_to_hms_text
 from rizmo.nodes.agent.tools.tools import get_tool_handler
 from rizmo.nodes.agent.value_store import ValueStore
+from rizmo.nodes.messages import FaceDetections
 from rizmo.nodes.messages_py36 import Detections
 from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -108,8 +109,12 @@ async def main(args: Namespace) -> None:
     async def handle_objects_detected(topic, objects: Detections) -> None:
         system_prompt_builder.objects = objects
 
+    async def handle_faces_recognized(topic, faces: FaceDetections) -> None:
+        system_prompt_builder.faces = faces
+
     await node.listen(Topic.TRANSCRIPT, handle_transcript)
     await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
+    await node.listen(Topic.FACES_RECOGNIZED, handle_faces_recognized)
     await say_topic.wait_for_listener()
 
     async def say(text: str) -> None:

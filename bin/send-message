@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+topic="$1"
+data="$2"
+
+if [ -z "$data" ]; then
+    echo "Usage: $0 <topic> <data>"
+    exit 1
+fi
+
+python -m easymesh.demo.sender \
+    --coordinator rizmo.local \
+    --authkey rizmo \
+    -t "$topic" \
+    -d "$data" \
+    --eval

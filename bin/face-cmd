@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+action="$1"
+name="$2"
+
+if [ -z "$name" ]; then
+    echo "Usage  : $0 <action> <name>"
+    echo "Example: $0 add \"John Smith\""
+    exit 1
+fi
+
+script_dir=`dirname "$0"`
+exec "$script_dir/send-message" "face_command" "{'action':'$action', 'name':'$name'}"

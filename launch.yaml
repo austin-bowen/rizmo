@@ -44,6 +44,9 @@ nodes:
   asr:
     command: ./run-node asr
     on_host: potato
+  face_rec:
+    command: ./run-node face_rec
+    on_host: potato
   vad:
     command: ./run-node vad
     on_host: potato
