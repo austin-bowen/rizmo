@@ -172,8 +172,8 @@ class JetsonDetectNetDetector(ObjectDetector):
 async def main(args: Namespace):
     node = await build_node_from_args(args=args)
 
-    obj_det_topic = node.get_topic_sender(Topic.OBJECTS_DETECTED)
-    faces_detected_topic = node.get_topic_sender(Topic.FACES_DETECTED)
+    obj_det_topic = node.get_topic(Topic.OBJECTS_DETECTED)
+    faces_detected_topic = node.get_topic(Topic.FACES_DETECTED)
 
     if IS_RIZMO:
         obj_detector = JetsonDetectNetDetector(

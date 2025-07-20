@@ -18,7 +18,7 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 async def main(args: Namespace) -> None:
     node = await build_node_from_args(args=args)
 
-    maestro_cmd_topic = node.get_topic_sender(Topic.MAESTRO_CMD)
+    maestro_cmd_topic = node.get_topic(Topic.MAESTRO_CMD)
 
     @dataclass
     class State:

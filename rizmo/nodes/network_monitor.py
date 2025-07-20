@@ -15,8 +15,8 @@ async def main(args: Namespace) -> None:
 
     network_manager = NetworkManager()
 
-    network_connected_topic = node.get_topic_sender(Topic.NETWORK_CONNECTED)
-    say_topic = node.get_topic_sender(Topic.SAY)
+    network_connected_topic = node.get_topic(Topic.NETWORK_CONNECTED)
+    say_topic = node.get_topic(Topic.SAY)
 
     async def say(message: str) -> None:
         print(message)

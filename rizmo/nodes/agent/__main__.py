@@ -74,7 +74,7 @@ async def main(args: Namespace) -> None:
     )
 
     node = await build_node_from_args(args=args)
-    say_topic = node.get_topic_sender(Topic.SAY)
+    say_topic = node.get_topic(Topic.SAY)
 
     async def timer_complete_callback(timer: Timer) -> None:
         message_ = f'{timer} is done'

@@ -26,8 +26,8 @@ def get_tool_handler(
         timer_complete_callback,
         speaker: ConferenceSpeaker,
 ) -> ToolHandler:
-    face_cmd_topic = node.get_topic_sender(Topic.FACE_COMMAND)
-    say_topic = node.get_topic_sender(Topic.SAY)
+    face_cmd_topic = node.get_topic(Topic.FACE_COMMAND)
+    say_topic = node.get_topic(Topic.SAY)
     weather_provider = WeatherProvider.build()
     reminder_store = ValueStore(config.reminders_file_path)
     wa_client = wolframalpha.Client(secrets.WOLFRAM_ALPHA_APP_ID)
@@ -37,7 +37,7 @@ def get_tool_handler(
         GetSystemStatusTool(say_topic),
         GetWeatherTool(weather_provider, say_topic),
         MemoryTool(memory_store),
-        MotorSystemTool(node.get_topic_sender(Topic.MOTOR_SYSTEM)),
+        MotorSystemTool(node.get_topic(Topic.MOTOR_SYSTEM)),
         RemindersTool(reminder_store),
         SystemPowerTool(say_topic),
         TimerTool(timer_complete_callback),

@@ -24,7 +24,7 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 async def main(args: Namespace) -> None:
     node = await build_node_from_args(args=args)
 
-    voice_detected_topic = node.get_topic_sender(Topic.VOICE_DETECTED)
+    voice_detected_topic = node.get_topic(Topic.VOICE_DETECTED)
 
     vad_model = AutoModel(
         model='fsmn-vad',

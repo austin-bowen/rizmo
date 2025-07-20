@@ -22,8 +22,8 @@ AVG_LATENCY = 0.085
 async def main(args: Namespace) -> None:
     node = await build_node_from_args(args=args)
 
-    tracking_topic = node.get_topic_sender(Topic.TRACKING)
-    maestro_cmd_topic = node.get_topic_sender(Topic.MAESTRO_CMD)
+    tracking_topic = node.get_topic(Topic.TRACKING)
+    maestro_cmd_topic = node.get_topic(Topic.MAESTRO_CMD)
 
     @dataclass
     class State:

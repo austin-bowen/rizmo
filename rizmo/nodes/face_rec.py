@@ -80,7 +80,7 @@ async def main(args: Namespace) -> None:
             raise ValueError(f'Invalid action: {action}')
 
     node = await build_node_from_args(args=args)
-    faces_recognized_topic = node.get_topic_sender(Topic.FACES_RECOGNIZED)
+    faces_recognized_topic = node.get_topic(Topic.FACES_RECOGNIZED)
     await node.listen(Topic.FACE_COMMAND, handle_face_command)
     await node.listen(Topic.FACES_DETECTED, handle_faces_detected)
 

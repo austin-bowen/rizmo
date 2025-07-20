@@ -121,7 +121,7 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
 
 async def main(args: Namespace):
     node = await build_node_from_args(args=args)
-    transcript_topic = node.get_topic_sender(Topic.TRANSCRIPT)
+    transcript_topic = node.get_topic(Topic.TRANSCRIPT)
 
     loop = asyncio.get_event_loop()
 

@@ -152,7 +152,7 @@ async def main(
         channels: int = 1,
 ):
     node = await build_node_from_args(args=args)
-    audio_topic = node.get_topic_sender(Topic.AUDIO)
+    audio_topic = node.get_topic(Topic.AUDIO)
 
     loop = asyncio.get_event_loop()
 
