@@ -1,10 +1,10 @@
-from easymesh.node.node import TopicSender
+from easymesh.node.node import TopicProxy
 
 from rizmo.llm_utils import Tool
 
 
 class FacesTool(Tool):
-    def __init__(self, face_cmd_topic: TopicSender):
+    def __init__(self, face_cmd_topic: TopicProxy):
         self.face_cmd_topic = face_cmd_topic
 
     @property

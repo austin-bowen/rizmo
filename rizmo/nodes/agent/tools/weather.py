@@ -1,13 +1,13 @@
 from dataclasses import asdict
 
-from easymesh.node.node import TopicSender
+from easymesh.node.node import TopicProxy
 
 from rizmo.llm_utils import Tool
 from rizmo.weather import WeatherProvider
 
 
 class GetWeatherTool(Tool):
-    def __init__(self, weather_provider: WeatherProvider, say_topic: TopicSender):
+    def __init__(self, weather_provider: WeatherProvider, say_topic: TopicProxy):
         self.weather_provider = weather_provider
         self.say_topic = say_topic
 

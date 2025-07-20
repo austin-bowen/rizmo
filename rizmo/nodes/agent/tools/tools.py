@@ -1,5 +1,5 @@
 import wolframalpha
-from easymesh.node.node import MeshNode
+from easymesh import Node
 
 from rizmo import secrets
 from rizmo.conference_speaker import ConferenceSpeaker
@@ -21,7 +21,7 @@ from rizmo.weather import WeatherProvider
 
 
 def get_tool_handler(
-        node: MeshNode,
+        node: Node,
         memory_store: ValueStore,
         timer_complete_callback,
         speaker: ConferenceSpeaker,

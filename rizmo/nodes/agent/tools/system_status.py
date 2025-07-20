@@ -1,13 +1,13 @@
 import asyncio
 
 import psutil
-from easymesh.node.node import TopicSender
+from easymesh.node.node import TopicProxy
 
 from rizmo.llm_utils import Tool
 
 
 class GetSystemStatusTool(Tool):
-    def __init__(self, say_topic: TopicSender, psutil_=psutil):
+    def __init__(self, say_topic: TopicProxy, psutil_=psutil):
         self.say_topic = say_topic
         self.psutil = psutil_
 

@@ -2,13 +2,13 @@ import asyncio
 import subprocess
 from typing import Literal
 
-from easymesh.node.node import TopicSender
+from easymesh.node.node import TopicProxy
 
 from rizmo.llm_utils import Tool
 
 
 class SystemPowerTool(Tool):
-    def __init__(self, say_topic: TopicSender, subprocess_=subprocess):
+    def __init__(self, say_topic: TopicProxy, subprocess_=subprocess):
         self.say_topic = say_topic
         self.subprocess = subprocess_
 
