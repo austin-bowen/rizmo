@@ -9,7 +9,7 @@ import asyncio
 from argparse import Namespace
 from typing import Union
 
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.asyncio import forever
 from maestro import Maestro
 
@@ -130,7 +130,7 @@ async def main(args: Namespace) -> None:
         center_servos()
 
         try:
-            node = await build_mesh_node_from_args(args=args)
+            node = await build_node_from_args(args=args)
             await set_motor_system_enabled(True)
             await node.listen(Topic.MOTOR_SYSTEM, handle_motor_system)
 

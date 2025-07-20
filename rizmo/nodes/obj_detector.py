@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import ultralytics
 from PIL import Image as PILImage
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.asyncio import forever
 
 from rizmo.config import IS_RIZMO
@@ -170,7 +170,7 @@ class JetsonDetectNetDetector(ObjectDetector):
 
 
 async def main(args: Namespace):
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
 
     obj_det_topic = node.get_topic_sender(Topic.OBJECTS_DETECTED)
     faces_detected_topic = node.get_topic_sender(Topic.FACES_DETECTED)

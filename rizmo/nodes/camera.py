@@ -5,7 +5,7 @@ from typing import Any
 
 import cv2
 import numpy as np
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.utils import require
 
 from rizmo.asyncio import DelayedCallback
@@ -20,7 +20,7 @@ Image = np.ndarray
 
 
 async def main(args: Namespace) -> None:
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
 
     camera_covered_topic = node.get_topic_sender(Topic.CAMERA_COVERED)
     new_image_compressed_topic = node.get_topic_sender(Topic.NEW_IMAGE_COMPRESSED)

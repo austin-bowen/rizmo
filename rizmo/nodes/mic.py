@@ -7,7 +7,7 @@ from typing import Optional
 
 import numpy as np
 import sounddevice as sd
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.asyncio import forever
 from voicebox.audio import Audio
 
@@ -151,7 +151,7 @@ async def main(
         args: Namespace,
         channels: int = 1,
 ):
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
     audio_topic = node.get_topic_sender(Topic.AUDIO)
 
     loop = asyncio.get_event_loop()

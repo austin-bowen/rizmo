@@ -9,7 +9,7 @@ from typing import Optional
 
 import cv2
 import numpy as np
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.asyncio import forever
 
 from rizmo.image_codec import JpegImageCodec
@@ -48,7 +48,7 @@ class Screen:
 
 
 async def main(args: Namespace, stdscr):
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
 
     cache = Cache()
 

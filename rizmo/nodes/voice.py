@@ -17,7 +17,7 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
-    node = await easymesh.build_mesh_node_from_args(args=args)
+    node = await easymesh.build_node_from_args(args=args)
     loop = asyncio.get_event_loop()
 
     def handle_speech_start() -> None:

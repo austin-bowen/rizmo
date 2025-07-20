@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Optional
 
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.asyncio import forever
 
 from rizmo.asyncio import DelayedCallback
@@ -20,7 +20,7 @@ AVG_LATENCY = 0.085
 
 
 async def main(args: Namespace) -> None:
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
 
     tracking_topic = node.get_topic_sender(Topic.TRACKING)
     maestro_cmd_topic = node.get_topic_sender(Topic.MAESTRO_CMD)

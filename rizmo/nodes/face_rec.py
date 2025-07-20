@@ -3,7 +3,7 @@ from argparse import Namespace
 from dataclasses import dataclass
 
 import numpy as np
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.asyncio import forever
 
 from rizmo.face_rec.face_finder import build_face_finder
@@ -79,7 +79,7 @@ async def main(args: Namespace) -> None:
         else:
             raise ValueError(f'Invalid action: {action}')
 
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
     faces_recognized_topic = node.get_topic_sender(Topic.FACES_RECOGNIZED)
     await node.listen(Topic.FACE_COMMAND, handle_face_command)
     await node.listen(Topic.FACES_DETECTED, handle_faces_detected)

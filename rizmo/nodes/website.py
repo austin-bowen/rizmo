@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from threading import Thread
 
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from easymesh.asyncio import forever
 from flask import Flask, render_template_string, send_file
 
@@ -66,7 +66,7 @@ def image():
 
 
 async def main(args: Namespace) -> None:
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
 
     async def handle_image(topic, data):
         timestamp, camera_index, image_bytes = data

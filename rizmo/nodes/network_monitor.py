@@ -1,7 +1,7 @@
 import asyncio
 from argparse import Namespace
 
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 
 from rizmo.config import config
 from rizmo.network_manager import NetworkManager
@@ -11,7 +11,7 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
 
     network_manager = NetworkManager()
 

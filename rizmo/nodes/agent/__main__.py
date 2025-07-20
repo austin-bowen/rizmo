@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, Literal, Optional
 
-from easymesh import build_mesh_node_from_args
+from easymesh import build_node_from_args
 from openai import OpenAI
 
 from rizmo import secrets
@@ -73,7 +73,7 @@ async def main(args: Namespace) -> None:
         speaker,
     )
 
-    node = await build_mesh_node_from_args(args=args)
+    node = await build_node_from_args(args=args)
     say_topic = node.get_topic_sender(Topic.SAY)
 
     async def timer_complete_callback(timer: Timer) -> None:
