@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import cv2
 import numpy as np
-from easymesh.utils import require
+from rosy.utils import require
 
 Image = np.ndarray
 

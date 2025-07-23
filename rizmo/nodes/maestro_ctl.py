@@ -9,9 +9,9 @@ import asyncio
 from argparse import Namespace
 from typing import Union
 
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
 from maestro import Maestro
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, MotorSystemCommand, SetHeadSpeed, SetServoPosition

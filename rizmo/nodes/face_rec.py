@@ -3,8 +3,8 @@ from argparse import Namespace
 from dataclasses import dataclass
 
 import numpy as np
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 
 from rizmo.face_rec.face_finder import build_face_finder
 from rizmo.face_rec.image_store import MultiImagePerNameFileStore

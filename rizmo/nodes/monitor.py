@@ -9,8 +9,8 @@ from typing import Optional
 
 import cv2
 import numpy as np
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 
 from rizmo.image_codec import JpegImageCodec
 from rizmo.node_args import get_rizmo_node_arg_parser

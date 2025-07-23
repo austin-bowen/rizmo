@@ -3,9 +3,9 @@ import wave
 from argparse import Namespace
 
 import numpy as np
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
-from easymesh.utils import require
+from rosy import build_node_from_args
+from rosy.asyncio import forever
+from rosy.utils import require
 from voicebox.audio import Audio
 
 from rizmo.config import config

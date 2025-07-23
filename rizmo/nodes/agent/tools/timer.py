@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Optional
 
-from easymesh.utils import require
+from rosy.utils import require
 
 from rizmo.llm_utils import Tool
 

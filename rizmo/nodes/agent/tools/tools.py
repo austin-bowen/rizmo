@@ -1,5 +1,5 @@
 import wolframalpha
-from easymesh import Node
+from rosy import Node
 
 from rizmo import secrets
 from rizmo.conference_speaker import ConferenceSpeaker

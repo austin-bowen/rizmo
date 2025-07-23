@@ -5,8 +5,8 @@ from typing import Any
 
 import cv2
 import numpy as np
-from easymesh import build_node_from_args
-from easymesh.utils import require
+from rosy import build_node_from_args
+from rosy.utils import require
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.config import config

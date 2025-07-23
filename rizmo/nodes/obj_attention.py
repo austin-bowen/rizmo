@@ -4,8 +4,8 @@ from argparse import Namespace
 from dataclasses import dataclass
 from typing import Optional
 
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser

@@ -2,8 +2,8 @@ import socket
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from easymesh.coordinator.constants import DEFAULT_COORDINATOR_PORT
-from easymesh.types import Endpoint
+from rosy.coordinator.constants import DEFAULT_COORDINATOR_PORT
+from rosy.types import Endpoint
 
 IS_RIZMO = socket.gethostname() == 'rizmo'
 

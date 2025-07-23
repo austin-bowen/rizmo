@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, Literal, Optional
 
-from easymesh import build_node_from_args
 from openai import OpenAI
+from rosy import build_node_from_args
 
 from rizmo import secrets
 from rizmo.conference_speaker import ConferenceSpeaker

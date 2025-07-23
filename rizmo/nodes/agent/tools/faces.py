@@ -1,4 +1,4 @@
-from easymesh.node.node import TopicProxy
+from rosy.node.node import TopicProxy
 
 from rizmo.llm_utils import Tool
 

@@ -1,7 +1,7 @@
 import asyncio
 from argparse import Namespace
 
-from easymesh import build_node_from_args
+from rosy import build_node_from_args
 
 from rizmo.config import config
 from rizmo.network_manager import NetworkManager

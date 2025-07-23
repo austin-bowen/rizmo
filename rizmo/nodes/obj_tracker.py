@@ -5,14 +5,14 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Optional
 
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import SetHeadSpeed
-from rizmo.nodes.topics import Topic
 from rizmo.nodes.messages_py36 import Detection, Detections
+from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 AVG_LATENCY = 0.085

@@ -1,7 +1,7 @@
 import asyncio
 from argparse import Namespace
 
-from easymesh import build_node_from_args
+from rosy import build_node_from_args
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import SetServoPosition

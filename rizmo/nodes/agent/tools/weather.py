@@ -1,6 +1,6 @@
 from dataclasses import asdict
 
-from easymesh.node.node import TopicProxy
+from rosy.node.node import TopicProxy
 
 from rizmo.llm_utils import Tool
 from rizmo.weather import WeatherProvider

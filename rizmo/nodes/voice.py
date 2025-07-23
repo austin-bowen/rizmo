@@ -1,8 +1,8 @@
 import asyncio
 from argparse import Namespace
 
-import easymesh
-from easymesh.asyncio import forever
+import rosy
+from rosy.asyncio import forever
 from voicebox import ParallelVoicebox, Voicebox, reliable_tts
 from voicebox.audio import Audio
 from voicebox.effects import Flanger, Tail
@@ -17,7 +17,7 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
-    node = await easymesh.build_node_from_args(args=args)
+    node = await rosy.build_node_from_args(args=args)
     loop = asyncio.get_event_loop()
 
     def handle_speech_start() -> None:

@@ -9,7 +9,7 @@ from io import BytesIO
 from typing import Any
 
 import numpy as np
-from easymesh.asyncio import Reader, Writer
+from rosy.asyncio import Reader, Writer
 from typing_extensions import Callable
 
 from rizmo.nodes.messages_py36 import Detection

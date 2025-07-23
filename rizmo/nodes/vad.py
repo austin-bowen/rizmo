@@ -10,9 +10,9 @@ from argparse import Namespace
 from dataclasses import dataclass, field
 
 import numpy as np
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
 from funasr import AutoModel
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 from voicebox.audio import Audio as VoiceboxAudio
 from voicebox.effects import Filter
 

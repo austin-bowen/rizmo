@@ -8,8 +8,8 @@ import numpy as np
 import torch
 import ultralytics
 from PIL import Image as PILImage
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 
 from rizmo.config import IS_RIZMO
 from rizmo.image_codec import JpegImageCodec

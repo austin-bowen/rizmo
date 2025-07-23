@@ -16,8 +16,8 @@ from threading import Thread
 
 import numpy as np
 import torch
-from easymesh import build_node_from_args
-from easymesh.asyncio import forever
+from rosy import build_node_from_args
+from rosy.asyncio import forever
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from voicebox.audio import Audio
 

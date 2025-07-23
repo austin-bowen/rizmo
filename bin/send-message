@@ -8,7 +8,7 @@ if [ -z "$data" ]; then
     exit 1
 fi
 
-python -m easymesh.demo.sender \
+python -m rosy.demo.sender \
     --coordinator rizmo.local \
     --authkey rizmo \
     -t "$topic" \
