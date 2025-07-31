@@ -1,7 +1,6 @@
-git+https://github.com/austin-bowen/rosy.git
-
 boto3
 boto3-stubs[polly]
 numpy
 opencv-python
+rosy
 torch
