@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from argparse import Namespace
 
 from rosy import build_node_from_args
@@ -11,6 +12,8 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     network_manager = NetworkManager()

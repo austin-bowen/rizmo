@@ -1,5 +1,6 @@
 import asyncio
 import curses
+import logging
 import time
 from argparse import Namespace
 from collections import deque
@@ -48,6 +49,8 @@ class Screen:
 
 
 async def main(args: Namespace, stdscr):
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     cache = Cache()

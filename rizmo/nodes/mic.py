@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from abc import abstractmethod
 from argparse import Namespace
 from collections.abc import Callable
@@ -151,6 +152,8 @@ async def main(
         args: Namespace,
         channels: int = 1,
 ):
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
     audio_topic = node.get_topic(Topic.AUDIO)
 

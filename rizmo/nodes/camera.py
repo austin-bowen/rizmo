@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from argparse import Namespace
 from typing import Any
@@ -20,6 +21,8 @@ Image = np.ndarray
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     camera_covered_topic = node.get_topic(Topic.CAMERA_COVERED)

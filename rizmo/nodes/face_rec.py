@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from argparse import Namespace
 from dataclasses import dataclass
 
@@ -17,6 +18,8 @@ FACE_STORE_ROOT: str = './var/faces'
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     @dataclass
     class Cache:
         save_face_name: str | None = None

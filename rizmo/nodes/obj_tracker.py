@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from argparse import Namespace
 from collections.abc import Iterable
@@ -20,6 +21,8 @@ AVG_LATENCY = 0.085
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     tracking_topic = node.get_topic(Topic.TRACKING)

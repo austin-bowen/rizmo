@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import random
 from argparse import Namespace
 from dataclasses import dataclass
@@ -16,6 +17,8 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     maestro_cmd_topic = node.get_topic(Topic.MAESTRO_CMD)

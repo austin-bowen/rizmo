@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import wave
 from argparse import Namespace
 
@@ -15,6 +16,8 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     async def handle_audio(topic, data) -> None:

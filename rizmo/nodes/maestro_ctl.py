@@ -6,6 +6,7 @@ Limits:
 """
 
 import asyncio
+import logging
 from argparse import Namespace
 from typing import Union
 
@@ -32,6 +33,8 @@ SPEED_LIMIT_DPS = 90.
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     async def handle_motor_system(topic, command: MotorSystemCommand) -> None:
         print('[Maestro] Received command:', command)
         await set_motor_system_enabled(command.enabled)

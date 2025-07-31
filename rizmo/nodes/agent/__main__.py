@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import re
 from argparse import Namespace
 from asyncio import Queue
@@ -54,6 +55,8 @@ RESPONSE_REPLACEMENT_PATTERNS = [
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     @dataclass
     class State:
         in_conversation: bool = False

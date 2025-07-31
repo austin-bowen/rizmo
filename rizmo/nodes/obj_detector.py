@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from abc import abstractmethod
 from argparse import Namespace
 from typing import Optional, Union
@@ -170,6 +171,8 @@ class JetsonDetectNetDetector(ObjectDetector):
 
 
 async def main(args: Namespace):
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     obj_det_topic = node.get_topic(Topic.OBJECTS_DETECTED)

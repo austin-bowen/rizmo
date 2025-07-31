@@ -7,6 +7,7 @@ Followed instructions here:
 """
 
 import asyncio
+import logging
 from argparse import Namespace
 from collections import deque
 from collections.abc import Callable
@@ -120,6 +121,8 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
 
 
 async def main(args: Namespace):
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
     transcript_topic = node.get_topic(Topic.TRANSCRIPT)
 

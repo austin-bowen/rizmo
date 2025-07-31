@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from argparse import Namespace
 
 import rosy
@@ -17,6 +18,8 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     node = await rosy.build_node_from_args(args=args)
     loop = asyncio.get_event_loop()
 

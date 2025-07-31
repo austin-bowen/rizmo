@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from argparse import Namespace
 from dataclasses import dataclass
 from io import BytesIO
@@ -66,6 +67,8 @@ def image():
 
 
 async def main(args: Namespace) -> None:
+    logging.basicConfig(level=args.log)
+
     node = await build_node_from_args(args=args)
 
     async def handle_image(topic, data):
