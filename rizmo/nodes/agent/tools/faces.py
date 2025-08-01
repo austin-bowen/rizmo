@@ -1,11 +1,11 @@
-from rosy.node.node import TopicProxy
+from rosy.node.node import ServiceProxy
 
 from rizmo.llm_utils import Tool
 
 
 class FacesTool(Tool):
-    def __init__(self, face_cmd_topic: TopicProxy):
-        self.face_cmd_topic = face_cmd_topic
+    def __init__(self, face_cmd_service: ServiceProxy):
+        self.face_cmd_service = face_cmd_service
 
     @property
     def schema(self) -> dict:
@@ -20,23 +20,23 @@ class FacesTool(Tool):
                         action=dict(
                             type='string',
                             description='The action to perform.',
-                            enum=['add'],
+                            enum=['add', 'list'],
                         ),
                         name=dict(
                             type='string',
-                            description='The name of the face to add.',
+                            description='For "add" command: The name of the face to add.',
                         ),
                     ),
-                    required=['action', 'name'],
+                    required=['action'],
                     additionalProperties=False,
                 ),
             ),
         )
 
-    async def call(self, action: str, name: str) -> str:
+    async def call(self, action: str, name: str = None) -> str:
         if action == 'add':
-            command = dict(action=action, name=name)
-            await self.face_cmd_topic.send(command)
-            return 'Done'
+            return await self.face_cmd_service(action, name=name)
+        elif action == 'list':
+            return await self.face_cmd_service(action)
         else:
             raise ValueError(f'Invalid action: {action}')

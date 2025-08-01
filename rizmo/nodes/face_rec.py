@@ -1,29 +1,34 @@
 import asyncio
 import logging
 from argparse import Namespace
+from asyncio import wait_for
 from dataclasses import dataclass
 
 import numpy as np
 from rosy import build_node_from_args
 
+from rizmo.asyncio import bind
 from rizmo.face_rec.face_finder import build_face_finder
-from rizmo.face_rec.image_store import MultiImagePerNameFileStore
+from rizmo.face_rec.image_store import MultiImagePerNameFileStore, Name
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import FaceDetections, FaceRecognition, FaceRecognitions
+from rizmo.nodes.services import Service
 from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
 
 FACE_STORE_ROOT: str = './var/faces'
+
+logger = logging.getLogger(__name__)
 
 
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
     @dataclass
-    class Cache:
-        save_face_name: str | None = None
+    class State:
+        save_face: tuple[Name, asyncio.Future] | None = None
 
-    cache = Cache()
+    state = State()
 
     face_finder = build_face_finder(
         embedding_model=args.embedding_model,
@@ -41,9 +46,13 @@ async def main(args: Namespace) -> None:
     async def handle_faces_detected(topic, face_detections: FaceDetections) -> None:
         face_imgs = [face.image for face in face_detections.faces]
 
-        if cache.save_face_name and len(face_imgs) == 1:
-            cache.save_face_name, face_name = None, cache.save_face_name
-            await save_face(face_imgs[0], face_name)
+        if state.save_face and len(face_imgs) == 1:
+            face_name, future = state.save_face
+            state.save_face = None
+
+            face_img = face_imgs[0]
+
+            await bind(future, save_face(face_img, face_name))
 
         face_recs = await asyncio.to_thread(
             face_finder.find_faces,
@@ -67,23 +76,29 @@ async def main(args: Namespace) -> None:
 
         await faces_recognized_topic.send(face_recs)
 
-    async def save_face(face_img: np.ndarray, face_name: str) -> None:
+    async def save_face(face_img: np.ndarray, face_name: str) -> str:
         print(f'Saving face image of size {face_img.shape} with name: {face_name}')
         face_store.add(face_img, face_name)
         face_finder.add_face(face_img, face_name)
+        return 'success'
 
-    async def handle_face_command(topic, command: dict) -> None:
-        action = command['action']
-        name = command['name']
-
+    async def handle_face_command(service, action: str, **kwargs):
         if action == 'add':
-            cache.save_face_name = name
+            name = kwargs['name']
+            future = asyncio.Future()
+            state.save_face = (name, future)
+            return await wait_for(future, timeout=10)
+
+        elif action == 'list':
+            names = face_store.get_names()
+            return sorted(names)
+
         else:
             raise ValueError(f'Invalid action: {action}')
 
     node = await build_node_from_args(args=args)
     faces_recognized_topic = node.get_topic(Topic.FACES_RECOGNIZED)
-    await node.listen(Topic.FACE_COMMAND, handle_face_command)
+    await node.add_service(Service.FACE_COMMAND, handle_face_command)
     await node.listen(Topic.FACES_DETECTED, handle_faces_detected)
 
     await node.forever()

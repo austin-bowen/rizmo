@@ -8,13 +8,20 @@ import cv2
 import numpy as np
 
 
+Name = str
+
+
 class ImageStore(ABC):
     @abstractmethod
-    def add(self, img: np.ndarray, name: str) -> None:
+    def add(self, img: np.ndarray, name: Name) -> None:
         ...
 
     @abstractmethod
-    def get_all(self) -> Iterable[tuple[np.ndarray, str]]:
+    def get_all(self) -> Iterable[tuple[np.ndarray, Name]]:
+        ...
+
+    @abstractmethod
+    def get_names(self) -> set[Name]:
         ...
 
 
@@ -35,12 +42,12 @@ class FileImageStore(ImageStore, ABC):
 class SingleImagePerNameFileStore(FileImageStore):
     """Stores a single image per name in the file system."""
 
-    def add(self, img: np.ndarray, name: str) -> None:
+    def add(self, img: np.ndarray, name: Name) -> None:
         path = self.root / f'{name}.{self.file_type}'
         cv2.imwrite(str(path), img, self.imwrite_params)
 
-    def get_all(self) -> Iterable[tuple[np.ndarray, str]]:
-        for path in self.root.glob(f'*.{self.file_type}'):
+    def get_all(self) -> Iterable[tuple[np.ndarray, Name]]:
+        for path in self._get_file_paths():
             img = cv2.imread(str(path))
             if img is None:
                 print(f'ERROR: Could not read image: {path}')
@@ -49,15 +56,21 @@ class SingleImagePerNameFileStore(FileImageStore):
             name = path.stem
             yield img, name
 
+    def get_names(self) -> set[Name]:
+        return {path.stem for path in self._get_file_paths()}
+
+    def _get_file_paths(self) -> Iterable[Path]:
+        return self.root.glob(f'*.{self.file_type}')
+
 
 class MultiImagePerNameFileStore(FileImageStore):
     """Stores multiple images per name in the file system."""
 
-    def add(self, img: np.ndarray, name: str) -> None:
+    def add(self, img: np.ndarray, name: Name) -> None:
         path = self._get_next_image_path(name)
         cv2.imwrite(str(path), img, self.imwrite_params)
 
-    def _get_next_image_path(self, name: str) -> Path:
+    def _get_next_image_path(self, name: Name) -> Path:
         root = self.root / name
         root.mkdir(parents=True, exist_ok=True)
 
@@ -68,12 +81,15 @@ class MultiImagePerNameFileStore(FileImageStore):
 
         raise RuntimeError('Unreachable')
 
-    def get_all(self) -> Iterable[tuple[np.ndarray, str]]:
+    def get_all(self) -> Iterable[tuple[np.ndarray, Name]]:
         for path in self.root.glob(f'*/*.{self.file_type}'):
             img = cv2.imread(str(path))
             if img is None:
                 print(f'ERROR: Could not read image: {path}')
                 continue
 
-            name = path.parent.stem
+            name = path.parent.name
             yield img, name
+
+    def get_names(self) -> set[Name]:
+        return set(d.name for d in self.root.iterdir())

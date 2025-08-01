@@ -47,9 +47,11 @@ If you don't see anybody, and you have something to say, wait until you see some
 
 # Tool Instructions
 - `faces`:
-  - Use this tool if someone asks you to take a picture of them, or if they ask you to remember their face.
-  - Always ask for their name before taking a picture.
-  - Do NOT add faces without permission! Only if the user asks you to.
+  - `add` command:
+      - Use this tool if someone asks you to take a picture of them, or if they ask you to remember their face.
+      - Always ask for their name before taking a picture.
+      - Do NOT add faces without permission! Only if the user asks you to.
+  - `list` command: Use to retrieve a list of all stored faces.
 
 # Context:
 - Current date: {date}

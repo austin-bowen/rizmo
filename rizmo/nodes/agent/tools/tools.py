@@ -16,6 +16,7 @@ from rizmo.nodes.agent.tools.volume import VolumeTool
 from rizmo.nodes.agent.tools.weather import GetWeatherTool
 from rizmo.nodes.agent.tools.wolfram_alpha import WolframAlphaTool
 from rizmo.nodes.agent.value_store import ValueStore
+from rizmo.nodes.services import Service
 from rizmo.nodes.topics import Topic
 from rizmo.weather import WeatherProvider
 
@@ -26,14 +27,14 @@ def get_tool_handler(
         timer_complete_callback,
         speaker: ConferenceSpeaker,
 ) -> ToolHandler:
-    face_cmd_topic = node.get_topic(Topic.FACE_COMMAND)
+    face_cmd_service = node.get_service(Service.FACE_COMMAND)
     say_topic = node.get_topic(Topic.SAY)
     weather_provider = WeatherProvider.build()
     reminder_store = ValueStore(config.reminders_file_path)
     wa_client = wolframalpha.Client(secrets.WOLFRAM_ALPHA_APP_ID)
 
     return ToolHandler([
-        FacesTool(face_cmd_topic),
+        FacesTool(face_cmd_service),
         GetSystemStatusTool(say_topic),
         GetWeatherTool(weather_provider, say_topic),
         MemoryTool(memory_store),

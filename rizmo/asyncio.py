@@ -1,4 +1,18 @@
 import asyncio
+from collections.abc import Awaitable
+
+
+async def bind(future: asyncio.Future, awaitable: Awaitable):
+    try:
+        result = await awaitable
+    except asyncio.CancelledError:
+        if not future.cancelled():
+            future.cancel()
+        raise
+    except Exception as e:
+        future.set_exception(e)
+    else:
+        future.set_result(result)
 
 
 class DelayedCallback:

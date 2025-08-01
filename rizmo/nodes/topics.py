@@ -1,7 +1,6 @@
 class Topic:
     AUDIO = 'audio'
     CAMERA_COVERED = 'camera_covered'
-    FACE_COMMAND = 'face_command'
     FACES_DETECTED = 'faces_detected'
     FACES_RECOGNIZED = 'faces_recognized'
     MAESTRO_CMD = 'maestro_cmd'
