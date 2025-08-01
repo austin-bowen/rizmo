@@ -10,7 +10,6 @@ import torch
 import ultralytics
 from PIL import Image as PILImage
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 
 from rizmo.config import IS_RIZMO
 from rizmo.image_codec import JpegImageCodec
@@ -267,7 +266,7 @@ async def main(args: Namespace):
     else:
         await node.listen(Topic.NEW_IMAGE_COMPRESSED, handle_image_compressed)
 
-    await forever()
+    await node.forever()
 
 
 def parse_args() -> Namespace:

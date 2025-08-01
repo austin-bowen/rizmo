@@ -9,7 +9,6 @@ from typing import Optional
 import numpy as np
 import sounddevice as sd
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 from voicebox.audio import Audio
 
 from rizmo.config import config
@@ -210,7 +209,7 @@ async def main(
     )
     mic.start()
 
-    await forever()
+    await node.forever()
 
 
 def parse_args() -> Namespace:

@@ -12,7 +12,6 @@ from typing import Union
 
 from maestro import Maestro
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.messages import ChangeServoPosition, MotorSystemCommand, SetHeadSpeed, SetServoPosition
@@ -137,7 +136,7 @@ async def main(args: Namespace) -> None:
             await set_motor_system_enabled(True)
             await node.listen(Topic.MOTOR_SYSTEM, handle_motor_system)
 
-            await forever()
+            await node.forever()
         finally:
             set_servo_speeds(250)
             center_servos()

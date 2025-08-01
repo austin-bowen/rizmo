@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -151,7 +150,7 @@ async def main(args: Namespace) -> None:
 
     await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
 
-    await forever()
+    await node.forever()
 
 
 def get_tracked_object(

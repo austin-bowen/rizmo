@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 import numpy as np
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 
 from rizmo.face_rec.face_finder import build_face_finder
 from rizmo.face_rec.image_store import MultiImagePerNameFileStore
@@ -87,7 +86,7 @@ async def main(args: Namespace) -> None:
     await node.listen(Topic.FACE_COMMAND, handle_face_command)
     await node.listen(Topic.FACES_DETECTED, handle_faces_detected)
 
-    await forever()
+    await node.forever()
 
 
 def parse_args() -> Namespace:

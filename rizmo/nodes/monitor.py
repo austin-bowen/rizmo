@@ -11,7 +11,6 @@ from typing import Optional
 import cv2
 import numpy as np
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 
 from rizmo.image_codec import JpegImageCodec
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -174,7 +173,7 @@ async def main(args: Namespace, stdscr):
     await node.listen(Topic.TRANSCRIPT, handle_transcript)
     await node.listen(Topic.SAY, handle_say)
 
-    await forever()
+    await node.forever()
 
 
 def draw_crosshair(image: Image, width: int, thickness: int, color=(128, 128, 128)) -> None:

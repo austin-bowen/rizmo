@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 import numpy as np
 from funasr import AutoModel
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 from voicebox.audio import Audio as VoiceboxAudio
 from voicebox.effects import Filter
 
@@ -82,7 +81,7 @@ async def main(args: Namespace) -> None:
         await voice_detected_topic.send((audio, timestamp, voice_detected))
 
     await node.listen(Topic.AUDIO, handle_audio)
-    await forever()
+    await node.forever()
 
 
 def parse_args() -> Namespace:

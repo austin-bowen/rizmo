@@ -3,7 +3,6 @@ import logging
 from argparse import Namespace
 
 import rosy
-from rosy.asyncio import forever
 from voicebox import ParallelVoicebox, Voicebox, reliable_tts
 from voicebox.audio import Audio
 from voicebox.effects import Flanger, Tail
@@ -45,7 +44,7 @@ async def main(args: Namespace) -> None:
             voicebox.say(message)
 
         await node.listen(Topic.SAY, handle_say)
-        await forever()
+        await node.forever()
 
 
 def build_voicebox(

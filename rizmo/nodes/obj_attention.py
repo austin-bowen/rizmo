@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 
 from rizmo.asyncio import DelayedCallback
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -72,7 +71,7 @@ async def main(args: Namespace) -> None:
 
     await node.listen(Topic.TRACKING, handle_tracking)
     await node.listen(Topic.CAMERA_COVERED, handle_camera_covered)
-    await forever()
+    await node.forever()
 
 
 def parse_args() -> Namespace:

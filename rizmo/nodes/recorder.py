@@ -5,7 +5,6 @@ from argparse import Namespace
 
 import numpy as np
 from rosy import build_node_from_args
-from rosy.asyncio import forever
 from rosy.utils import require
 from voicebox.audio import Audio
 
@@ -52,7 +51,7 @@ async def main(args: Namespace) -> None:
         else:
             await node.listen(Topic.AUDIO, handle_audio)
 
-        await forever()
+        await node.forever()
 
 
 def parse_args() -> Namespace:
