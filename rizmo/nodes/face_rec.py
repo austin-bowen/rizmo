@@ -24,6 +24,11 @@ logger = logging.getLogger(__name__)
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
+
+
+async def _main(args: Namespace, node) -> None:
     @dataclass
     class State:
         save_face: tuple[Name, asyncio.Future] | None = None
@@ -96,7 +101,6 @@ async def main(args: Namespace) -> None:
         else:
             raise ValueError(f'Invalid action: {action}')
 
-    node = await build_node_from_args(args=args)
     faces_recognized_topic = node.get_topic(Topic.FACES_RECOGNIZED)
     await node.add_service(Service.FACE_COMMAND, handle_face_command)
     await node.listen(Topic.FACES_DETECTED, handle_faces_detected)

@@ -14,8 +14,11 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
 
+
+async def _main(args: Namespace, node) -> None:
     network_manager = NetworkManager()
 
     network_connected_topic = node.get_topic(Topic.NETWORK_CONNECTED)

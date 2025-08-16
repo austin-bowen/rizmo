@@ -34,6 +34,11 @@ SPEED_LIMIT_DPS = 90.
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
+
+
+async def _main(args: Namespace, node) -> None:
     async def handle_motor_system(topic, command: MotorSystemCommand) -> None:
         print('[Maestro] Received command:', command)
         await set_motor_system_enabled(command.enabled)
@@ -132,7 +137,6 @@ async def main(args: Namespace) -> None:
         center_servos()
 
         try:
-            node = await build_node_from_args(args=args)
             await set_motor_system_enabled(True)
             await node.listen(Topic.MOTOR_SYSTEM, handle_motor_system)
 

@@ -40,9 +40,12 @@ def get_servo_command() -> SetServoPosition:
 
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
+    
+    async with await build_node_from_args(args=args) as node:
+        await _main(node)
 
-    node = await build_node_from_args(args=args)
 
+async def _main(node) -> None:
     while True:
         servo_command = await asyncio.to_thread(get_servo_command)
         await node.send(Topic.SERVO_COMMAND, servo_command)

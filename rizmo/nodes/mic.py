@@ -153,7 +153,11 @@ async def main(
 ):
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node, channels)
+
+
+async def _main(args: Namespace, node, channels: int) -> None:
     audio_topic = node.get_topic(Topic.AUDIO)
 
     loop = asyncio.get_event_loop()

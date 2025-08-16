@@ -68,8 +68,11 @@ def image():
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
 
+
+async def _main(args: Namespace, node) -> None:
     async def handle_image(topic, data):
         timestamp, camera_index, image_bytes = data
         cache.image_bytes = image_bytes

@@ -20,8 +20,7 @@ def get_rizmo_node_arg_parser(node_file: str) -> ArgumentParser:
 
     parser = get_node_arg_parser(
         default_node_name=name,
-        default_coordinator=config.mesh_coordinator,
-        default_authkey=config.mesh_authkey,
+        default_domain_id=config.mesh_domain_id,
     )
 
     add_log_arg(parser)

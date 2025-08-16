@@ -24,7 +24,7 @@ BLOCK_SYMBOLS = '▁▂▃▄▅▆▇█'
 
 
 @dataclass
-class Cache:
+class State:
     image: Image = None
     objects: list[Detection] = field(default_factory=list)
 
@@ -50,9 +50,12 @@ class Screen:
 async def main(args: Namespace, stdscr):
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(node, stdscr)
 
-    cache = Cache()
+
+async def _main(node, stdscr):
+    state = State()
 
     screen = Screen(stdscr)
     screen.addstr(0, '# Camera')
@@ -64,12 +67,12 @@ async def main(args: Namespace, stdscr):
     codec = JpegImageCodec()
 
     def show_image() -> None:
-        image = cache.image
+        image = state.image
         if image is None:
             return
         image = image.copy()
 
-        for obj in cache.objects:
+        for obj in state.objects:
             box = obj.box
 
             cv2.rectangle(
@@ -108,13 +111,13 @@ async def main(args: Namespace, stdscr):
 
     async def handle_new_image(topic, data):
         timestamp, camera_index, image_bytes = data
-        cache.image = codec.decode(image_bytes)
+        state.image = codec.decode(image_bytes)
         image_ready_event.set()
 
     async def handle_obj_detected(topic, data: Detections):
         now = time.time()
 
-        cache.objects = data.objects
+        state.objects = data.objects
         image_ready_event.set()
 
         latency = now - data.timestamp

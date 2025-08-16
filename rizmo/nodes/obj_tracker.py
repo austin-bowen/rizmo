@@ -22,8 +22,11 @@ AVG_LATENCY = 0.085
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(node)
 
+
+async def _main(node) -> None:
     tracking_topic = node.get_topic(Topic.TRACKING)
     maestro_cmd_topic = node.get_topic(Topic.MAESTRO_CMD)
 

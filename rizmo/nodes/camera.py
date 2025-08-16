@@ -23,8 +23,11 @@ Image = np.ndarray
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
 
+
+async def _main(args: Namespace, node):
     camera_covered_topic = node.get_topic(Topic.CAMERA_COVERED)
     new_image_compressed_topic = node.get_topic(Topic.NEW_IMAGE_COMPRESSED)
     new_image_raw_topic = node.get_topic(Topic.NEW_IMAGE_RAW)

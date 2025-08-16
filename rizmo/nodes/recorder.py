@@ -17,8 +17,11 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
 
+
+async def _main(args: Namespace, node) -> None:
     async def handle_audio(topic, data) -> None:
         audio: Audio = data[0]
         await save_audio(audio)

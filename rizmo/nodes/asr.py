@@ -17,7 +17,7 @@ from threading import Thread
 
 import numpy as np
 import torch
-from rosy import build_node_from_args
+from rosy import Node, build_node_from_args
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from voicebox.audio import Audio
 
@@ -122,7 +122,11 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
 async def main(args: Namespace):
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
+
+
+async def _main(args: Namespace, node: Node):
     transcript_topic = node.get_topic(Topic.TRANSCRIPT)
 
     loop = asyncio.get_event_loop()

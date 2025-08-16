@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Iterable, Literal, Optional
 
 from openai import OpenAI
-from rosy import build_node_from_args
+from rosy import Node, build_node_from_args
 
 from rizmo import secrets
 from rizmo.conference_speaker import ConferenceSpeaker
@@ -56,7 +56,11 @@ RESPONSE_REPLACEMENT_PATTERNS = [
 
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
+    async with await build_node_from_args(args=args) as node:
+        await _main(args, node)
 
+
+async def _main(args: Namespace, node: Node) -> None:
     @dataclass
     class State:
         in_conversation: bool = False
@@ -76,7 +80,6 @@ async def main(args: Namespace) -> None:
         speaker,
     )
 
-    node = await build_node_from_args(args=args)
     say_topic = node.get_topic(Topic.SAY)
 
     async def timer_complete_callback(timer: Timer) -> None:

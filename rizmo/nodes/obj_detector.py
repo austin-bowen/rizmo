@@ -172,8 +172,11 @@ class JetsonDetectNetDetector(ObjectDetector):
 async def main(args: Namespace):
     logging.basicConfig(level=args.log)
 
-    node = await build_node_from_args(args=args)
+    async with await build_node_from_args(args=args) as node:
+        await _main(node)
 
+
+async def _main(node) -> None:
     obj_det_topic = node.get_topic(Topic.OBJECTS_DETECTED)
     faces_detected_topic = node.get_topic(Topic.FACES_DETECTED)
 

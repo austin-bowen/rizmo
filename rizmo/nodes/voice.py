@@ -19,7 +19,11 @@ from rizmo.signal import graceful_shutdown_on_sigterm
 async def main(args: Namespace) -> None:
     logging.basicConfig(level=args.log)
 
-    node = await rosy.build_node_from_args(args=args)
+    async with await rosy.build_node_from_args(args=args) as node:
+        await _main(args, node)
+
+
+async def _main(args: Namespace, node) -> None:
     loop = asyncio.get_event_loop()
 
     def handle_speech_start() -> None:

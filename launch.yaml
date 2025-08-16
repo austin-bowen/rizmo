@@ -1,8 +1,4 @@
-coordinator:
-  client_host: rizmo.local
-  authkey: rizmo
-  log_heartbeats: false
-  on_host: rizmo
+domain_id: rizmo
 
 nodes:
   # rizmo
