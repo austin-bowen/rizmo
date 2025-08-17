@@ -59,7 +59,10 @@ class ASR(Thread):
 
         result = self.pipe(
             sample,
-            generate_kwargs={'language': 'english'},
+            generate_kwargs={
+                'task': 'transcribe',
+                'language': 'english',
+            },
         )
 
         transcript = result['text'].strip()
@@ -111,7 +114,6 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
         feature_extractor=processor.feature_extractor,
         device=device,
         torch_dtype=torch_dtype,
-        chunk_length_s=30,
     )
 
     asr = ASR(pipe, handle_transcript)
