@@ -11,6 +11,8 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
 from openai.types.chat.chat_completion_message_tool_call import Function
 
+from rizmo.nodes.agent.system_prompt import SystemContextMessageBuilder
+
 SystemPromptBuilder = Callable[[], Awaitable[str]]
 
 
@@ -20,12 +22,14 @@ class Chat:
             client: OpenAI,
             model: str,
             system_prompt_builder: SystemPromptBuilder,
+            system_context_message_builder: SystemContextMessageBuilder,
             tool_handler: 'ToolHandler' = None,
             **kwargs,
     ):
         self.client = client
         self.model = model
         self.system_prompt_builder = system_prompt_builder
+        self.system_context_message_builder = system_context_message_builder
         self.tool_handler = tool_handler
         self.kwargs = kwargs
 
@@ -65,7 +69,7 @@ class Chat:
 
         self.messages.appendleft(system_message)
         try:
-            processed_messages = self._get_processed_messages()
+            processed_messages = await self._get_processed_messages()
 
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
@@ -77,12 +81,20 @@ class Chat:
         finally:
             self.messages.popleft()
 
+        cached_input_tokens = response.usage.prompt_tokens_details.cached_tokens
+        total_input_tokens = response.usage.prompt_tokens
+        total_output_tokens = response.usage.completion_tokens
+        print(
+            f'Input (cached) / output tokens: '
+            f'{total_input_tokens} ({cached_input_tokens}) / {total_output_tokens}'
+        )
+
         message = response.choices[0].message
         self.messages.append(message)
 
         return message
 
-    def _get_processed_messages(self) -> list[dict]:
+    async def _get_processed_messages(self) -> list[dict]:
         messages = []
         now = datetime.now()
 
@@ -91,6 +103,17 @@ class Chat:
                 message = self._process_user_message(message, now)
 
             messages.append(message)
+
+        last_user_message = next(
+            (
+                m for m in reversed(messages)
+                if isinstance(m, dict) and m['role'] == 'user'),
+            None,
+        )
+        if last_user_message:
+            context = await self.system_context_message_builder()
+            last_content = last_user_message['content']
+            last_user_message['content'] = f'{context}\n{last_content}'
 
         return messages
 
@@ -106,7 +129,7 @@ class Chat:
             timestamp = humanize.naturaldelta(timestamp) + ' ago'
 
         content = message['content']
-        message['content'] = f'[{timestamp}] {content}'
+        # message['content'] = f'[{timestamp}] {content}'
 
         return message
 

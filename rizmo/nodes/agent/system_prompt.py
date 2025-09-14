@@ -1,6 +1,5 @@
 from collections import Counter
 from datetime import datetime, timedelta
-from typing import Optional
 
 import humanize
 
@@ -53,16 +52,7 @@ If you don't see anybody, and you have something to say, wait until you see some
       - Do NOT add faces without permission! Only if the user asks you to.
   - `list` command: Use to retrieve a list of all stored faces.
 
-# Context:
-- Current date: {date}
-- Current time: {time}
-- Current location: {location}
-- System uptime: {uptime}
-- Speaker volume: {volume}
-- Objects seen (count): {objects}
-- People seen: {people}
-
-# Memories:
+# Memories
 {memories}
 
 You can use the "memories" tool to store facts you think may be important to remember.
@@ -74,18 +64,55 @@ You can use the "memories" tool to store facts you think may be important to rem
 
 
 class SystemPromptBuilder:
-    objects: Optional[Detections]
+    def __init__(
+            self,
+            memory_store: ValueStore,
+            system_prompt_template: str = SYSTEM_PROMPT,
+    ):
+        self.system_prompt_template = system_prompt_template
+        self.memory_store = memory_store
+
+    async def __call__(self) -> str:
+        template_vars = await self._get_template_vars()
+        return self.system_prompt_template.format(**template_vars)
+
+    async def _get_template_vars(self) -> dict:
+        return {
+            **self._get_memories(),
+        }
+
+    def _get_memories(self) -> dict:
+        memories = self.memory_store.list()
+        memories = '\n'.join(f'- {memory}' for memory in memories)
+        memories = ('\n' + memories) if memories else 'None'
+        return dict(memories=memories)
+
+
+SYSTEM_CONTEXT_MESSAGE = """
+<system-context>
+- Current date: {date}
+- Current time: {time}
+- Current location: {location}
+- System uptime: {uptime}
+- Speaker volume: {volume}
+- Objects seen (count): {objects}
+- People seen: {people}
+</system-context>
+""".strip()
+
+
+class SystemContextMessageBuilder:
+    objects: Detections | None
+    faces: FaceRecognitions | None
 
     def __init__(
             self,
             location_provider: LocationProvider,
-            memory_store: ValueStore,
             speaker: ConferenceSpeaker,
-            system_prompt_template: str = SYSTEM_PROMPT,
+            system_prompt_template: str = SYSTEM_CONTEXT_MESSAGE,
     ):
         self.system_prompt_template = system_prompt_template
         self.location_provider = location_provider
-        self.memory_store = memory_store
         self.speaker = speaker
 
         self.objects: Detections | None = None
@@ -99,7 +126,6 @@ class SystemPromptBuilder:
         return {
             **self._get_datetime(),
             **await self._get_location(),
-            **self._get_memories(),
             **self._get_objects(),
             **self._get_people(),
             **self._get_uptime(),
@@ -116,12 +142,6 @@ class SystemPromptBuilder:
         loc = await self.location_provider.get_location()
         loc = f'{loc.city}, {loc.state}' if loc else 'Unknown'
         return dict(location=loc)
-
-    def _get_memories(self) -> dict:
-        memories = self.memory_store.list()
-        memories = '\n'.join(f'- {memory}' for memory in memories)
-        memories = ('\n' + memories) if memories else 'None'
-        return dict(memories=memories)
 
     def _get_objects(self) -> dict:
         objects = self.objects

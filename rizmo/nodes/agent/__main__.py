@@ -16,11 +16,11 @@ from rizmo.config import config
 from rizmo.llm_utils import Chat
 from rizmo.location import get_location_provider
 from rizmo.node_args import get_rizmo_node_arg_parser
-from rizmo.nodes.agent.system_prompt import SystemPromptBuilder
+from rizmo.nodes.agent.system_prompt import SystemContextMessageBuilder, SystemPromptBuilder
 from rizmo.nodes.agent.tools.timer import Timer, timedelta_to_hms_text
 from rizmo.nodes.agent.tools.tools import get_tool_handler
 from rizmo.nodes.agent.value_store import ValueStore
-from rizmo.nodes.messages import FaceDetections
+from rizmo.nodes.messages import FaceRecognitions
 from rizmo.nodes.messages_py36 import Detections
 from rizmo.nodes.topics import Topic
 from rizmo.signal import graceful_shutdown_on_sigterm
@@ -75,8 +75,10 @@ async def _main(args: Namespace, node: Node) -> None:
     memory_store = ValueStore(config.memory_file_path)
     speaker = ConferenceSpeaker.build()
     system_prompt_builder = SystemPromptBuilder(
-        location_provider,
         memory_store,
+    )
+    system_context_message_builder = SystemContextMessageBuilder(
+        location_provider,
         speaker,
     )
 
@@ -103,7 +105,10 @@ async def _main(args: Namespace, node: Node) -> None:
         client,
         model=args.model,
         system_prompt_builder=system_prompt_builder,
+        system_context_message_builder=system_context_message_builder,
         tool_handler=tool_handler,
+        # Passed to chat completion call
+        prompt_cache_key='rizmo',
         store=False,
         temperature=args.temperature,
     )
@@ -113,10 +118,10 @@ async def _main(args: Namespace, node: Node) -> None:
         await state.messages.put(Message('user', transcript_))
 
     async def handle_objects_detected(topic, objects: Detections) -> None:
-        system_prompt_builder.objects = objects
+        system_context_message_builder.objects = objects
 
-    async def handle_faces_recognized(topic, faces: FaceDetections) -> None:
-        system_prompt_builder.faces = faces
+    async def handle_faces_recognized(topic, faces: FaceRecognitions) -> None:
+        system_context_message_builder.faces = faces
 
     await node.listen(Topic.TRANSCRIPT, handle_transcript)
     await node.listen(Topic.OBJECTS_DETECTED, handle_objects_detected)
