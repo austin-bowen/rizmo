@@ -118,6 +118,10 @@ class Chat:
         return messages
 
     def _process_user_message(self, message: dict, now: datetime) -> dict:
+        # TODO This method basically does nothing since we're not using the
+        #  timestamp anymore. But the `dict(message)` copy is useful for
+        #  temporarily modifying messages.
+
         message = dict(message)
 
         timestamp = message.pop('timestamp')
