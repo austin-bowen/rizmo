@@ -129,6 +129,7 @@ pyenv update
 env PYTHON_CONFIGURE_OPTS='--enable-optimizations --with-lto' PYTHON_CFLAGS='-march=native -mtune=native' pyenv install --verbose 3.12
 
 # Create new venv
+echo 3.12.x> .python-version
 mv venv venv.old
 python -m venv --symlinks venv
 . venv/bin/activate
@@ -137,7 +138,7 @@ python -V
 
 # Install requirements
 pip install -U pip
-pip install -r requirements.txt
+pip install -r requirements.<hostname>.txt
 # <verify everything is working>
 
 # Cleanup
