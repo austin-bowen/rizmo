@@ -60,17 +60,33 @@ class ASR(Thread):
         result = self.pipe(
             sample,
             generate_kwargs={
-                'language': 'english',
                 'generation_config': GenerationConfig(
-                    max_new_tokens=10,
+                    max_new_tokens=self._get_max_new_tokens(audio.len_seconds),
                 ),
-                'task': 'transcribe',
+                'language': 'english',
             },
         )
 
         transcript = result['text'].strip()
 
         self.handle_transcript(transcript)
+
+    def _get_max_new_tokens(
+            self,
+            audio_len_s: float,
+            max_wpm: float = 200.,
+            # Just an educated guess
+            tokens_per_word = 1.2,
+            min_tokens: int = 10,
+            max_tokens: int = 200,
+    ) -> int:
+        """Returns a max token limit based on the audio length."""
+
+        est_words = (max_wpm / 60) * audio_len_s
+
+        token_limit = round(est_words * tokens_per_word)
+
+        return min(max(min_tokens, token_limit), max_tokens)
 
     def stop(self):
         self.queue.put(None)
