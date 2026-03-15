@@ -94,13 +94,13 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     print(f'Device: {device}')
 
-    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
     model_id = 'openai/whisper-large-v3-turbo'
 
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
         model_id,
-        torch_dtype=torch_dtype,
+        dtype=dtype,
         low_cpu_mem_usage=True,
         use_safetensors=True,
     ).to(device)
@@ -113,7 +113,7 @@ def build_asr_thread(handle_transcript: Callable[[str], None]):
         tokenizer=processor.tokenizer,
         feature_extractor=processor.feature_extractor,
         device=device,
-        torch_dtype=torch_dtype,
+        dtype=dtype,
     )
 
     asr = ASR(pipe, handle_transcript)
