@@ -29,6 +29,8 @@ Code for my robot, Rizmo.
     2. Power up and install OS.
         - Hostname: `rizmo`
     3. Remove unnecessary programs. Install updates.
+    4. Register for Ubuntu Pro for additional security updates:
+       `sudo pro attach <token>`, where token comes from [here](https://ubuntu.com/pro/dashboard).
 2. Setup SSH:
     1. Copy `~/.ssh/id_rsa.pub` of dev machine to `~/.ssh/authorized_keys` on Jetson Nano.
     2. Set permissions: `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`
