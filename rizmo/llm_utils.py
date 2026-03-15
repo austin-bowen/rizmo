@@ -54,6 +54,11 @@ class Chat:
             yield response
 
             if not response.tool_calls:
+                # Delete the tool_calls attribute so Llama-3.x models don't throw an error.
+                # The template blows up if the tool_calls attribute exists but is empty.
+                # See: https://github.com/vllm-project/vllm/blob/main/examples/tool_chat_template_llama3.1_json.jinja#L94
+                del response.tool_calls
+
                 return
 
             for tool_call in response.tool_calls:
@@ -81,7 +86,10 @@ class Chat:
         finally:
             self.messages.popleft()
 
-        cached_input_tokens = response.usage.prompt_tokens_details.cached_tokens
+        try:
+            cached_input_tokens = response.usage.prompt_tokens_details.cached_tokens
+        except AttributeError:
+            cached_input_tokens = None
         total_input_tokens = response.usage.prompt_tokens
         total_output_tokens = response.usage.completion_tokens
         print(
