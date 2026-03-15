@@ -20,6 +20,15 @@ class NetworkManager:
             "on" if powered else "off",
         ])
 
+    async def device_connect(self, device: str) -> None:
+        await self._run_and_check_command([
+            "sudo",
+            "nmcli",
+            "device",
+            "connect",
+            device,
+        ])
+
     async def connect(self, name: str) -> None:
         await self._run_and_check_command([
             "nmcli",

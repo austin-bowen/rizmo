@@ -45,15 +45,22 @@ async def _main(args: Namespace, node) -> None:
 
         if not connected:
             await say('Network disconnected; attempting to reconnect...')
+
             try:
                 await network_manager.cycle_wifi_radio_powered()
             except RuntimeError as e:
                 print(repr(e))
 
             try:
+                await asyncio.sleep(5)
+                await network_manager.device_connect(args.wifi_device)
+            except RuntimeError as e:
+                print(repr(e))
+
+            try:
                 await asyncio.wait_for(wait_wifi_connected(), timeout=30)
             except asyncio.TimeoutError:
-                pass
+                print("Timed out waiting for WiFi to connect.")
 
         await asyncio.sleep(10)
 

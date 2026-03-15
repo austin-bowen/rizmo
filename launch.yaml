@@ -14,9 +14,9 @@ nodes:
   mic:
     command: ./run-node mic
     on_host: rizmo
-#  network_monitor:
-#    command: ./run-node network_monitor
-#    on_host: rizmo
+  network_monitor:
+    command: ./run-node network_monitor
+    on_host: rizmo
   obj_attention:
     command: ./run-node obj_attention
     on_host: rizmo
