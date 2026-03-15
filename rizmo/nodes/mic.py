@@ -57,8 +57,10 @@ class LimitedMaxPowerGainControl(GainControl):
         samples = indata.shape[0]
         self._dt += samples / sample_rate
 
-        gain = 2 ** (self.alpha * self._dt) - 1
-        gain = min(gain, self.max_gain)
+        # Calculate max_exp instead of limiting gain post-calc to avoid overflows
+        max_exp = np.log2(self.max_gain + 1)
+        exp = min(self.alpha * self._dt, max_exp)
+        gain = 2 ** exp - 1
 
         power = np.abs(indata).max()
 
