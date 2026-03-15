@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, Literal, Optional
 
+import openai
 from openai import OpenAI
 from rosy import Node, build_node_from_args
 
@@ -69,7 +70,10 @@ async def _main(args: Namespace, node: Node) -> None:
 
     state = State()
 
-    client = OpenAI(api_key=secrets.OPENAI_API_KEY)
+    client = OpenAI(
+        api_key=secrets.OPENAI_API_KEY,
+        base_url=args.openai_base_url,
+    )
 
     location_provider = get_location_provider()
     memory_store = ValueStore(config.memory_file_path)
@@ -111,6 +115,8 @@ async def _main(args: Namespace, node: Node) -> None:
         prompt_cache_key='rizmo',
         store=False,
         temperature=args.temperature,
+        # parallel_tool_calls=False,
+        # tool_choice="required",
     )
 
     async def handle_transcript(topic, transcript_: str) -> None:
@@ -133,13 +139,17 @@ async def _main(args: Namespace, node: Node) -> None:
         state.last_reply_datetime = datetime.now()
 
     async def say_response() -> None:
-        async for response in chat.get_responses():
-            print('Rizmo:', response)
-            response = postprocess_response(response.content)
-            if response and response != '<NO REPLY>':
-                await say(response)
-                state.in_conversation = True
+        try:
+            async for response in chat.get_responses():
+                print('Rizmo:', response)
+                response = postprocess_response(response.content)
+                if response and response != '<NO REPLY>':
+                    await say(response)
+                    state.in_conversation = True
+        except openai.OpenAIError as e:
+            await say(f"Sorry, LLM call failed. {e}")
 
+    chat.add_user_message("Hello.")
     await say_response()
 
     while True:
@@ -236,6 +246,11 @@ def parse_args() -> Namespace:
         '--temperature',
         type=float,
         help='The temperature to use for the model.',
+    )
+
+    parser.add_argument(
+        '--openai-base-url',
+        help='The base URL for the OpenAI API.',
     )
 
     return parser.parse_args()
