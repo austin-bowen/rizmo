@@ -61,7 +61,8 @@ class ASR(Thread):
             sample,
             generate_kwargs={
                 'language': 'english',
-                'max_new_tokens': 10,
+                # 'max_new_tokens': 10,
+                'max_length': 10,
                 'task': 'transcribe',
             },
         )
