@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -ex
+
+source venv/bin/activate
+
+host=$(hostname)
+host=${host%%.*}
+
+pip install -U pip
+
+if [ "$host" = "potato" ]; then
+    pip install -U -r requirements.potato.txt
+elif [ "$host" = "rizmo" ]; then
+    pip install -U -r requirements.rizmo.txt
+else
+    pip install -U -r requirements.txt
+    pip install -U -r requirements.test.txt
+fi
