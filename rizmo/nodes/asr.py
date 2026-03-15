@@ -60,8 +60,9 @@ class ASR(Thread):
         result = self.pipe(
             sample,
             generate_kwargs={
-                'task': 'transcribe',
                 'language': 'english',
+                'max_new_tokens': 10,
+                'task': 'transcribe',
             },
         )
 
