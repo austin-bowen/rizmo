@@ -18,7 +18,7 @@ from threading import Thread
 import numpy as np
 import torch
 from rosy import Node, build_node_from_args
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, GenerationConfig, pipeline
 from voicebox.audio import Audio
 
 from rizmo.node_args import get_rizmo_node_arg_parser
@@ -61,8 +61,9 @@ class ASR(Thread):
             sample,
             generate_kwargs={
                 'language': 'english',
-                # 'max_new_tokens': 10,
-                'max_length': 10,
+                'generation_config': GenerationConfig(
+                    max_new_tokens=10,
+                ),
                 'task': 'transcribe',
             },
         )
