@@ -67,8 +67,8 @@ async def _main(args: Namespace, node) -> None:
 
         # The same name may occur multiple times; take the highest similarity
         face_recs = [
-            (name, max(similarities))
-            for name, similarities in groupby(face_recs, key=lambda x: x[0])
+            max(group)
+            for _, group in groupby(face_recs, key=lambda x: x[0])
         ]
 
         face_recs_log = [(str(name), round(sim, 3)) for name, sim in face_recs]
