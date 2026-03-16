@@ -48,6 +48,8 @@ class ASR(Thread):
         while (audio := self.queue.get()) is not None:
             try:
                 self._handle_audio(audio)
+            except Exception:
+                logging.exception('Error transcribing audio.')
             finally:
                 self.queue.task_done()
 
@@ -62,6 +64,7 @@ class ASR(Thread):
             generate_kwargs={
                 'generation_config': GenerationConfig(
                     max_new_tokens=self._get_max_new_tokens(audio.len_seconds),
+                    return_timestamps=True,
                 ),
                 'language': 'english',
             },
