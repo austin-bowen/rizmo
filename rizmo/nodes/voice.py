@@ -7,9 +7,10 @@ from voicebox import ParallelVoicebox, Voicebox, reliable_tts
 from voicebox.audio import Audio
 from voicebox.effects import Flanger, Tail
 from voicebox.sinks import Sink, SoundDevice
-from voicebox.tts import AmazonPolly, ESpeakNG, PrerecordedTTS, TTS
+from voicebox.tts import AmazonPolly, ESpeakNG, ElevenLabsTTS, PrerecordedTTS, TTS
 from voicebox.voiceboxes.splitter import PunktSentenceSplitter
 
+from rizmo import secrets
 from rizmo.aws import get_polly_client
 from rizmo.node_args import get_rizmo_node_arg_parser
 from rizmo.nodes.topics import Topic
@@ -21,6 +22,19 @@ async def main(args: Namespace) -> None:
 
     async with await rosy.build_node_from_args(args=args) as node:
         await _main(args, node)
+
+
+def parse_args() -> Namespace:
+    parser = get_rizmo_node_arg_parser(__file__)
+
+    parser.add_argument(
+        '--tts',
+        default='kevin',
+        choices=('blondie', 'espeak', 'kevin'),
+        help='The text-to-speech engine to use. Default: %(default)s',
+    )
+
+    return parser.parse_args()
 
 
 async def _main(args: Namespace, node) -> None:
@@ -48,6 +62,8 @@ async def _main(args: Namespace, node) -> None:
             voicebox.say(message)
 
         await node.listen(Topic.SAY, handle_say)
+
+        print('Ready.')
         await node.forever()
 
 
@@ -69,7 +85,7 @@ def build_voicebox(
             handle_speech_start,
             handle_speech_end,
         ),
-        text_splitter=PunktSentenceSplitter(),
+        # text_splitter=PunktSentenceSplitter(),
     )
 
 
@@ -82,6 +98,17 @@ def _build_tts(tts_name: str) -> TTS:
             engine='neural',
             language_code='en-US',
             sample_rate=16_000,
+        ))
+    elif tts_name == 'blondie':
+        ttss.append(ElevenLabsTTS(
+            # https://elevenlabs.io/app/voice-lab/share/cb8f12185b25573a68a3439afa2019305119eb88d1afc3c61493a44dc3c7d609/XXphLKNRxvJ1Qa95KBhX
+            voice_id='XXphLKNRxvJ1Qa95KBhX',
+            api_key=secrets.ELEVENLABS_API_KEY,
+            sample_rate=16_000,
+            convert_kwargs=dict(
+                # https://elevenlabs.io/docs/overview/models#models-overview
+                model_id='eleven_flash_v2_5'
+            )
         ))
     elif tts_name != 'espeak':
         raise ValueError(f'Unknown TTS engine: {tts_name!r}')
@@ -117,19 +144,6 @@ class SinkWithCallbacks(Sink):
             self.sink.play(audio)
         finally:
             self.on_speech_end()
-
-
-def parse_args() -> Namespace:
-    parser = get_rizmo_node_arg_parser(__file__)
-
-    parser.add_argument(
-        '--tts',
-        default='kevin',
-        choices=('espeak', 'kevin'),
-        help='The text-to-speech engine to use. Default: %(default)s',
-    )
-
-    return parser.parse_args()
 
 
 if __name__ == '__main__':
