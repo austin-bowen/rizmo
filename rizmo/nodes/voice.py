@@ -28,9 +28,9 @@ def parse_args() -> Namespace:
     parser = get_rizmo_node_arg_parser(__file__)
 
     parser.add_argument(
-        '--tts',
-        default='kevin',
-        choices=('blondie', 'espeak', 'kevin'),
+        '--voice',
+        default='grete',
+        choices=('blondie', 'espeak', 'grete', 'kevin'),
         help='The text-to-speech engine to use. Default: %(default)s',
     )
 
@@ -53,7 +53,7 @@ async def _main(args: Namespace, node) -> None:
         ).result()
 
     with build_voicebox(
-            args.tts,
+            args.voice,
             handle_speech_start,
             handle_speech_end,
     ) as voicebox:
@@ -68,14 +68,14 @@ async def _main(args: Namespace, node) -> None:
 
 
 def build_voicebox(
-        tts_name: str,
+        voice_name: str,
         handle_speech_start,
         handle_speech_end,
 ) -> Voicebox:
     PunktSentenceSplitter.download_resources()
 
     return ParallelVoicebox(
-        tts=_build_tts(tts_name),
+        tts=_build_tts(voice_name),
         effects=[
             Tail(0.5),
             Flanger(),
@@ -89,9 +89,28 @@ def build_voicebox(
     )
 
 
-def _build_tts(tts_name: str) -> TTS:
+def _build_tts(voice_name: str) -> TTS:
     ttss = []
-    if tts_name == 'kevin':
+    if voice_name == 'blondie':
+        ttss.append(_build_elevenlabs_tts(
+            voice_id='XXphLKNRxvJ1Qa95KBhX',
+            convert_kwargs=dict(
+                # https://elevenlabs.io/docs/overview/models#models-overview
+                model_id='eleven_flash_v2_5'
+            )
+        ))
+    elif voice_name == 'grete':
+        ttss.append(_build_elevenlabs_tts(
+            voice_id='ONFS8Q3TuiPLQCXXa4dy',
+            convert_kwargs=dict(
+                # https://elevenlabs.io/docs/overview/models#models-overview
+                model_id='eleven_flash_v2_5',
+                voice_settings=dict(
+                    speed=1.1,
+                )
+            )
+        ))
+    elif voice_name == 'kevin':
         ttss.append(AmazonPolly(
             client=get_polly_client(timeout=5),
             voice_id='Kevin',
@@ -99,19 +118,8 @@ def _build_tts(tts_name: str) -> TTS:
             language_code='en-US',
             sample_rate=16_000,
         ))
-    elif tts_name == 'blondie':
-        ttss.append(ElevenLabsTTS(
-            # https://elevenlabs.io/app/voice-lab/share/cb8f12185b25573a68a3439afa2019305119eb88d1afc3c61493a44dc3c7d609/XXphLKNRxvJ1Qa95KBhX
-            voice_id='XXphLKNRxvJ1Qa95KBhX',
-            api_key=secrets.ELEVENLABS_API_KEY,
-            sample_rate=16_000,
-            convert_kwargs=dict(
-                # https://elevenlabs.io/docs/overview/models#models-overview
-                model_id='eleven_flash_v2_5'
-            )
-        ))
-    elif tts_name != 'espeak':
-        raise ValueError(f'Unknown TTS engine: {tts_name!r}')
+    elif voice_name != 'espeak':
+        raise ValueError(f'Unknown TTS engine: {voice_name!r}')
 
     ttss.append(ESpeakNG())
 
@@ -130,6 +138,18 @@ def _build_tts(tts_name: str) -> TTS:
         print(f'Failed to pre-load TTS messages: {e!r}')
 
     return tts
+
+
+def _build_elevenlabs_tts(
+        voice_id: str,
+        convert_kwargs: dict,
+) -> ElevenLabsTTS:
+    return ElevenLabsTTS(
+        voice_id=voice_id,
+        api_key=secrets.ELEVENLABS_API_KEY,
+        sample_rate=16_000,
+        convert_kwargs=convert_kwargs,
+    )
 
 
 class SinkWithCallbacks(Sink):
