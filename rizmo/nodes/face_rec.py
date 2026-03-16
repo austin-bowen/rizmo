@@ -3,6 +3,7 @@ import logging
 from argparse import Namespace
 from asyncio import wait_for
 from dataclasses import dataclass
+from itertools import groupby
 
 import numpy as np
 from rosy import build_node_from_args
@@ -63,6 +64,12 @@ async def _main(args: Namespace, node) -> None:
             face_finder.find_faces,
             face_imgs,
         )
+
+        # The same name may occur multiple times; take the highest similarity
+        face_recs = [
+            (name, max(similarities))
+            for name, similarities in groupby(face_recs, key=lambda x: x[0])
+        ]
 
         face_recs_log = [(str(name), round(sim, 3)) for name, sim in face_recs]
         face_recs_log = sorted(face_recs_log)
