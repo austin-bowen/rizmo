@@ -63,7 +63,7 @@ async def _main(args: Namespace, node) -> None:
 
         await node.listen(Topic.SAY, handle_say)
 
-        print('Ready.')
+        print(f'[{node}] Ready')
         await node.forever()
 
 
