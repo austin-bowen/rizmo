@@ -31,7 +31,7 @@ def parse_args() -> Namespace:
         '--voice',
         default='grete',
         choices=('blondie', 'espeak', 'grete', 'kevin'),
-        help='The text-to-speech engine to use. Default: %(default)s',
+        help='The voice to use. Default: %(default)s',
     )
 
     return parser.parse_args()
