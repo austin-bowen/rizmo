@@ -4,4 +4,7 @@ node_name=$1
 shift
 
 . venv/bin/activate
-python -O -u -m rizmo.nodes.$node_name $@ 2>&1 | tee logs/$node_name.log
+
+set -o pipefail
+exec python -O -u -m rizmo.nodes.$node_name $@ 2>&1 | tee "logs/$node_name.log"
+exit $?
